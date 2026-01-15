@@ -18,10 +18,36 @@
   }
 }
 
+html {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-cairo), Arial, Helvetica, sans-serif;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100%;
+}
+
+/* إزالة أي spacing بين sections */
+section + footer {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* إزالة أي مساحة بيضاء بعد الفوتر */
+footer {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+footer > div:last-child {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 /* Animation for News Ticker - LTR (معكوس) */
@@ -50,4 +76,49 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Animations للقائمة المنبثقة */
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dropdown {
+  animation: fadeInDown 0.3s ease-out;
+}
+
+/* Animation for Tuition Fees Cards - Infinite Marquee Loop */
+/* حركة دائرية مستمرة - من 0 إلى -50% (لأن البطاقات مكررة مرتين) */
+@keyframes marquee-infinite {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-infinite {
+  animation: marquee-infinite 60s linear infinite !important;
+  will-change: transform;
+  width: fit-content;
+  display: flex;
+}
+
+.animate-marquee-infinite:hover {
+  animation-play-state: paused !important;
+}
+
+/* دعم prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-infinite {
+    animation: none !important;
+  }
 }

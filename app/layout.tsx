@@ -4,6 +4,13 @@ import "./globals.css";
 import Header from "./components/Header";
 import NewsTicker from "./components/NewsTicker";
 import HeroSlider from "./components/HeroSlider";
+import GreenCard from "./components/GreenCard";
+import NewsSection from "./components/NewsSection";
+import ProgramsSection from "./components/ProgramsSection";
+import InnovationSection from "./components/InnovationSection";
+import TuitionFeesSection from "./components/TuitionFeesSection";
+import ContactSection from "./components/ContactSection";
+import Footer from "./components/Footer";
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -35,20 +42,24 @@ export default function RootLayout({
         <Header />
         <NewsTicker />
         <HeroSlider />
-
-        {/* Main Content */}
-        <main className="min-h-[calc(100vh-120px)] w-full">
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {children}
-          </div>
-        </main>
+        <GreenCard />
+        <NewsSection />
+        <ProgramsSection />
+        <InnovationSection />
+        <TuitionFeesSection />
+        <ContactSection />
 
         {/* Footer */}
-        <footer className="w-full border-t border-neutral-200">
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-sm text-neutral-600">
-            © {new Date().getFullYear()} كلية الشرق للعلوم التقنية التخصصية – جميع الحقوق محفوظة
-          </div>
-        </footer>
+        <Footer />
+
+        {/* Main Content */}
+        {children && (
+          <main className="w-full">
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {children}
+            </div>
+          </main>
+        )}
       </body>
     </html>
   );
