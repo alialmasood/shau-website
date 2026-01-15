@@ -23,3 +23,21 @@ body {
   color: var(--foreground);
   font-family: var(--font-cairo), Arial, Helvetica, sans-serif;
 }
+
+/* Animation for News Ticker - LTR (معكوس) */
+@keyframes scroll-rtl {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(50%);
+  }
+}
+
+.animate-scroll-rtl {
+  animation: scroll-rtl 60s linear infinite;
+}
+
+.animate-scroll-rtl:hover {
+  animation-play-state: paused;
+}

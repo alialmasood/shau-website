@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
+import NewsTicker from "./components/NewsTicker";
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -31,6 +32,7 @@ export default function RootLayout({
         `}
       >
         <Header />
+        <NewsTicker />
 
         {/* Main Content */}
         <main className="min-h-[calc(100vh-120px)] w-full">
