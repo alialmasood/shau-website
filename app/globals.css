@@ -41,3 +41,13 @@ body {
 .animate-scroll-rtl:hover {
   animation-play-state: paused;
 }
+
+/* إخفاء scrollbar للتبويبات */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}

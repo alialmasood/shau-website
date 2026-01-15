@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -13,73 +16,85 @@ const navItems = [
 ];
 
 export default function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-sm border-b border-neutral-200">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 sm:h-24">
-          {/* Logo - الجانب الأيمن */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center">
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0 transform scale-[2.1] sm:scale-[2.6] md:scale-[2.9] lg:scale-[3.2]">
+      <div className="w-full pr-4 sm:pr-6 md:pr-8 lg:pr-10 xl:pr-12 pl-8 sm:pl-10 md:pl-12 lg:pl-14 xl:pl-20">
+        <div className="flex items-center justify-between h-16 sm:h-20 md:h-24 gap-2 sm:gap-3 md:gap-4">
+          
+          {/* المنطقة 1: الشعار (Logo) - اليسار - ثابت لا ينضغط */}
+          <div 
+            className="flex items-center justify-center flex-shrink-0 whitespace-nowrap overflow-hidden"
+            style={{ 
+              maxWidth: '320px',
+              minWidth: '320px',
+              width: '320px'
+            }}
+          >
+            <Link href="/" className="flex items-center justify-center w-full h-full">
+              <div 
+                className="relative flex items-center justify-center overflow-visible"
+                style={{
+                  width: '140px',
+                  height: '112px',
+                  maxWidth: '140px',
+                  maxHeight: '112px',
+                  transform: 'scale(2.15)',
+                  transformOrigin: 'center center'
+                }}
+              >
                 <Image
                   src="/Untit4545led-1.png"
                   alt="شعار كلية الشرق"
                   fill
-                  className="object-contain"
+                  className="object-contain object-center"
                   priority
                   unoptimized
+                  sizes="(max-width: 640px) 70px, (max-width: 768px) 90px, (max-width: 1024px) 110px, 140px"
                 />
               </div>
             </Link>
           </div>
 
-          {/* Navigation and Language Switcher - الجانب الأيسر */}
-          <div className="flex items-center gap-2">
-            {/* Navigation - الجانب الأيسر */}
-            <nav className="hidden md:flex items-center justify-end max-w-[calc(100%-120px)]">
+          {/* المنطقة 2: وسط - التبويبات (Nav) */}
+          <nav className="hidden xl:flex items-center justify-center flex-1 min-w-0 max-w-none overflow-x-auto px-2 scrollbar-hide">
+            <div className="flex items-center justify-center gap-0 flex-nowrap">
               {navItems.map((item, index) => (
-                <div key={item.href} className="flex items-center">
+                <div key={item.href} className="flex items-center flex-shrink-0">
                   <Link
                     href={item.href}
-                    className="group relative px-2.5 py-3 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-blue-600"
+                    className="group relative px-2.5 py-2.5 text-xs font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
                   >
-                    {/* تأثير الخلفية عند hover */}
-                    <span className="absolute inset-0 bg-gradient-to-b from-blue-50 to-blue-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform scale-y-0 group-hover:scale-y-100 origin-bottom"></span>
-                    
-                    {/* تأثير الخط السفلي */}
-                    <span className="absolute bottom-0 right-0 left-0 h-0.5 bg-gradient-to-l from-blue-600 via-blue-500 to-blue-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-right rounded-full"></span>
-                    
                     {/* النص */}
-                    <span className="relative z-10 flex items-center gap-1.5">
+                    <span className="relative z-10 flex items-center">
                       {item.label}
-                      <span className="w-1 h-1 bg-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform scale-0 group-hover:scale-100"></span>
                     </span>
-                    
-                    {/* تأثير الـ shadow */}
-                    <span className="absolute inset-0 rounded-lg shadow-lg shadow-blue-200/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></span>
                   </Link>
                   
                   {/* الخط الفاصل العمودي */}
                   {index < navItems.length - 1 && (
-                    <div className="h-6 w-px bg-gradient-to-b from-transparent via-neutral-300 to-transparent mx-0.5"></div>
+                    <div className="h-5 w-px bg-gradient-to-b from-transparent via-neutral-300 to-transparent mx-0.5"></div>
                   )}
                 </div>
               ))}
-            </nav>
+            </div>
+          </nav>
 
-            {/* Search Button */}
-            <div className="flex items-center">
-              {/* الخط الفاصل قبل زر البحث */}
-              <div className="hidden md:block h-6 w-px bg-gradient-to-b from-transparent via-neutral-300 to-transparent mx-2"></div>
-              
-              <button
-                className="group relative px-3 py-2 md:px-4 md:py-2.5 rounded-lg border border-neutral-200 bg-white hover:border-blue-400 hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100 transition-all duration-300 ease-in-out shadow-sm hover:shadow-md hover:shadow-blue-200/50"
-                aria-label="البحث"
-              >
-                <div className="flex items-center justify-center">
-                  {/* أيقونة البحث */}
+          {/* المنطقة 3: يمين - اللغة والبحث */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 min-w-0">
+            {/* Search Bar - Windows 11 Style */}
+            <div className="relative group">
+              <div className="flex items-center bg-neutral-50 hover:bg-white border border-neutral-200 hover:border-[#31BD9C] rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus-within:border-[#31BD9C] focus-within:bg-white focus-within:shadow-md focus-within:[&_svg]:text-[#31BD9C]">
+                <input
+                  type="text"
+                  placeholder="ابحث..."
+                  className="w-[90px] sm:w-[115px] md:w-[135px] lg:w-[160px] px-8 py-1.5 pl-3 text-sm text-neutral-700 bg-transparent border-0 outline-none placeholder:text-neutral-400 focus:placeholder:text-neutral-300"
+                  aria-label="البحث"
+                />
+                <div className="absolute right-2.5 flex items-center pointer-events-none">
                   <svg
-                    className="w-5 h-5 text-neutral-600 group-hover:text-blue-600 transition-colors duration-300 group-hover:scale-110 transform"
+                    className="w-4 h-4 text-neutral-400 transition-colors duration-200"
                     fill="none"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -90,78 +105,90 @@ export default function Header() {
                     <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                   </svg>
                 </div>
-                
-                {/* تأثير الإضاءة عند hover */}
-                <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400/0 via-blue-400/5 to-blue-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              </button>
+              </div>
             </div>
 
-            {/* Language Switcher Button */}
-            <div className="flex items-center">
-              {/* الخط الفاصل قبل زر اللغة */}
-              <div className="hidden md:block h-6 w-px bg-gradient-to-b from-transparent via-neutral-300 to-transparent mx-2"></div>
-              
+            {/* Language Switcher Button - كبسولة */}
+            <div className="hidden sm:flex items-center">
+              <div className="h-6 w-px bg-gradient-to-b from-transparent via-neutral-300 to-transparent mx-2"></div>
               <button
-                className="group relative px-3 py-2 md:px-4 md:py-2.5 rounded-lg border border-neutral-200 bg-white hover:border-blue-400 hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100 transition-all duration-300 ease-in-out shadow-sm hover:shadow-md hover:shadow-blue-200/50"
+                className="group relative flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#31BD9C] hover:bg-[#2aa88a] text-white transition-all duration-300 ease-in-out shadow-md hover:shadow-lg hover:shadow-[#31BD9C]/30 focus:outline-none focus:ring-2 focus:ring-[#31BD9C] focus:ring-offset-2"
                 aria-label="تغيير اللغة"
               >
-                <div className="flex items-center gap-2">
-                  {/* أيقونة اللغة */}
-                  <svg
-                    className="w-5 h-5 text-neutral-600 group-hover:text-blue-600 transition-colors duration-300"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
-                  </svg>
-                  
-                  {/* نص اللغة */}
-                  <span className="hidden sm:inline-block text-sm font-semibold text-neutral-700 group-hover:text-blue-600 transition-colors duration-300">
-                    ع
-                  </span>
-                  
-                  {/* أيقونة السهم */}
-                  <svg
-                    className="w-4 h-4 text-neutral-500 group-hover:text-blue-600 group-hover:rotate-180 transition-all duration-300"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path d="M19 9l-7 7-7-7"></path>
-                  </svg>
-                </div>
+                {/* أيقونة الكرة الأرضية */}
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
                 
-                {/* تأثير الإضاءة عند hover */}
-                <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400/0 via-blue-400/5 to-blue-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                {/* نص اللغة */}
+                <span className="text-xs sm:text-sm font-semibold whitespace-nowrap">
+                  العربية
+                </span>
               </button>
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* زر القائمة للهواتف المحمولة والشاشات المتوسطة */}
             <button
-              className="md:hidden p-2 text-neutral-700 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+              className="xl:hidden flex-shrink-0 p-2 text-neutral-700 hover:text-[#31BD9C] rounded-lg hover:bg-[#31BD9C]/5 transition-colors duration-200"
               aria-label="قائمة التنقل"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path d="M4 6h16M4 12h16M4 18h16"></path>
-              </svg>
+              {mobileMenuOpen ? (
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              ) : (
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+              )}
             </button>
           </div>
         </div>
+
+        {/* القائمة المنسدلة للهواتف المحمولة والشاشات المتوسطة */}
+        {mobileMenuOpen && (
+          <div className="xl:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200">
+            <nav className="flex flex-col py-4">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
