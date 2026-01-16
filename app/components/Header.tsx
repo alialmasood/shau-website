@@ -124,7 +124,7 @@ const navItems = [
       },
     ]
   },
-  { label: "المنصة البحثة", href: "/research-platform" },
+  { label: "المنصة البحثية", href: "https://plan.shau.edu.iq/", external: true },
   { label: "المجلة العلمية", href: "/journal" },
 ];
 
@@ -416,15 +416,29 @@ export default function Header() {
                       )}
                     </div>
                   ) : (
-                    <Link
-                      href={item.href}
-                      className="group relative px-2.5 py-2.5 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
-                    >
-                      {/* النص */}
-                      <span className="relative z-10 flex items-center">
-                        {item.label}
-                      </span>
-                    </Link>
+                    item.external ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative px-2.5 py-2.5 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
+                      >
+                        {/* النص */}
+                        <span className="relative z-10 flex items-center">
+                          {item.label}
+                        </span>
+                      </a>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className="group relative px-2.5 py-2.5 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
+                      >
+                        {/* النص */}
+                        <span className="relative z-10 flex items-center">
+                          {item.label}
+                        </span>
+                      </Link>
+                    )
                   )}
                   
                   {/* الخط الفاصل العمودي */}
@@ -525,14 +539,27 @@ export default function Header() {
           <div className="xl:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200">
             <nav className="flex flex-col py-4">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
+                item.external ? (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                )
               ))}
             </nav>
           </div>
