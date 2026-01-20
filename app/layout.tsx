@@ -3,13 +3,6 @@ import { Cairo } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import NewsTicker from "./components/NewsTicker";
-import HeroSlider from "./components/HeroSlider";
-import GreenCard from "./components/GreenCard";
-import NewsSection from "./components/NewsSection";
-import ProgramsSection from "./components/ProgramsSection";
-import InnovationSection from "./components/InnovationSection";
-import TuitionFeesSection from "./components/TuitionFeesSection";
-import ContactSection from "./components/ContactSection";
 import Footer from "./components/Footer";
 
 const cairo = Cairo({
@@ -40,28 +33,11 @@ export default function RootLayout({
           overflow-x-hidden
         `}
       >
-        <div className="w-full max-w-full">
+        <div className="min-h-screen w-full max-w-full flex flex-col">
           <Header />
           <NewsTicker />
-          <HeroSlider />
-          <GreenCard />
-          <NewsSection />
-          <ProgramsSection />
-          <InnovationSection />
-          <TuitionFeesSection />
-          <ContactSection />
-
-          {/* Footer */}
+          <main className="w-full flex-1">{children}</main>
           <Footer />
-
-          {/* Main Content */}
-          {children && (
-            <main className="w-full">
-              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {children}
-              </div>
-            </main>
-          )}
         </div>
       </body>
     </html>

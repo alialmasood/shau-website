@@ -1,11 +1,20 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  ADMIN
+}
+
+enum NewsCategory {
+  ADMINISTRATIVE
+  SCIENTIFIC
+  ACTIVITIES
+  ANNOUNCEMENTS
 }
 
 model contact_messages {
@@ -19,15 +28,54 @@ model contact_messages {
   created_at DateTime @default(now()) @db.Timestamptz(6)
 }
 
-model news {
-  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  title        String    @db.VarChar(250)
+model AdminUser {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String    @unique @db.VarChar(120)
+  password_hash String
+  role          AdminRole @default(ADMIN)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@map("admin_users")
+}
+
+model Media {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  filename   String   @db.VarChar(255)
+  mimeType   String   @map("mime_type") @db.VarChar(120)
+  size       Int
+  data       Bytes
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  newsCoverFor News[] @relation("NewsCoverImage")
+
+  @@map("media")
+}
+
+model News {
+  id           String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title        String        @db.VarChar(250)
+  slug         String?       @unique @db.VarChar(250)
+  excerpt      String?       @db.VarChar(500)
   content      String
-  is_published Boolean   @default(false)
-  publish_date DateTime? @db.Timestamptz(6)
-  created_by   String?   @db.Uuid
-  created_at   DateTime  @default(now()) @db.Timestamptz(6)
-  users        users?    @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  category     NewsCategory?
+  published    Boolean       @default(false) @map("is_published")
+  publishedAt  DateTime?     @map("publish_date") @db.Timestamptz(6)
+  featured     Boolean       @default(false)
+  coverImageId String?       @map("cover_image_id") @db.Uuid
+  coverImage   Media?        @relation("NewsCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  // الحفاظ على العمود الموجود حالياً (اختياري)
+  createdById String? @map("created_by") @db.Uuid
+  createdBy   users?  @relation(fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([published, publishedAt])
+  @@index([category])
+  @@map("news")
 }
 
 model sessions {
@@ -49,7 +97,7 @@ model users {
   is_active      Boolean    @default(true)
   created_at     DateTime   @default(now()) @db.Timestamptz(6)
   updated_at     DateTime   @default(now()) @db.Timestamptz(6)
-  news           news[]
+  news           News[]
   sessions       sessions[]
 }
 
@@ -57,4 +105,17 @@ model visitor_count {
   id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   count      BigInt   @default(0)
   updated_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model TickerItem {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  text       String   @db.VarChar(400)
+  link       String?  @db.VarChar(500)
+  isActive   Boolean  @default(true) @map("is_active")
+  sortOrder  Int      @default(0) @map("sort_order")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([isActive, sortOrder])
+  @@map("ticker_items")
 }

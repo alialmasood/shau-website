@@ -4,9 +4,10 @@ import { Pool } from "pg";
 // ملاحظة: Prisma يعتمد على DATABASE_URL، لذلك نفضّل استخدامه هنا أيضاً لتجنب اختلاف إعدادات dev/prod.
 const connectionString = process.env.DATABASE_URL;
 
-const shouldUseSsl =
-  process.env.DB_SSL === "true" ||
-  (process.env.NODE_ENV === "production" && process.env.DB_SSL !== "false");
+// SSL يكون "اختياري" وبشكل صريح فقط، لأن بعض قواعد البيانات (خصوصاً على السيرفرات المحلية)
+// لا تدعم SSL وتسبب 500 مثل: "The server does not support SSL connections".
+// إذا كانت قاعدتك تتطلب SSL (مثلاً بعض مزودي الاستضافة)، ضع DB_SSL=true.
+const shouldUseSsl = process.env.DB_SSL === "true";
 
 const pool = connectionString
   ? new Pool({

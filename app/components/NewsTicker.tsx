@@ -1,15 +1,11 @@
-"use client";
-
 import Image from "next/image";
+import { getActiveTickerItems } from "@/lib/tickerRepo";
 
-const newsItems = [
-  "تعلن كلية الشرق للعلوم التقنية التخصصية عن بدء التسجيل للفصل الدراسي الجديد",
-  "ورشة عمل حول أحدث التطورات في مجال الذكاء الاصطناعي",
-  "حفل تكريم للطلبة المتميزين في البحث العلمي",
-  "ندوة علمية حول أهمية الابتكار في التعليم التقني",
-];
+export default async function NewsTicker() {
+  const items = await getActiveTickerItems();
+  if (items.length === 0) return null;
 
-export default function NewsTicker() {
+  const repeated = [...items, ...items, ...items];
   return (
     <div 
       className="w-full bg-[#31BD9C] text-white h-10 overflow-hidden relative"
@@ -17,12 +13,23 @@ export default function NewsTicker() {
     >
       <div className="flex items-center h-full gap-3 md:gap-6 animate-scroll-rtl px-3 md:px-10">
         {/* تكرار الأخبار عدة مرات لضمان حركة مستمرة */}
-        {[...newsItems, ...newsItems, ...newsItems].map((news, index) => (
+        {repeated.map((item, index) => (
           <div key={index} className="flex items-center gap-3 md:gap-6 whitespace-nowrap flex-shrink-0">
-            <span className="text-xs md:text-sm font-medium">{news}</span>
+            {item.link ? (
+              <a
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs md:text-sm font-medium hover:underline"
+              >
+                {item.text}
+              </a>
+            ) : (
+              <span className="text-xs md:text-sm font-medium">{item.text}</span>
+            )}
             
             {/* شعار الكلية الدائري كفاصل - أبيض بالكامل */}
-            {index < [...newsItems, ...newsItems, ...newsItems].length - 1 && (
+            {index < repeated.length - 1 && (
               <div className="relative w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex-shrink-0">
                 <div className="relative w-full h-full flex items-center justify-center">
                   <Image

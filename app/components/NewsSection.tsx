@@ -1,45 +1,22 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
+import { getLatestPublishedNews } from "@/lib/newsRepo";
 
-// بيانات الأخبار - يمكن استبدالها لاحقاً بمصدر بيانات
-const newsItems = [
-  {
-    id: 1,
-    title: "ورشة عمل حول أحدث التطورات في مجال الذكاء الاصطناعي",
-    excerpt: "تنظم كلية الشرق ورشة عمل متخصصة حول أحدث التطورات في مجال الذكاء الاصطناعي وتطبيقاته في التعليم",
-    image: "/hero-image-1.jpg",
-    date: "15 يناير 2025",
-    category: "فعاليات",
-  },
-  {
-    id: 2,
-    title: "حفل تكريم للطلبة المتميزين في البحث العلمي",
-    excerpt: "تحت رعاية عميد الكلية، تم تكريم الطلبة المتميزين في مجال البحث العلمي والابتكار",
-    image: "/hero-image-2.jpg",
-    date: "12 يناير 2025",
-    category: "أحداث",
-  },
-  {
-    id: 3,
-    title: "ندوة علمية حول أهمية الابتكار في التعليم التقني",
-    excerpt: "ندوة علمية متخصصة تناقش دور الابتكار في تطوير التعليم التقني ومواكبة متطلبات سوق العمل",
-    image: "/hero-image-3.jpg",
-    date: "10 يناير 2025",
-    category: "ندوات",
-  },
-  {
-    id: 4,
-    title: "تعلن كلية الشرق عن بدء التسجيل للفصل الدراسي الجديد",
-    excerpt: "تعلن كلية الشرق للعلوم التقنية التخصصية عن فتح باب التسجيل للفصل الدراسي الجديد",
-    image: "/hero-image-1.jpg",
-    date: "8 يناير 2025",
-    category: "إعلانات",
-  },
-];
+function formatArabicDate(iso: string | null) {
+  if (!iso) return "";
+  try {
+    return new Intl.DateTimeFormat("ar-IQ", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(iso));
+  } catch {
+    return "";
+  }
+}
 
-export default function NewsSection() {
+export default async function NewsSection() {
+  const items = await getLatestPublishedNews(4);
   return (
     <section className="w-full bg-gradient-to-b from-white to-neutral-50 py-12 sm:py-16 md:py-20 lg:py-24">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -53,7 +30,7 @@ export default function NewsSection() {
 
         {/* بطاقات الأخبار */}
         <div className="flex md:grid md:grid-cols-4 overflow-x-auto gap-3 md:gap-6 lg:gap-8 snap-x snap-mandatory md:overflow-visible md:snap-none scrollbar-hide pb-2 md:pb-0">
-          {newsItems.map((news) => (
+          {items.map((news) => (
             <Link
               key={news.id}
               href={`/news/${news.id}`}
@@ -65,7 +42,7 @@ export default function NewsSection() {
               {/* الصورة */}
               <div className="relative w-full h-48 sm:h-56 md:h-64 overflow-hidden">
                 <Image
-                  src={news.image}
+                  src={news.coverImageId ? `/api/media/${news.coverImageId}` : "/hero-image-1.jpg"}
                   alt={news.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -77,7 +54,7 @@ export default function NewsSection() {
                 {/* فئة الخبر */}
                 <div className="absolute top-3 right-3 z-20">
                   <span className="px-3 py-1 bg-[#31BD9C] text-white text-xs font-semibold rounded-full backdrop-blur-sm">
-                    {news.category}
+                    {news.categoryLabel}
                   </span>
                 </div>
               </div>
@@ -86,7 +63,7 @@ export default function NewsSection() {
               <div className="p-5 sm:p-6">
                 {/* التاريخ */}
                 <p className="text-xs sm:text-sm text-[#31BD9C] font-medium mb-3">
-                  {news.date}
+                  {formatArabicDate(news.publishedAt)}
                 </p>
 
                 {/* العنوان */}
@@ -96,7 +73,7 @@ export default function NewsSection() {
 
                 {/* الملخص */}
                 <p className="text-sm sm:text-base text-neutral-600 line-clamp-3 leading-relaxed mb-4">
-                  {news.excerpt}
+                  {news.excerpt ?? ""}
                 </p>
 
                 {/* زر القراءة */}
