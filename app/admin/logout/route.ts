@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE } from "@/lib/adminSession";
 
-export async function GET(request: Request) {
-  const res = NextResponse.redirect(new URL("/admin/login", request.url));
+export async function GET() {
+  const res = NextResponse.redirect("/admin/login");
   res.cookies.set(ADMIN_SESSION_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -12,4 +12,3 @@ export async function GET(request: Request) {
   });
   return res;
 }
-
