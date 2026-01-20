@@ -147,18 +147,13 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-[100] w-full bg-white shadow-sm border-b border-neutral-200 overflow-visible">
+    <header className="sticky top-0 z-[100] w-full bg-white shadow-sm border-b border-neutral-200 overflow-x-hidden overflow-y-visible md:overflow-visible">
       <div className="w-full px-4 md:pr-8 md:pl-10 lg:pr-10 lg:pl-14 xl:pr-12 xl:pl-20 overflow-visible">
         <div className="flex items-center justify-between h-16 md:h-20 lg:h-24 gap-2 sm:gap-3 md:gap-4">
           
           {/* المنطقة 1: الشعار (Logo) - اليسار - ثابت لا ينضغط */}
           <div 
-            className="flex items-center justify-center flex-shrink-0 whitespace-nowrap overflow-hidden"
-            style={{ 
-              maxWidth: '320px',
-              minWidth: '320px',
-              width: '320px'
-            }}
+            className="flex items-center justify-center shrink whitespace-nowrap overflow-hidden max-w-[220px] sm:max-w-[260px] md:max-w-[320px] md:min-w-[320px] md:w-[320px] md:shrink-0"
           >
             <Link href="/" className="flex items-center justify-center w-full h-full">
               <div 
