@@ -26,6 +26,8 @@ type Props = {
     published: boolean;
     featured: boolean;
     coverImageId: string | null;
+    secondaryImageId: string | null;
+    secondaryImage2Id: string | null;
   };
 };
 
@@ -39,8 +41,12 @@ export default function EditNewsForm({ id, initial }: Props) {
   );
   const [published, setPublished] = useState(initial.published);
   const [featured, setFeatured] = useState(initial.featured);
-  const [file, setFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [secondaryFile, setSecondaryFile] = useState<File | null>(null);
+  const [secondaryFile2, setSecondaryFile2] = useState<File | null>(null);
   const [removeCover, setRemoveCover] = useState(false);
+  const [removeSecondary, setRemoveSecondary] = useState(false);
+  const [removeSecondary2, setRemoveSecondary2] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -57,14 +63,16 @@ export default function EditNewsForm({ id, initial }: Props) {
 
     try {
       let coverImageId: string | null | undefined = undefined;
+      let secondaryImageId: string | null | undefined = undefined;
+      let secondaryImage2Id: string | null | undefined = undefined;
 
       if (removeCover) {
         coverImageId = null;
       }
 
-      if (file) {
+      if (coverFile) {
         const fd = new FormData();
-        fd.append("file", file);
+        fd.append("file", coverFile);
         const up = await fetch("/api/media", {
           method: "POST",
           body: fd,
@@ -74,6 +82,42 @@ export default function EditNewsForm({ id, initial }: Props) {
           throw new Error(upJson?.error || "فشل رفع الصورة");
         }
         coverImageId = String(upJson.id);
+      }
+
+      if (removeSecondary) {
+        secondaryImageId = null;
+      }
+
+      if (secondaryFile) {
+        const fd = new FormData();
+        fd.append("file", secondaryFile);
+        const up = await fetch("/api/media", {
+          method: "POST",
+          body: fd,
+        });
+        const upJson = await up.json().catch(() => ({}));
+        if (!up.ok) {
+          throw new Error(upJson?.error || "فشل رفع الصورة الإضافية");
+        }
+        secondaryImageId = String(upJson.id);
+      }
+
+      if (removeSecondary2) {
+        secondaryImage2Id = null;
+      }
+
+      if (secondaryFile2) {
+        const fd = new FormData();
+        fd.append("file", secondaryFile2);
+        const up = await fetch("/api/media", {
+          method: "POST",
+          body: fd,
+        });
+        const upJson = await up.json().catch(() => ({}));
+        if (!up.ok) {
+          throw new Error(upJson?.error || "فشل رفع الصورة الإضافية الثانية");
+        }
+        secondaryImage2Id = String(upJson.id);
       }
 
       const res = await fetch(`/api/admin/news/${id}`, {
@@ -88,6 +132,8 @@ export default function EditNewsForm({ id, initial }: Props) {
           published,
           featured,
           ...(coverImageId !== undefined ? { coverImageId } : {}),
+          ...(secondaryImageId !== undefined ? { secondaryImageId } : {}),
+          ...(secondaryImage2Id !== undefined ? { secondaryImage2Id } : {}),
         }),
       });
 
@@ -98,7 +144,11 @@ export default function EditNewsForm({ id, initial }: Props) {
 
       setSuccess("تم حفظ التغييرات بنجاح.");
       setRemoveCover(false);
-      setFile(null);
+      setCoverFile(null);
+      setRemoveSecondary(false);
+      setSecondaryFile(null);
+      setRemoveSecondary2(false);
+      setSecondaryFile2(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
     } finally {
@@ -194,7 +244,7 @@ export default function EditNewsForm({ id, initial }: Props) {
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
             className="w-full text-sm"
           />
           <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-neutral-700">
@@ -205,6 +255,48 @@ export default function EditNewsForm({ id, initial }: Props) {
               className="w-4 h-4"
             />
             إزالة صورة الغلاف الحالية
+          </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-neutral-700 mb-2">
+            صورة إضافية (اختياري)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setSecondaryFile(e.target.files?.[0] ?? null)}
+            className="w-full text-sm"
+          />
+          <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-neutral-700">
+            <input
+              type="checkbox"
+              checked={removeSecondary}
+              onChange={(e) => setRemoveSecondary(e.target.checked)}
+              className="w-4 h-4"
+            />
+            إزالة الصورة الإضافية الحالية
+          </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-neutral-700 mb-2">
+            صورة إضافية ثانية (اختياري)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setSecondaryFile2(e.target.files?.[0] ?? null)}
+            className="w-full text-sm"
+          />
+          <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-neutral-700">
+            <input
+              type="checkbox"
+              checked={removeSecondary2}
+              onChange={(e) => setRemoveSecondary2(e.target.checked)}
+              className="w-4 h-4"
+            />
+            إزالة الصورة الإضافية الثانية الحالية
           </label>
         </div>
       </div>

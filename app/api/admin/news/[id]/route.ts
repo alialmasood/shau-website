@@ -44,6 +44,8 @@ type UpdateNewsBody = {
   featured?: boolean;
   publishedAt?: string | null;
   coverImageId?: string | null;
+  secondaryImageId?: string | null;
+  secondaryImage2Id?: string | null;
 };
 
 export async function PATCH(
@@ -78,6 +80,14 @@ export async function PATCH(
   const category = body.category !== undefined ? body.category : undefined;
   const featured = body.featured !== undefined ? Boolean(body.featured) : undefined;
   const coverImageId = body.coverImageId !== undefined ? (body.coverImageId ? String(body.coverImageId) : null) : undefined;
+  const secondaryImageId =
+    body.secondaryImageId !== undefined
+      ? (body.secondaryImageId ? String(body.secondaryImageId) : null)
+      : undefined;
+  const secondaryImage2Id =
+    body.secondaryImage2Id !== undefined
+      ? (body.secondaryImage2Id ? String(body.secondaryImage2Id) : null)
+      : undefined;
 
   const published =
     body.published !== undefined ? Boolean(body.published) : Boolean(current.is_published);
@@ -102,6 +112,23 @@ export async function PATCH(
 
   if (coverImageId !== undefined && coverImageId !== null && !isUuid(coverImageId)) {
     return NextResponse.json({ error: "Invalid coverImageId" }, { status: 400 });
+  }
+  if (
+    secondaryImageId !== undefined &&
+    secondaryImageId !== null &&
+    !isUuid(secondaryImageId)
+  ) {
+    return NextResponse.json({ error: "Invalid secondaryImageId" }, { status: 400 });
+  }
+  if (
+    secondaryImage2Id !== undefined &&
+    secondaryImage2Id !== null &&
+    !isUuid(secondaryImage2Id)
+  ) {
+    return NextResponse.json(
+      { error: "Invalid secondaryImage2Id" },
+      { status: 400 }
+    );
   }
 
   // slug: if provided empty/null => auto from title; else keep current if not provided
@@ -144,6 +171,8 @@ export async function PATCH(
   if (category !== undefined) { sets.push(`category=$${i++}::"NewsCategory"`); values.push(category); }
   if (featured !== undefined) { sets.push(`featured=$${i++}`); values.push(featured); }
   if (coverImageId !== undefined) { sets.push(`cover_image_id=$${i++}`); values.push(coverImageId); }
+  if (secondaryImageId !== undefined) { sets.push(`secondary_image_id=$${i++}`); values.push(secondaryImageId); }
+  if (secondaryImage2Id !== undefined) { sets.push(`secondary_image2_id=$${i++}`); values.push(secondaryImage2Id); }
 
   values.push(id);
 

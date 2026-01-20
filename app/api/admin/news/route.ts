@@ -38,6 +38,8 @@ type CreateNewsBody = {
   featured?: boolean;
   publishedAt?: string | null; // ISO string
   coverImageId?: string | null;
+  secondaryImageId?: string | null;
+  secondaryImage2Id?: string | null;
 };
 
 function isUuid(id: string) {
@@ -60,6 +62,8 @@ export async function POST(request: Request) {
   const published = Boolean(body?.published);
   const featured = Boolean(body?.featured);
   const coverImageId = body?.coverImageId ? String(body.coverImageId) : null;
+  const secondaryImageId = body?.secondaryImageId ? String(body.secondaryImageId) : null;
+  const secondaryImage2Id = body?.secondaryImage2Id ? String(body.secondaryImage2Id) : null;
 
   if (!title || !content) {
     return NextResponse.json(
@@ -81,6 +85,15 @@ export async function POST(request: Request) {
   if (coverImageId && !isUuid(coverImageId)) {
     return NextResponse.json({ error: "Invalid coverImageId" }, { status: 400 });
   }
+  if (secondaryImageId && !isUuid(secondaryImageId)) {
+    return NextResponse.json({ error: "Invalid secondaryImageId" }, { status: 400 });
+  }
+  if (secondaryImage2Id && !isUuid(secondaryImage2Id)) {
+    return NextResponse.json(
+      { error: "Invalid secondaryImage2Id" },
+      { status: 400 }
+    );
+  }
 
   const base = slugify(title);
   const slug = await ensureUniqueSlug(base);
@@ -94,9 +107,9 @@ export async function POST(request: Request) {
 
   const res = await query(
     `INSERT INTO news
-      (title, slug, excerpt, content, category, is_published, publish_date, featured, cover_image_id, updated_at)
+      (title, slug, excerpt, content, category, is_published, publish_date, featured, cover_image_id, secondary_image_id, secondary_image2_id, updated_at)
      VALUES
-      ($1, $2, $3, $4, $5::"NewsCategory", $6, $7, $8, $9, NOW())
+      ($1, $2, $3, $4, $5::"NewsCategory", $6, $7, $8, $9, $10, $11, NOW())
      RETURNING id`,
     [
       title,
@@ -108,6 +121,8 @@ export async function POST(request: Request) {
       publishedAt,
       featured,
       coverImageId,
+      secondaryImageId,
+      secondaryImage2Id,
     ]
   );
 

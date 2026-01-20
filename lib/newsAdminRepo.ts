@@ -37,6 +37,8 @@ export type AdminNewsDetails = {
   publishedAt: string | null;
   featured: boolean;
   coverImageId: string | null;
+  secondaryImageId: string | null;
+  secondaryImage2Id: string | null;
 };
 
 export async function getAdminNewsPage(params: {
@@ -119,7 +121,7 @@ export async function getAdminNewsPage(params: {
 export async function getAdminNewsById(id: string): Promise<AdminNewsDetails | null> {
   if (!isUuid(id)) return null;
   const res = await query(
-    `SELECT id, title, slug, excerpt, content, category, is_published, publish_date, featured, cover_image_id
+    `SELECT id, title, slug, excerpt, content, category, is_published, publish_date, featured, cover_image_id, secondary_image_id, secondary_image2_id
      FROM news
      WHERE id = $1
      LIMIT 1`,
@@ -140,6 +142,8 @@ export async function getAdminNewsById(id: string): Promise<AdminNewsDetails | n
     publishedAt,
     featured: Boolean(r.featured),
     coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
+    secondaryImageId: r.secondary_image_id ? String(r.secondary_image_id) : null,
+    secondaryImage2Id: r.secondary_image2_id ? String(r.secondary_image2_id) : null,
   };
 }
 

@@ -61,6 +61,12 @@ export default async function NewsDetailsPage({
   const coverSrc = news.coverImageId
     ? `/api/media/${news.coverImageId}`
     : "/hero-image-1.jpg";
+  const secondarySrc = news.secondaryImageId
+    ? `/api/media/${news.secondaryImageId}`
+    : null;
+  const secondary2Src = news.secondaryImage2Id
+    ? `/api/media/${news.secondaryImage2Id}`
+    : null;
 
   const dateLabel = news.publishedAt
     ? new Intl.DateTimeFormat("ar-IQ", {
@@ -138,6 +144,38 @@ export default async function NewsDetailsPage({
 
         {/* Content */}
         <article className="mt-7 sm:mt-10 bg-white rounded-2xl border border-neutral-100 shadow-sm p-5 sm:p-7">
+          {secondarySrc ? (
+            <div className="mb-6">
+              <div className="relative w-full rounded-2xl overflow-hidden border border-neutral-100">
+                <div className="relative w-full aspect-[16/9]">
+                  <Image
+                    src={secondarySrc}
+                    alt={`${news.title} - صورة إضافية`}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {secondary2Src ? (
+            <div className="mb-6">
+              <div className="relative w-full rounded-2xl overflow-hidden border border-neutral-100">
+                <div className="relative w-full aspect-[16/9]">
+                  <Image
+                    src={secondary2Src}
+                    alt={`${news.title} - صورة إضافية ثانية`}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {blocks.map((text, idx) => {
             const isH2 = text.startsWith("## ");
             const isH3 = text.startsWith("### ");

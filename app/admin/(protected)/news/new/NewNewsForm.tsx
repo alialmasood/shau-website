@@ -22,7 +22,9 @@ export default function NewNewsForm() {
   const [category, setCategory] = useState<CategoryCode>("SCIENTIFIC");
   const [published, setPublished] = useState(true);
   const [featured, setFeatured] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [secondaryFile1, setSecondaryFile1] = useState<File | null>(null);
+  const [secondaryFile2, setSecondaryFile2] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -39,10 +41,12 @@ export default function NewNewsForm() {
 
     try {
       let coverImageId: string | null = null;
+      let secondaryImageId: string | null = null;
+      let secondaryImage2Id: string | null = null;
 
-      if (file) {
+      if (coverFile) {
         const fd = new FormData();
-        fd.append("file", file);
+        fd.append("file", coverFile);
         const up = await fetch("/api/media", {
           method: "POST",
           body: fd,
@@ -52,6 +56,34 @@ export default function NewNewsForm() {
           throw new Error(upJson?.error || "فشل رفع الصورة");
         }
         coverImageId = String(upJson.id);
+      }
+
+      if (secondaryFile1) {
+        const fd = new FormData();
+        fd.append("file", secondaryFile1);
+        const up = await fetch("/api/media", {
+          method: "POST",
+          body: fd,
+        });
+        const upJson = await up.json().catch(() => ({}));
+        if (!up.ok) {
+          throw new Error(upJson?.error || "فشل رفع الصورة الإضافية");
+        }
+        secondaryImageId = String(upJson.id);
+      }
+
+      if (secondaryFile2) {
+        const fd = new FormData();
+        fd.append("file", secondaryFile2);
+        const up = await fetch("/api/media", {
+          method: "POST",
+          body: fd,
+        });
+        const upJson = await up.json().catch(() => ({}));
+        if (!up.ok) {
+          throw new Error(upJson?.error || "فشل رفع الصورة الإضافية الثانية");
+        }
+        secondaryImage2Id = String(upJson.id);
       }
 
       const res = await fetch("/api/admin/news", {
@@ -65,6 +97,8 @@ export default function NewNewsForm() {
           published,
           featured,
           coverImageId,
+          secondaryImageId,
+          secondaryImage2Id,
         }),
       });
 
@@ -160,12 +194,42 @@ export default function NewNewsForm() {
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
             className="w-full text-sm"
           />
           <p className="mt-2 text-xs text-neutral-500">
             سيتم حفظ الصورة داخل قاعدة البيانات (Postgres) وعرضها عبر{" "}
             <code>/api/media/&lt;id&gt;</code>.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-neutral-700 mb-2">
+            صورة إضافية (اختياري)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setSecondaryFile1(e.target.files?.[0] ?? null)}
+            className="w-full text-sm"
+          />
+          <p className="mt-2 text-xs text-neutral-500">
+            سيتم حفظها أيضاً داخل قاعدة البيانات، ويمكن عرضها داخل صفحة الخبر.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-neutral-700 mb-2">
+            صورة إضافية ثانية (اختياري)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setSecondaryFile2(e.target.files?.[0] ?? null)}
+            className="w-full text-sm"
+          />
+          <p className="mt-2 text-xs text-neutral-500">
+            سيتم حفظها أيضاً داخل قاعدة البيانات، ويمكن عرضها داخل صفحة الخبر.
           </p>
         </div>
       </div>

@@ -46,6 +46,8 @@ export default async function AdminEditNewsPage({
               published: news.published,
               featured: news.featured,
               coverImageId: news.coverImageId,
+              secondaryImageId: news.secondaryImageId,
+              secondaryImage2Id: news.secondaryImage2Id,
             }}
           />
         </div>

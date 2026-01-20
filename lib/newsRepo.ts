@@ -19,6 +19,8 @@ export type PublicNewsDetails = {
   categoryLabel: string;
   publishedAt: string | null; // ISO
   coverImageId: string | null;
+  secondaryImageId: string | null;
+  secondaryImage2Id: string | null;
 };
 
 function isUuid(id: string) {
@@ -144,7 +146,7 @@ export async function getLatestPublishedNews(limit: number) {
 export async function getPublishedNewsById(id: string) {
   if (!isUuid(id)) return null;
   const res = await query(
-    `SELECT id, title, excerpt, content, category, publish_date, cover_image_id
+    `SELECT id, title, excerpt, content, category, publish_date, cover_image_id, secondary_image_id, secondary_image2_id
      FROM news
      WHERE id = $1 AND is_published = true
      LIMIT 1`,
@@ -161,6 +163,8 @@ export async function getPublishedNewsById(id: string) {
     categoryLabel: categoryToArabic(r.category ? String(r.category) : null),
     publishedAt,
     coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
+    secondaryImageId: r.secondary_image_id ? String(r.secondary_image_id) : null,
+    secondaryImage2Id: r.secondary_image2_id ? String(r.secondary_image2_id) : null,
   } satisfies PublicNewsDetails;
 }
 

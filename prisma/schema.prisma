@@ -48,23 +48,29 @@ model Media {
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @default(now()) @db.Timestamptz(6)
 
-  newsCoverFor News[] @relation("NewsCoverImage")
+  newsCoverFor      News[] @relation("NewsCoverImage")
+  newsSecondaryFor  News[] @relation("NewsSecondaryImage")
+  newsSecondary2For News[] @relation("NewsSecondaryImage2")
 
   @@map("media")
 }
 
 model News {
-  id           String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  title        String        @db.VarChar(250)
-  slug         String?       @unique @db.VarChar(250)
-  excerpt      String?       @db.VarChar(500)
-  content      String
-  category     NewsCategory?
-  published    Boolean       @default(false) @map("is_published")
-  publishedAt  DateTime?     @map("publish_date") @db.Timestamptz(6)
-  featured     Boolean       @default(false)
-  coverImageId String?       @map("cover_image_id") @db.Uuid
-  coverImage   Media?        @relation("NewsCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  id                String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title             String        @db.VarChar(250)
+  slug              String?       @unique @db.VarChar(250)
+  excerpt           String?       @db.VarChar(500)
+  content           String
+  category          NewsCategory?
+  published         Boolean       @default(false) @map("is_published")
+  publishedAt       DateTime?     @map("publish_date") @db.Timestamptz(6)
+  featured          Boolean       @default(false)
+  coverImageId      String?       @map("cover_image_id") @db.Uuid
+  coverImage        Media?        @relation("NewsCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  secondaryImageId  String?       @map("secondary_image_id") @db.Uuid
+  secondaryImage    Media?        @relation("NewsSecondaryImage", fields: [secondaryImageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  secondaryImage2Id String?       @map("secondary_image2_id") @db.Uuid
+  secondaryImage2   Media?        @relation("NewsSecondaryImage2", fields: [secondaryImage2Id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   // الحفاظ على العمود الموجود حالياً (اختياري)
   createdById String? @map("created_by") @db.Uuid
