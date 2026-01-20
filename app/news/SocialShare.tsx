@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -44,29 +44,35 @@ type Props = {
 };
 
 export default function SocialShare({ title, className }: Props) {
-  const href = typeof window !== "undefined" ? window.location.href : "";
+  // لتجنب hydration mismatch: أول render يكون نفس السيرفر (بدون window)
+  // ثم بعد mount نقرأ الرابط الحقيقي من المتصفح.
+  const [href, setHref] = useState("");
+
+  useEffect(() => {
+    setHref(window.location.href);
+  }, []);
 
   const links = useMemo(() => {
-    const url = encodeURIComponent(href);
+    const url = href ? encodeURIComponent(href) : "";
     const text = encodeURIComponent(title);
 
     return [
       {
         key: "facebook",
         label: "Facebook",
-        href: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+        href: href ? `https://www.facebook.com/sharer/sharer.php?u=${url}` : "",
         icon: <FacebookIcon />,
       },
       {
         key: "whatsapp",
         label: "WhatsApp",
-        href: `https://wa.me/?text=${encodeURIComponent(`${title} - ${href}`)}`,
+        href: href ? `https://wa.me/?text=${encodeURIComponent(`${title} - ${href}`)}` : "",
         icon: <WhatsAppIcon />,
       },
       {
         key: "telegram",
         label: "Telegram",
-        href: `https://t.me/share/url?url=${url}&text=${text}`,
+        href: href ? `https://t.me/share/url?url=${url}&text=${text}` : "",
         icon: <TelegramIcon />,
       },
     ];
@@ -81,7 +87,13 @@ export default function SocialShare({ title, className }: Props) {
             href={l.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-700 hover:text-white hover:bg-[#31BD9C] hover:border-[#31BD9C] transition-all duration-300 shadow-sm hover:shadow-md"
+            aria-disabled={!l.href}
+            className={[
+              "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-700 transition-all duration-300 shadow-sm",
+              l.href
+                ? "hover:text-white hover:bg-[#31BD9C] hover:border-[#31BD9C] hover:shadow-md"
+                : "opacity-60 pointer-events-none",
+            ].join(" ")}
             aria-label={`مشاركة عبر ${l.label}`}
           >
             <span className="w-5 h-5">{l.icon}</span>
