@@ -52,3 +52,9 @@ model users {
   news           news[]
   sessions       sessions[]
 }
+
+model visitor_count {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  count      BigInt   @default(0)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+}

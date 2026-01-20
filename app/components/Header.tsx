@@ -148,8 +148,8 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-[100] w-full bg-white shadow-sm border-b border-neutral-200 overflow-visible">
-      <div className="w-full pr-4 sm:pr-6 md:pr-8 lg:pr-10 xl:pr-12 pl-8 sm:pl-10 md:pl-12 lg:pl-14 xl:pl-20 overflow-visible">
-        <div className="flex items-center justify-between h-16 sm:h-20 md:h-24 gap-2 sm:gap-3 md:gap-4">
+      <div className="w-full px-4 md:pr-8 md:pl-10 lg:pr-10 lg:pl-14 xl:pr-12 xl:pl-20 overflow-visible">
+        <div className="flex items-center justify-between h-14 md:h-20 lg:h-24 gap-2 sm:gap-3 md:gap-4">
           
           {/* المنطقة 1: الشعار (Logo) - اليسار - ثابت لا ينضغط */}
           <div 
@@ -162,7 +162,7 @@ export default function Header() {
           >
             <Link href="/" className="flex items-center justify-center w-full h-full">
               <div 
-                className="relative flex items-center justify-center overflow-visible"
+                className="relative flex items-center justify-center overflow-visible h-10 md:h-auto w-auto"
                 style={{
                   width: '140px',
                   height: '112px',
@@ -186,7 +186,7 @@ export default function Header() {
           </div>
 
           {/* المنطقة 2: وسط - التبويبات (Nav) */}
-          <nav className="hidden xl:flex items-center justify-center flex-1 min-w-0 max-w-none overflow-visible px-2">
+          <nav className="hidden md:flex items-center justify-center flex-1 min-w-0 max-w-none overflow-visible px-2">
             <div className="flex items-center justify-center gap-0 flex-nowrap overflow-visible">
               {navItems.map((item, index) => (
                 <div 
@@ -501,7 +501,7 @@ export default function Header() {
 
             {/* زر القائمة للهواتف المحمولة والشاشات المتوسطة */}
             <button
-              className="xl:hidden flex-shrink-0 p-2 text-neutral-700 hover:text-[#31BD9C] rounded-lg hover:bg-[#31BD9C]/5 transition-colors duration-200"
+              className="md:hidden flex-shrink-0 p-2 text-neutral-700 hover:text-[#31BD9C] rounded-lg hover:bg-[#31BD9C]/5 transition-colors duration-200"
               aria-label="قائمة التنقل"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
@@ -536,7 +536,7 @@ export default function Header() {
 
         {/* القائمة المنسدلة للهواتف المحمولة والشاشات المتوسطة */}
         {mobileMenuOpen && (
-          <div className="xl:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200">
+          <div className="md:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200">
             <nav className="flex flex-col py-4">
               {navItems.map((item) => (
                 item.external ? (

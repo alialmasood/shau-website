@@ -27,7 +27,7 @@ export default function HeroSlider() {
   };
 
   return (
-    <div className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+    <div className="relative w-full h-[52vh] md:h-[600px] lg:h-[700px] overflow-hidden">
       {/* الصور */}
       <div className="relative w-full h-full">
         {images.map((src, index) => (
@@ -52,29 +52,29 @@ export default function HeroSlider() {
       </div>
 
       {/* النص الثابت على الصور */}
-      <div className="absolute right-8 sm:right-12 md:right-16 lg:right-20 top-[55%] transform -translate-y-1/2 z-20 max-w-lg sm:max-w-xl md:max-w-2xl">
-        <div className="space-y-4 sm:space-y-5 md:space-y-6">
+      <div className="absolute right-4 sm:right-8 md:right-16 lg:right-20 top-[55%] transform -translate-y-1/2 z-20 max-w-lg sm:max-w-xl md:max-w-2xl px-2 md:px-0">
+        <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
             {/* العنوان الرئيسي */}
-            <h2 className="text-white text-sm sm:text-base md:text-lg lg:text-xl font-bold leading-tight text-right">
+            <h2 className="text-white text-sm md:text-lg lg:text-xl font-bold leading-tight text-right">
               مرحبًا بكم في كلية الشرق للعلوم التقنية التخصصية
             </h2>
             
             {/* العبارة الفرعية */}
-            <p className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-relaxed text-right -mt-2 sm:-mt-2.5 md:-mt-3 whitespace-nowrap">
+            <p className="text-white text-2xl md:text-4xl lg:text-5xl font-bold leading-tight text-right -mt-2 md:-mt-3">
               نُعِدُّ كوادر تقنية مؤهلة للمستقبل
             </p>
             
             {/* النص الطويل */}
-            <div className="pt-2 sm:pt-4 border-t border-white/20">
-              <p className="text-white text-xs sm:text-xs md:text-sm lg:text-base leading-relaxed sm:leading-loose font-normal text-right space-y-0">
+            <div className="pt-2 md:pt-4 border-t border-white/20">
+              <p className="text-white text-xs md:text-sm lg:text-base leading-relaxed md:leading-loose font-normal text-right line-clamp-2 md:line-clamp-none">
                 <span className="block">استنادًا إلى أسس علمية رصينة ومواكبة مستمرة للتطورات التقنية الحديثة،</span>
                 <span className="block">تقدم <span className="font-bold text-[#31BD9C]">كلية الشرق</span> تعليمًا تطبيقيًا متكاملًا لإعداد كفاءات علمية قادرة على خدمة المجتمع وسوق العمل</span>
               </p>
             </div>
 
             {/* زر فلنبدأ */}
-            <div className="pt-2 sm:pt-3 md:pt-4 flex justify-start">
-              <button className="px-4 sm:px-5 md:px-6 py-1.5 sm:py-2 md:py-2.5 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-xs sm:text-sm md:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+            <div className="pt-2 md:pt-4 flex justify-start">
+              <button className="h-9 md:h-11 w-auto px-4 md:px-6 py-2 md:py-2.5 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-xs md:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
                 فلنبدأ
               </button>
             </div>

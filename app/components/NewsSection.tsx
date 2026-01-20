@@ -52,12 +52,12 @@ export default function NewsSection() {
         </div>
 
         {/* بطاقات الأخبار */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+        <div className="flex md:grid md:grid-cols-4 overflow-x-auto gap-3 md:gap-6 lg:gap-8 snap-x snap-mandatory md:overflow-visible md:snap-none scrollbar-hide pb-2 md:pb-0">
           {newsItems.map((news) => (
             <Link
               key={news.id}
               href={`/news/${news.id}`}
-              className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-neutral-100 hover:border-[#31BD9C]/30"
+              className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-neutral-100 hover:border-[#31BD9C]/30 w-[48%] sm:w-[45%] md:w-auto md:min-w-0 snap-start flex-shrink-0"
             >
               {/* الشريط الملون من الأعلى */}
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#31BD9C] via-[#2aa88a] to-[#31BD9C] z-10"></div>

@@ -33,37 +33,18 @@ export default function ContactSection() {
   };
 
   return (
-    <section className="relative w-full h-[600px] sm:h-[700px] md:h-[800px] lg:h-[900px] overflow-hidden" style={{ marginBottom: 0, paddingBottom: 0, marginTop: 0, display: 'block' }}>
-      {/* الخريطة كخلفية كاملة */}
-      <div className="absolute inset-0 w-full h-full z-0">
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3323.518648884789!2d44.3661!3d33.3152!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDE4JzU0LjciTiA0NMKwMjEnNTguMCJF!5e0!3m2!1sar!2siq!4v1234567890123!5m2!1sar!2siq"
-          width="100%"
-          height="100%"
-          style={{ border: 0 }}
-          allowFullScreen
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          title="عنوان كلية الشرق للعلوم التقنية التخصصية"
-          className="w-full h-full"
-        ></iframe>
-        {/* Overlay شفاف لتغميق الخريطة قليلاً - pointer-events-none للسماح بالتفاعل مع الخريطة */}
-        <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none"></div>
-      </div>
-
-      {/* المحتوى فوق الخريطة - pointer-events-auto للسماح بالتفاعل مع النموذج */}
-      <div className="relative z-20 w-full h-full flex items-center justify-start px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 pointer-events-none" style={{ paddingBottom: 0 }}>
-        <div className="w-full">
-          <div className="max-w-xs mr-auto ml-0">
-            {/* خانة الفورم */}
-            <div className="w-full pointer-events-auto">
-              <div className="bg-white/20 backdrop-blur-md rounded-xl shadow-2xl border border-white/30 p-4 sm:p-5 md:p-6 h-full w-full flex flex-col">
+    <section className="relative w-full min-h-[600px] md:h-[800px] lg:h-[900px] overflow-hidden flex flex-col md:block" style={{ marginBottom: 0, paddingBottom: 0, marginTop: 0, display: 'block' }}>
+      {/* المحتوى فوق الخريطة - موبايل: عمودي، ديسكتوب: فوق الخريطة */}
+      <div className="relative z-20 w-full flex flex-col md:absolute md:inset-0 md:flex md:items-center md:justify-start px-4 sm:px-6 lg:px-8 py-6 md:py-12 lg:py-16 xl:py-20 pointer-events-none">
+        {/* خانة الفورم */}
+        <div className="w-full md:max-w-xs md:mr-auto md:ml-0 mb-4 md:mb-0 pointer-events-auto order-1 md:order-none">
+          <div className="bg-white md:bg-white/20 backdrop-blur-md md:backdrop-blur-md rounded-xl shadow-2xl border-2 border-white md:border-white/30 p-5 md:p-6 h-full w-full flex flex-col">
                 {/* العنوان */}
-                <div className="mb-4 sm:mb-5">
-                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 drop-shadow-lg">
+                <div className="mb-5 md:mb-5">
+                  <h3 className="text-xl md:text-2xl font-bold text-neutral-900 md:text-white mb-2 md:drop-shadow-lg">
                     هل من أسئلة؟
                   </h3>
-                  <h4 className="text-base sm:text-lg md:text-xl font-semibold text-[#31BD9C] drop-shadow-lg">
+                  <h4 className="text-lg md:text-xl font-semibold text-[#31BD9C] md:drop-shadow-lg">
                     تحدث مع خبير
                   </h4>
                 </div>
@@ -74,7 +55,7 @@ export default function ContactSection() {
                   <div>
                     <label
                       htmlFor="firstName"
-                      className="block text-xs font-semibold text-white mb-1.5 drop-shadow-lg"
+                      className="block text-sm font-semibold text-neutral-700 md:text-white mb-2 md:mb-1.5 md:drop-shadow-lg"
                     >
                       الاسم <span className="text-red-500">*</span>
                     </label>
@@ -85,7 +66,7 @@ export default function ContactSection() {
                       value={formData.firstName}
                       onChange={handleChange}
                       required
-                      className="w-full px-3 py-2 bg-white/90 border-2 border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm"
+                      className="w-full h-11 px-4 py-2 bg-white md:bg-white/90 border-2 border-neutral-200 md:border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm text-neutral-900 placeholder:text-neutral-400"
                       placeholder="أدخل اسمك"
                     />
                   </div>
@@ -94,7 +75,7 @@ export default function ContactSection() {
                   <div>
                     <label
                       htmlFor="lastName"
-                      className="block text-xs font-semibold text-white mb-1.5 drop-shadow-lg"
+                      className="block text-sm font-semibold text-neutral-700 md:text-white mb-2 md:mb-1.5 md:drop-shadow-lg"
                     >
                       اللقب <span className="text-red-500">*</span>
                     </label>
@@ -105,7 +86,7 @@ export default function ContactSection() {
                       value={formData.lastName}
                       onChange={handleChange}
                       required
-                      className="w-full px-3 py-2 bg-white/90 border-2 border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm"
+                      className="w-full h-11 px-4 py-2 bg-white md:bg-white/90 border-2 border-neutral-200 md:border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm text-neutral-900 placeholder:text-neutral-400"
                       placeholder="أدخل لقبك"
                     />
                   </div>
@@ -114,7 +95,7 @@ export default function ContactSection() {
                   <div>
                     <label
                       htmlFor="phone"
-                      className="block text-xs font-semibold text-white mb-1.5 drop-shadow-lg"
+                      className="block text-sm font-semibold text-neutral-700 md:text-white mb-2 md:mb-1.5 md:drop-shadow-lg"
                     >
                       رقم الهاتف <span className="text-red-500">*</span>
                     </label>
@@ -125,7 +106,7 @@ export default function ContactSection() {
                       value={formData.phone}
                       onChange={handleChange}
                       required
-                      className="w-full px-3 py-2 bg-white/90 border-2 border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm"
+                      className="w-full h-11 px-4 py-2 bg-white md:bg-white/90 border-2 border-neutral-200 md:border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm text-neutral-900 placeholder:text-neutral-400"
                       placeholder="07XX XXX XXXX"
                     />
                   </div>
@@ -134,7 +115,7 @@ export default function ContactSection() {
                   <div>
                     <label
                       htmlFor="email"
-                      className="block text-xs font-semibold text-white mb-1.5 drop-shadow-lg"
+                      className="block text-sm font-semibold text-neutral-700 md:text-white mb-2 md:mb-1.5 md:drop-shadow-lg"
                     >
                       البريد الإلكتروني <span className="text-red-500">*</span>
                     </label>
@@ -145,17 +126,17 @@ export default function ContactSection() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-3 py-2 bg-white/90 border-2 border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm"
+                      className="w-full h-11 px-4 py-2 bg-white md:bg-white/90 border-2 border-neutral-200 md:border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm text-neutral-900 placeholder:text-neutral-400"
                       placeholder="example@email.com"
                     />
                   </div>
 
                   {/* زر الإرسال */}
-                  <div className="pt-2 mt-auto">
+                  <div className="pt-3 mt-auto">
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full px-3 py-2 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-xs sm:text-sm rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      className="w-full h-12 md:h-11 px-4 py-3 md:py-2 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm md:text-xs rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                       {isSubmitting ? (
                         <span className="flex items-center justify-center gap-2">
@@ -189,9 +170,24 @@ export default function ContactSection() {
                 </form>
               </div>
             </div>
+      
+            {/* الخريطة - موبايل: تحت الفورم، ديسكتوب: خلفية */}
+            <div className="relative z-0 w-full h-[320px] md:absolute md:inset-0 md:h-full order-2 md:order-none">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3323.518648884789!2d44.3661!3d33.3152!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDE4JzU0LjciTiA0NMKwMjEnNTguMCJF!5e0!3m2!1sar!2siq!4v1234567890123!5m2!1sar!2siq"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="عنوان كلية الشرق للعلوم التقنية التخصصية"
+                className="w-full h-full"
+              ></iframe>
+              {/* Overlay شفاف لتغميق الخريطة قليلاً - pointer-events-none للسماح بالتفاعل مع الخريطة */}
+              <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none"></div>
+            </div>
           </div>
-        </div>
-      </div>
-    </section>
+        </section>
   );
 }

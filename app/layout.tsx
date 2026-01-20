@@ -37,29 +37,32 @@ export default function RootLayout({
           antialiased
           bg-white
           text-neutral-900
+          overflow-x-hidden
         `}
       >
-        <Header />
-        <NewsTicker />
-        <HeroSlider />
-        <GreenCard />
-        <NewsSection />
-        <ProgramsSection />
-        <InnovationSection />
-        <TuitionFeesSection />
-        <ContactSection />
+        <div className="w-full max-w-full">
+          <Header />
+          <NewsTicker />
+          <HeroSlider />
+          <GreenCard />
+          <NewsSection />
+          <ProgramsSection />
+          <InnovationSection />
+          <TuitionFeesSection />
+          <ContactSection />
 
-        {/* Footer */}
-        <Footer />
+          {/* Footer */}
+          <Footer />
 
-        {/* Main Content */}
-        {children && (
-          <main className="w-full">
-            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              {children}
-            </div>
-          </main>
-        )}
+          {/* Main Content */}
+          {children && (
+            <main className="w-full">
+              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {children}
+              </div>
+            </main>
+          )}
+        </div>
       </body>
     </html>
   );

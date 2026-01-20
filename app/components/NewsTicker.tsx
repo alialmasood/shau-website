@@ -12,14 +12,14 @@ const newsItems = [
 export default function NewsTicker() {
   return (
     <div 
-      className="w-full bg-[#31BD9C] text-white py-1.5 overflow-hidden relative"
+      className="w-full bg-[#31BD9C] text-white h-10 overflow-hidden relative"
       style={{ direction: "rtl" }}
     >
-      <div className="flex items-center gap-3 sm:gap-4 md:gap-6 animate-scroll-rtl">
+      <div className="flex items-center h-full gap-3 md:gap-6 animate-scroll-rtl px-3 md:px-10">
         {/* تكرار الأخبار عدة مرات لضمان حركة مستمرة */}
         {[...newsItems, ...newsItems, ...newsItems].map((news, index) => (
-          <div key={index} className="flex items-center gap-3 sm:gap-4 md:gap-6 whitespace-nowrap flex-shrink-0">
-            <span className="text-xs sm:text-sm font-medium px-2 sm:px-4">{news}</span>
+          <div key={index} className="flex items-center gap-3 md:gap-6 whitespace-nowrap flex-shrink-0">
+            <span className="text-xs md:text-sm font-medium">{news}</span>
             
             {/* شعار الكلية الدائري كفاصل - أبيض بالكامل */}
             {index < [...newsItems, ...newsItems, ...newsItems].length - 1 && (

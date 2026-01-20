@@ -1,12 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
-  const [visitorCount, setVisitorCount] = useState(1655);
+  const [visitorCount, setVisitorCount] = useState(1680);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // جلب عدد الزوار وتحديثه عند تحميل المكون
+  useEffect(() => {
+    const updateVisitorCount = async () => {
+      try {
+        // التحقق من localStorage لتجنب العد المتكرر في نفس الجلسة
+        const hasVisited = localStorage.getItem("hasVisitedToday");
+        const today = new Date().toDateString();
+
+        if (hasVisited !== today) {
+          // زيادة العدد
+          const response = await fetch("/api/visitors", {
+            method: "POST",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data && typeof data.count === 'number') {
+              setVisitorCount(data.count);
+              // حفظ التاريخ في localStorage
+              localStorage.setItem("hasVisitedToday", today);
+            }
+          }
+        } else {
+          // فقط جلب العدد الحالي بدون زيادة
+          const response = await fetch("/api/visitors");
+          if (response.ok) {
+            const data = await response.json();
+            if (data && typeof data.count === 'number') {
+              setVisitorCount(data.count);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error updating visitor count:", error);
+        // في حالة الخطأ، استخدم قيمة افتراضية
+        setVisitorCount(1680);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    updateVisitorCount();
+  }, []);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,14 +196,14 @@ export default function Footer() {
   return (
     <footer className="w-full bg-neutral-900 text-neutral-300" style={{ marginTop: 0, paddingTop: 0, marginBottom: 0, paddingBottom: 0 }}>
       {/* التبويبات الرئيسية */}
-      <div className="w-full border-b border-neutral-800 pt-8 sm:pt-10 md:pt-12 pb-8 sm:pb-10 md:pb-12">
+      <div className="w-full border-b border-neutral-800 pt-6 sm:pt-8 md:pt-12 pb-6 sm:pb-8 md:pb-12">
         <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 sm:gap-6 md:gap-10 lg:gap-8">
             {/* شعار الكلية والنشرة البريدية */}
             <div className="flex flex-col items-center lg:items-start">
               {/* الشعار */}
-              <Link href="/" className="flex items-center -mb-4 sm:-mb-5 -mt-8 sm:-mt-10 md:-mt-12">
-                <div className="relative w-40 h-30 sm:w-48 sm:h-36 md:w-56 md:h-42">
+              <Link href="/" className="flex items-center -mb-3 sm:-mb-4 md:-mb-5 -mt-6 sm:-mt-8 md:-mt-12">
+                <div className="relative w-32 h-24 sm:w-40 sm:h-30 md:w-56 md:h-42">
                   <Image
                     src="/Untitledoffffffff2 copy.png"
                     alt="شعار كلية الشرق"
@@ -172,7 +216,7 @@ export default function Footer() {
               </Link>
               {/* النشرة البريدية */}
               <div className="w-full">
-                <h4 className="text-xs sm:text-sm font-semibold text-white mb-2 text-center lg:text-right">
+                <h4 className="text-sm md:text-base font-semibold text-white mb-2 text-center lg:text-right">
                   النشرة البريدية
                 </h4>
                 <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
@@ -181,12 +225,12 @@ export default function Footer() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="أدخل بريدك الإلكتروني"
-                    className="w-full px-2.5 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-500 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-xs"
+                    className="w-full px-2.5 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-500 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm md:text-base"
                     required
                   />
                   <button
                     type="submit"
-                    className="w-full px-3 py-1.5 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 text-xs whitespace-nowrap"
+                    className="w-full px-3 py-1.5 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 text-sm md:text-base whitespace-nowrap"
                   >
                     اشترك
                   </button>
@@ -196,15 +240,15 @@ export default function Footer() {
 
             {/* مواقع ذات صلة */}
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+              <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
                 {footerLinks.relatedSites.title}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.relatedSites.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-xs sm:text-sm text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
+                      className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
                       <span>{link.label}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,15 +262,15 @@ export default function Footer() {
 
             {/* تصنيفات الجامعة */}
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+              <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
                 {footerLinks.rankings.title}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.rankings.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-xs sm:text-sm text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
+                      className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
                       <span>{link.label}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,15 +284,15 @@ export default function Footer() {
 
             {/* الخدمات */}
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+              <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
                 {footerLinks.services.title}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.services.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-xs sm:text-sm text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
+                      className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
                       <span>{link.label}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,15 +306,15 @@ export default function Footer() {
 
             {/* الاكاديميين */}
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+              <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
                 {footerLinks.academics.title}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.academics.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-xs sm:text-sm text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
+                      className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
                       <span>{link.label}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,15 +328,15 @@ export default function Footer() {
 
             {/* البحث العلمي */}
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+              <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
                 {footerLinks.research.title}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.research.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-xs sm:text-sm text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
+                      className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
                       <span>{link.label}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,15 +350,15 @@ export default function Footer() {
 
             {/* اخبار كلية الشرق */}
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+              <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
                 {footerLinks.news.title}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.news.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-xs sm:text-sm text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
+                      className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
                       <span>{link.label}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,7 +372,13 @@ export default function Footer() {
               <div className="mt-4 pt-4 border-t border-neutral-800">
                 <div className="flex items-center gap-2">
                   <span className="text-xs sm:text-sm text-neutral-400">عدد الزوار:</span>
-                  <span className="text-sm sm:text-base font-bold text-[#31BD9C]">{visitorCount.toLocaleString()}</span>
+                  {isLoading ? (
+                    <span className="text-sm sm:text-base font-bold text-[#31BD9C]">...</span>
+                  ) : (
+                    <span className="text-sm sm:text-base font-bold text-[#31BD9C]">
+                      {visitorCount ? visitorCount.toLocaleString() : '0'}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

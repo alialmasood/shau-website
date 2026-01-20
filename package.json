@@ -6,7 +6,8 @@
     "dev": "next dev -p 3020",
     "build": "next build",
     "start": "next start -p 3020",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:visitors": "node scripts/test-visitor-count.js"
   },
   "dependencies": {
     "@prisma/client": "^7.2.0",

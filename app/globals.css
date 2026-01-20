@@ -78,6 +78,44 @@ footer > div:last-child {
   display: none;  /* Chrome, Safari and Opera */
 }
 
+/* إظهار scrollbar على الموبايل فقط */
+.scrollbar-visible {
+  scrollbar-width: thin;  /* Firefox */
+  scrollbar-color: #31BD9C #04025E;  /* thumb color, track color */
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  height: 8px;  /* ارتفاع scrollbar */
+  display: block;  /* إظهار scrollbar */
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: #04025E;  /* لون المسار */
+  border-radius: 10px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #31BD9C;  /* لون الـ thumb */
+  border-radius: 10px;
+  border: 1px solid #04025E;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #2aa88a;  /* لون عند hover */
+}
+
+/* إخفاء scrollbar على الديسكتوب */
+@media (min-width: 768px) {
+  .scrollbar-visible {
+    scrollbar-width: none;
+    scrollbar-color: transparent transparent;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Animations للقائمة المنبثقة */
 @keyframes fadeInDown {
   0% {

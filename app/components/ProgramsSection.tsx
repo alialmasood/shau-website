@@ -105,9 +105,9 @@ export default function ProgramsSection() {
         </div>
 
       <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+        <div className="relative flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           {/* الخانة الأولى: النص */}
-          <div className="lg:sticky lg:top-24 pr-0 lg:pr-8">
+          <div className="lg:sticky lg:top-24 pr-0 lg:pr-8 order-2 lg:order-1">
             <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900 mb-6 leading-tight">
               الدراسة في كلية الشرق للعلوم التقنية التخصصية
             </h3>
@@ -148,7 +148,7 @@ export default function ProgramsSection() {
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-[#31BD9C] transform -translate-x-1/2 -translate-x-0.5"></div>
 
           {/* الخانة الثانية: بطاقات الأقسام */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pl-0 lg:pl-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pl-0 lg:pl-8 order-1 lg:order-2">
             {departments.map((dept, index) => (
               <Link
                 key={dept.id}
@@ -159,7 +159,7 @@ export default function ProgramsSection() {
                 }}
               >
                 {/* الصورة */}
-                <div className="relative w-full h-36 sm:h-40 overflow-hidden">
+                <div className="relative w-full h-40 md:h-36 lg:h-40 overflow-hidden">
                   <Image
                     src={dept.image}
                     alt={dept.name}

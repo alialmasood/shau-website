@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
 // بيانات الأقسام مع الرسوم
@@ -110,9 +111,49 @@ export default function TuitionFeesSection() {
   // تكرار البطاقات مرتين لضمان loop مستمر بدون فراغ
   // مهم: يجب أن تكون مكررة مرتين بالضبط للحركة الدائرية
   const duplicatedDepartments = [...departments, ...departments];
+  
+  // State لإدارة السحب باليد
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  // معالجة بداية السحب
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!trackRef.current) return;
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - trackRef.current.offsetLeft);
+    setScrollLeft(trackRef.current.scrollLeft);
+    
+    // إيقاف الحركة التلقائية
+    if (trackRef.current) {
+      trackRef.current.style.animationPlayState = 'paused';
+    }
+  };
+
+  // معالجة السحب
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !trackRef.current) return;
+    e.preventDefault();
+    const x = e.touches[0].pageX - trackRef.current.offsetLeft;
+    const walk = (x - startX) * 1.2; // سرعة السحب
+    trackRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  // معالجة نهاية السحب
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    
+    // استئناف الحركة التلقائية بعد تأخير قصير
+    setTimeout(() => {
+      if (trackRef.current) {
+        trackRef.current.style.animationPlayState = 'running';
+      }
+    }, 300);
+  };
 
   return (
-    <section className="relative w-full bg-[#04025E] py-4 sm:py-6 md:py-8 lg:py-10 overflow-hidden">
+    <section className="relative w-full bg-[#04025E] py-4 sm:py-6 md:py-8 lg:py-10 overflow-x-hidden md:overflow-hidden min-h-[400px] md:min-h-0">
       {/* خطوط هندسية بيضاء */}
       <div className="absolute inset-0 pointer-events-none opacity-10">
         {/* خطوط متقاطعة */}
@@ -159,7 +200,7 @@ export default function TuitionFeesSection() {
         <div className="text-center mb-6 sm:mb-8">
           <a
             href="/tuition-fees-guide"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+            className="inline-flex items-center gap-2 w-full md:w-auto px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 justify-center"
             aria-label="تحميل دليل الرسوم"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,25 +212,34 @@ export default function TuitionFeesSection() {
       </div>
 
       {/* Cards Container - Infinite Marquee Loop */}
-      <div className="relative z-10 w-full overflow-hidden" style={{ direction: 'ltr' }}>
+      <div className="relative z-10 w-full overflow-x-auto md:overflow-hidden scrollbar-hide" style={{ direction: 'ltr' }}>
         {/* Mask Gradient على الأطراف */}
-        <div className="absolute inset-y-0 right-0 w-32 sm:w-48 md:w-64 bg-gradient-to-l from-[#04025E] to-transparent z-20 pointer-events-none"></div>
-        <div className="absolute inset-y-0 left-0 w-32 sm:w-48 md:w-64 bg-gradient-to-r from-[#04025E] to-transparent z-20 pointer-events-none"></div>
+        <div className="absolute inset-y-0 right-0 w-16 md:w-64 bg-gradient-to-l from-[#04025E] via-[#04025E]/90 to-transparent z-20 pointer-events-none"></div>
+        <div className="absolute inset-y-0 left-0 w-16 md:w-64 bg-gradient-to-r from-[#04025E] via-[#04025E]/90 to-transparent z-20 pointer-events-none"></div>
 
         {/* Track - Infinite Loop */}
         <div 
-          className="flex gap-4 sm:gap-6 animate-marquee-infinite"
+          ref={trackRef}
+          className="flex gap-3 md:gap-4 lg:gap-6 animate-marquee-infinite scrollbar-hide pb-2 md:pb-0"
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-x',
+            cursor: isDragging ? 'grabbing' : 'grab'
+          }}
           onMouseEnter={(e) => {
             e.currentTarget.style.animationPlayState = 'paused';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.animationPlayState = 'running';
           }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           {duplicatedDepartments.map((dept, index) => (
             <div
               key={`${dept.id}-${index}`}
-              className="flex-shrink-0 w-64 sm:w-72 md:w-80"
+              className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-64 lg:w-72 xl:w-80"
               style={{ flexShrink: 0, direction: 'rtl' }}
             >
               <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-neutral-100 h-full flex flex-col">
