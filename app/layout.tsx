@@ -14,6 +14,14 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: "كلية الشرق للعلوم التقنية التخصصية",
   description: "الموقع الرسمي لكلية الشرق",
+  icons: {
+    icon: [
+      { url: "/logo3333333333.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/logo3333333333.png", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
