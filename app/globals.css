@@ -160,3 +160,22 @@ footer > div:last-child {
     animation: none !important;
   }
 }
+/* ===== Language Direction Isolation ===== */
+
+/* Arabic pages */
+[lang="ar"] {
+  direction: rtl;
+  text-align: right;
+}
+
+/* English pages */
+[lang="en"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Fix Tailwind space-x-reverse conflicts */
+[lang="en"] .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+}
+

@@ -13,47 +13,31 @@ export default function Footer() {
   useEffect(() => {
     const updateVisitorCount = async () => {
       try {
-        // أولاً: جلب العدد الحالي دائماً
-        const getResponse = await fetch("/api/visitors", {
-          cache: 'no-store',
-        });
-        
-        if (getResponse.ok) {
-          const getData = await getResponse.json();
-          if (getData && typeof getData.count === 'number') {
-            setVisitorCount(getData.count);
-          }
-        }
+        // التحقق من localStorage لتجنب العد المتكرر في نفس الجلسة
+        const hasVisited = localStorage.getItem("hasVisitedToday");
+        const today = new Date().toDateString();
 
-        // ثانياً: التحقق من localStorage لتجنب العد المتكرر في نفس اليوم
-        if (typeof window !== 'undefined') {
-          const hasVisited = localStorage.getItem("hasVisitedToday");
-          const today = new Date().toDateString();
-
-          if (hasVisited !== today) {
-            // زيادة العدد
-            try {
-              const postResponse = await fetch("/api/visitors", {
-                method: "POST",
-                cache: 'no-store',
-              });
-              
-              if (postResponse.ok) {
-                const postData = await postResponse.json();
-                if (postData && typeof postData.count === 'number') {
-                  setVisitorCount(postData.count);
-                  // حفظ التاريخ في localStorage
-                  localStorage.setItem("hasVisitedToday", today);
-                  console.log("✅ Visitor count incremented:", postData.count);
-                }
-              } else {
-                console.error("Failed to increment visitor count:", postResponse.status);
-              }
-            } catch (postError) {
-              console.error("Error incrementing visitor count:", postError);
+        if (hasVisited !== today) {
+          // زيادة العدد
+          const response = await fetch("/api/visitors", {
+            method: "POST",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data && typeof data.count === 'number') {
+              setVisitorCount(data.count);
+              // حفظ التاريخ في localStorage
+              localStorage.setItem("hasVisitedToday", today);
             }
-          } else {
-            console.log("Already visited today, skipping increment");
+          }
+        } else {
+          // فقط جلب العدد الحالي بدون زيادة
+          const response = await fetch("/api/visitors");
+          if (response.ok) {
+            const data = await response.json();
+            if (data && typeof data.count === 'number') {
+              setVisitorCount(data.count);
+            }
           }
         }
       } catch (error) {

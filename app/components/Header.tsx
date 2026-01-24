@@ -1,5 +1,5 @@
 "use client";
-
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -130,10 +130,47 @@ const navItems = [
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const isArabicPath = (pathname ?? "").startsWith("/ar");
+  const localePrefix = isArabicPath ? "/ar" : "/en";
+  const toLocaleHref = (href: string) => {
+    if (!href) return localePrefix;
+  
+    // روابط خارجية
+    if (href.startsWith("http")) return href;
+  
+    // إذا الرابط أصلاً فيه لغة
+    if (href.startsWith("/ar") || href.startsWith("/en")) return href;
+  
+    // الصفحة الرئيسية
+    if (href === "/") return localePrefix;
+  
+    // أي رابط داخلي
+    return `${localePrefix}${href}`;
+  };
+  
+  
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [nestedMenuOpen, setNestedMenuOpen] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nestedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const toggleLanguage = () => {
+    const p = pathname ?? "/ar";
+  
+    if (p.startsWith("/ar")) {
+      router.push(p.replace("/ar", "/en"));
+      return;
+    }
+    if (p.startsWith("/en")) {
+      router.push(p.replace("/en", "/ar"));
+      return;
+    }
+    router.push("/ar");
+  };
+  
 
   useEffect(() => {
     return () => {
@@ -155,7 +192,7 @@ export default function Header() {
           <div 
             className="flex items-center justify-center shrink whitespace-nowrap overflow-hidden max-w-[220px] sm:max-w-[260px] md:max-w-[320px] md:min-w-[320px] md:w-[320px] md:shrink-0"
           >
-            <Link href="/" className="flex items-center justify-center w-full h-full">
+            <Link href={localePrefix} className="flex items-center justify-center w-full h-full">
               <div 
                 className="relative flex items-center justify-center overflow-visible h-10 md:h-auto w-auto"
                 style={{
@@ -325,7 +362,7 @@ export default function Header() {
                                             {subItem.submenu.map((nestedItem, nestedIndex) => (
                                               <Link
                                                 key={nestedItem.href}
-                                                href={nestedItem.href}
+                                                href={toLocaleHref(nestedItem.href)}
                                                 className="group relative block px-5 py-3.5 text-sm font-semibold text-neutral-700 hover:text-[#31BD9C] transition-all duration-300 hover:bg-gradient-to-l hover:from-[#31BD9C]/10 hover:to-transparent"
                                               >
                                                 <div className="flex items-center gap-3 relative">
@@ -367,7 +404,7 @@ export default function Header() {
                                   </div>
                                 ) : (
                                   <Link
-                                    href={subItem.href}
+                                  href={toLocaleHref(subItem.href)}
                                     className="group relative block px-5 py-3.5 text-sm font-semibold text-neutral-700 hover:text-[#31BD9C] transition-all duration-300 hover:bg-gradient-to-l hover:from-[#31BD9C]/10 hover:to-transparent"
                                   >
                                     <div className="flex items-center gap-3 relative">
@@ -413,7 +450,7 @@ export default function Header() {
                   ) : (
                     item.external ? (
                       <a
-                        href={item.href}
+                      href={toLocaleHref(item.href)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group relative px-2.5 py-2.5 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
@@ -425,7 +462,7 @@ export default function Header() {
                       </a>
                     ) : (
                       <Link
-                        href={item.href}
+                      href={toLocaleHref(item.href)}
                         className="group relative px-2.5 py-2.5 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
                       >
                         {/* النص */}
@@ -469,8 +506,9 @@ export default function Header() {
             <div className="hidden sm:flex items-center">
               <div className="h-6 w-px bg-gradient-to-b from-transparent via-neutral-300 to-transparent mx-2"></div>
               <button
+                onClick={toggleLanguage}
                 className="group relative flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#31BD9C] hover:bg-[#2aa88a] text-white transition-all duration-300 ease-in-out shadow-md hover:shadow-lg hover:shadow-[#31BD9C]/30 focus:outline-none focus:ring-2 focus:ring-[#31BD9C] focus:ring-offset-2"
-                aria-label="تغيير اللغة"
+                aria-label={isArabicPath ? "Switch to English" : "التبديل إلى العربية"}
               >
                 {/* أيقونة الكرة الأرضية */}
                 <svg
@@ -489,8 +527,9 @@ export default function Header() {
                 
                 {/* نص اللغة */}
                 <span className="text-xs sm:text-sm font-semibold whitespace-nowrap">
-                  العربية
+                {isArabicPath ? "English" : "العربية"}
                 </span>
+
               </button>
             </div>
 
@@ -537,7 +576,7 @@ export default function Header() {
                 item.external ? (
                   <a
                     key={item.href}
-                    href={item.href}
+                    href={toLocaleHref(item.href)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
@@ -548,7 +587,7 @@ export default function Header() {
                 ) : (
                   <Link
                     key={item.href}
-                    href={item.href}
+                    href={toLocaleHref(item.href)}
                     className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
                     onClick={() => setMobileMenuOpen(false)}
                   >
