@@ -1,11 +1,15 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import SocialShare from "../SocialShare";
 import {
   getPublishedNewsById,
   getRelatedPublishedNews,
 } from "@/lib/newsRepo";
+
+const getCachedNews = cache(getPublishedNewsById);
 
 function CalendarIcon({ className }: { className?: string }) {
   return (
@@ -43,13 +47,57 @@ function TagIcon({ className }: { className?: string }) {
   );
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id: rawId } = await params;
+  const news = await getCachedNews(rawId);
+  if (!news) return {};
+
+  const title = news.title;
+  const description =
+    news.excerpt?.trim() || news.content?.slice(0, 160).trim() || title;
+  const imagePath = news.coverImageId
+    ? `/api/media/${news.coverImageId}`
+    : "/hero-image-1.jpg";
+  const url = `/news/${news.id}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "article",
+      images: [
+        {
+          url: imagePath,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imagePath],
+    },
+    alternates: { canonical: url },
+  };
+}
+
 export default async function NewsDetailsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id: rawId } = await params;
-  const news = await getPublishedNewsById(rawId);
+  const news = await getCachedNews(rawId);
   if (!news) notFound();
 
   const related = await getRelatedPublishedNews({

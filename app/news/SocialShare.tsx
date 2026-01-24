@@ -1,6 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className ?? "w-5 h-5"}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+      />
+    </svg>
+  );
+}
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -47,10 +65,22 @@ export default function SocialShare({ title, className }: Props) {
   // لتجنب hydration mismatch: أول render يكون نفس السيرفر (بدون window)
   // ثم بعد mount نقرأ الرابط الحقيقي من المتصفح.
   const [href, setHref] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setHref(window.location.href);
   }, []);
+
+  const copyLink = useCallback(() => {
+    if (!href) return;
+    navigator.clipboard.writeText(href).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      },
+      () => {}
+    );
+  }, [href]);
 
   const links = useMemo(() => {
     const url = href ? encodeURIComponent(href) : "";
@@ -78,6 +108,14 @@ export default function SocialShare({ title, className }: Props) {
     ];
   }, [href, title]);
 
+  const copyBtnClass =
+    "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-700 transition-all duration-300 shadow-sm " +
+    (href
+      ? copied
+        ? "text-white bg-[#31BD9C] border-[#31BD9C]"
+        : "hover:text-white hover:bg-[#31BD9C] hover:border-[#31BD9C] hover:shadow-md"
+      : "opacity-60 pointer-events-none");
+
   return (
     <div className={className ?? ""}>
       <div className="flex flex-wrap items-center gap-2">
@@ -100,6 +138,18 @@ export default function SocialShare({ title, className }: Props) {
             <span className="text-sm font-semibold">{l.label}</span>
           </a>
         ))}
+        <button
+          type="button"
+          onClick={copyLink}
+          disabled={!href}
+          className={copyBtnClass}
+          aria-label="نسخ رابط الخبر"
+        >
+          <span className="w-5 h-5">
+            <CopyIcon />
+          </span>
+          <span className="text-sm font-semibold">{copied ? "تم النسخ!" : "نسخ الرابط"}</span>
+        </button>
       </div>
     </div>
   );

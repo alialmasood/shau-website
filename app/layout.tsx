@@ -8,7 +8,10 @@ const cairo = Cairo({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shau.edu.iq";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "كلية الشرق للعلوم التقنية التخصصية",
   description: "الموقع الرسمي لكلية الشرق",
 };
