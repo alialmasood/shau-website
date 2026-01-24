@@ -29,9 +29,12 @@ export type AdminNewsListItem = {
 export type AdminNewsDetails = {
   id: string;
   title: string;
+  titleEn: string | null;
   slug: string | null;
   excerpt: string | null;
+  excerptEn: string | null;
   content: string;
+  contentEn: string | null;
   categoryCode: NewsCategoryCode | null;
   published: boolean;
   publishedAt: string | null;
@@ -121,7 +124,7 @@ export async function getAdminNewsPage(params: {
 export async function getAdminNewsById(id: string): Promise<AdminNewsDetails | null> {
   if (!isUuid(id)) return null;
   const res = await query(
-    `SELECT id, title, slug, excerpt, content, category, is_published, publish_date, featured, cover_image_id, secondary_image_id, secondary_image2_id
+    `SELECT id, title, title_en, slug, excerpt, excerpt_en, content, content_en, category, is_published, publish_date, featured, cover_image_id, secondary_image_id, secondary_image2_id
      FROM news
      WHERE id = $1
      LIMIT 1`,
@@ -134,9 +137,12 @@ export async function getAdminNewsById(id: string): Promise<AdminNewsDetails | n
   return {
     id: String(r.id),
     title: String(r.title),
+    titleEn: r.title_en ? String(r.title_en) : null,
     slug: r.slug ? String(r.slug) : null,
     excerpt: r.excerpt ? String(r.excerpt) : null,
+    excerptEn: r.excerpt_en ? String(r.excerpt_en) : null,
     content: String(r.content ?? ""),
+    contentEn: r.content_en ? String(r.content_en) : null,
     categoryCode: code,
     published: Boolean(r.is_published),
     publishedAt,

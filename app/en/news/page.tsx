@@ -1,26 +1,25 @@
-import NewsPageClient from "./NewsPageClient";
+import NewsPageClient from "@/app/news/NewsPageClient";
 import { getPublishedNewsPage } from "@/lib/newsRepo";
 
-function formatArabicDate(iso: string | null) {
+function formatDate(iso: string | null, locale: string) {
   if (!iso) return "";
   try {
-    const d = new Date(iso);
-    return new Intl.DateTimeFormat("ar-IQ", {
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-IQ" : "en-GB", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    }).format(d);
+    }).format(new Date(iso));
   } catch {
     return "";
   }
 }
 
-export default async function NewsPage() {
+export default async function EnNewsPage() {
   const { items, total, page, pageSize } = await getPublishedNewsPage({
     page: 1,
     pageSize: 9,
+    locale: "en",
   });
-
   return (
     <NewsPageClient
       initial={{
@@ -32,12 +31,12 @@ export default async function NewsPage() {
           title: n.title,
           excerpt: n.excerpt,
           categoryLabel: n.categoryLabel,
-          dateLabel: formatArabicDate(n.publishedAt),
+          dateLabel: formatDate(n.publishedAt, "en"),
           coverImageId: n.coverImageId,
           featured: n.featured,
         })),
       }}
+      locale="en"
     />
   );
 }
-

@@ -58,9 +58,12 @@ model Media {
 model News {
   id                String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   title             String        @db.VarChar(250)
+  titleEn           String?       @map("title_en") @db.VarChar(250)
   slug              String?       @unique @db.VarChar(250)
   excerpt           String?       @db.VarChar(500)
+  excerptEn         String?       @map("excerpt_en") @db.VarChar(500)
   content           String
+  contentEn         String?       @map("content_en") @db.Text
   category          NewsCategory?
   published         Boolean       @default(false) @map("is_published")
   publishedAt       DateTime?     @map("publish_date") @db.Timestamptz(6)
@@ -116,6 +119,7 @@ model visitor_count {
 model TickerItem {
   id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   text       String   @db.VarChar(400)
+  textEn     String?  @map("text_en") @db.VarChar(400)
   link       String?  @db.VarChar(500)
   isActive   Boolean  @default(true) @map("is_active")
   sortOrder  Int      @default(0) @map("sort_order")

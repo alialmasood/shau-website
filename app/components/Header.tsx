@@ -3,6 +3,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
 const navItems = [
       { 
@@ -81,6 +82,7 @@ const navItems = [
     ]
   },
   { label: "الاحداث", href: "/events" },
+  { label: "الأخبار", href: "/news" },
   { 
     label: "خدماتنا", 
     href: "/services",
@@ -134,6 +136,11 @@ export default function Header() {
   const router = useRouter();
 
   const isArabicPath = (pathname ?? "").startsWith("/ar");
+  const locale: Locale = isArabicPath ? "ar" : "en";
+  const t = getTranslations(locale);
+  const nav = (t.header.nav || {}) as Record<string, string>;
+  const getNavLabel = (href: string, fallback: string, isExternal?: boolean) =>
+    isExternal ? t.header.platform : (nav[href] ?? fallback);
   const localePrefix = isArabicPath ? "/ar" : "/en";
   const toLocaleHref = (href: string) => {
     if (!href) return localePrefix;
@@ -206,7 +213,7 @@ export default function Header() {
               >
                 <Image
                   src="/Untit4545led-1.png"
-                  alt="شعار كلية الشرق"
+                  alt={t.header.logoAlt}
                   fill
                   className="object-contain object-center"
                   priority
@@ -247,7 +254,7 @@ export default function Header() {
                       >
                         {/* النص */}
                         <span className="relative z-10 flex items-center">
-                          {item.label}
+                          {getNavLabel(item.href, item.label, item.external)}
                         </span>
                         {/* أيقونة السهم */}
                         <svg
@@ -316,7 +323,7 @@ export default function Header() {
                                       {/* أيقونة */}
                                       <div className="w-2 h-2 rounded-full bg-[#31BD9C] opacity-0 group-hover:opacity-100 transform scale-0 group-hover:scale-100 transition-all duration-300"></div>
                                       
-                                      <span className="flex-1 relative z-10">{subItem.label}</span>
+                                      <span className="flex-1 relative z-10">{getNavLabel(subItem.href, subItem.label)}</span>
                                       
                                       {/* أيقونة السهم */}
                                       <svg
@@ -372,7 +379,7 @@ export default function Header() {
                                                   {/* أيقونة */}
                                                   <div className="w-2 h-2 rounded-full bg-[#31BD9C] opacity-0 group-hover:opacity-100 transform scale-0 group-hover:scale-100 transition-all duration-300"></div>
                                                   
-                                                  <span className="flex-1 relative z-10">{nestedItem.label}</span>
+                                                  <span className="flex-1 relative z-10">{getNavLabel(nestedItem.href, nestedItem.label)}</span>
                                                   
                                                   {/* أيقونة السهم */}
                                                   <svg
@@ -414,7 +421,7 @@ export default function Header() {
                                       {/* أيقونة */}
                                       <div className="w-2 h-2 rounded-full bg-[#31BD9C] opacity-0 group-hover:opacity-100 transform scale-0 group-hover:scale-100 transition-all duration-300"></div>
                                       
-                                      <span className="flex-1 relative z-10">{subItem.label}</span>
+                                      <span className="flex-1 relative z-10">{getNavLabel(subItem.href, subItem.label)}</span>
                                       
                                       {/* أيقونة السهم */}
                                       <svg
@@ -457,7 +464,7 @@ export default function Header() {
                       >
                         {/* النص */}
                         <span className="relative z-10 flex items-center">
-                          {item.label}
+                          {getNavLabel(item.href, item.label, item.external)}
                         </span>
                       </a>
                     ) : (
@@ -467,7 +474,7 @@ export default function Header() {
                       >
                         {/* النص */}
                         <span className="relative z-10 flex items-center">
-                          {item.label}
+                          {getNavLabel(item.href, item.label, item.external)}
                         </span>
                       </Link>
                     )
@@ -487,7 +494,7 @@ export default function Header() {
             {/* Search Button */}
             <button
               className="group relative flex items-center justify-center w-9 h-9 bg-neutral-50 hover:bg-white border border-neutral-200 hover:border-[#31BD9C] rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#31BD9C] focus:ring-offset-2"
-              aria-label="البحث"
+              aria-label={t.header.search}
             >
               <svg
                 className="w-4 h-4 text-neutral-400 group-hover:text-[#31BD9C] transition-colors duration-200"
@@ -508,7 +515,7 @@ export default function Header() {
               <button
                 onClick={toggleLanguage}
                 className="group relative flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#31BD9C] hover:bg-[#2aa88a] text-white transition-all duration-300 ease-in-out shadow-md hover:shadow-lg hover:shadow-[#31BD9C]/30 focus:outline-none focus:ring-2 focus:ring-[#31BD9C] focus:ring-offset-2"
-                aria-label={isArabicPath ? "Switch to English" : "التبديل إلى العربية"}
+                aria-label={isArabicPath ? t.header.switchToEn : t.header.switchToAr}
               >
                 {/* أيقونة الكرة الأرضية */}
                 <svg
@@ -536,7 +543,7 @@ export default function Header() {
             {/* زر القائمة للهواتف المحمولة والشاشات المتوسطة */}
             <button
               className="md:hidden flex-shrink-0 p-2 text-neutral-700 hover:text-[#31BD9C] rounded-lg hover:bg-[#31BD9C]/5 transition-colors duration-200"
-              aria-label="قائمة التنقل"
+              aria-label={t.header.navMenu}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (
@@ -582,7 +589,7 @@ export default function Header() {
                     className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    {item.label}
+                    {getNavLabel(item.href, item.label, item.external)}
                   </a>
                 ) : (
                   <Link
@@ -591,7 +598,7 @@ export default function Header() {
                     className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    {item.label}
+                    {getNavLabel(item.href, item.label, item.external)}
                   </Link>
                 )
               ))}

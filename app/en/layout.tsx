@@ -14,7 +14,7 @@ export default function EnglishLayout({
       className="min-h-screen w-full max-w-full flex flex-col"
     >
       <Header />
-      <NewsTicker />
+      <NewsTicker locale="en" />
       <main className="w-full flex-1">{children}</main>
       <Footer />
     </div>

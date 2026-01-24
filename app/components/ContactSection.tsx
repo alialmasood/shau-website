@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
 export default function ContactSection() {
+  const pathname = usePathname();
+  const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
+  const t = getTranslations(locale);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -27,7 +32,7 @@ export default function ContactSection() {
     // هنا يمكنك إضافة منطق إرسال النموذج
     setTimeout(() => {
       setIsSubmitting(false);
-      alert("شكراً لك! سنتواصل معك قريباً.");
+      alert(t.contact.thanks);
       setFormData({ firstName: "", lastName: "", phone: "", email: "" });
     }, 1000);
   };
@@ -42,10 +47,10 @@ export default function ContactSection() {
                 {/* العنوان */}
                 <div className="mb-5 md:mb-5">
                   <h3 className="text-xl md:text-2xl font-bold text-neutral-900 md:text-white mb-2 md:drop-shadow-lg">
-                    هل من أسئلة؟
+                    {t.contact.title}
                   </h3>
                   <h4 className="text-lg md:text-xl font-semibold text-[#31BD9C] md:drop-shadow-lg">
-                    تحدث مع خبير
+                    {t.contact.subtitle}
                   </h4>
                 </div>
 
@@ -57,7 +62,7 @@ export default function ContactSection() {
                       htmlFor="firstName"
                       className="block text-sm font-semibold text-neutral-700 md:text-white mb-2 md:mb-1.5 md:drop-shadow-lg"
                     >
-                      الاسم <span className="text-red-500">*</span>
+                      {t.contact.firstName} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -67,7 +72,7 @@ export default function ContactSection() {
                       onChange={handleChange}
                       required
                       className="w-full h-11 px-4 py-2 bg-white md:bg-white/90 border-2 border-neutral-200 md:border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm text-neutral-900 placeholder:text-neutral-400"
-                      placeholder="أدخل اسمك"
+                      placeholder={t.contact.placeholderFirstName}
                     />
                   </div>
 
@@ -77,7 +82,7 @@ export default function ContactSection() {
                       htmlFor="lastName"
                       className="block text-sm font-semibold text-neutral-700 md:text-white mb-2 md:mb-1.5 md:drop-shadow-lg"
                     >
-                      اللقب <span className="text-red-500">*</span>
+                      {t.contact.lastName} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -87,7 +92,7 @@ export default function ContactSection() {
                       onChange={handleChange}
                       required
                       className="w-full h-11 px-4 py-2 bg-white md:bg-white/90 border-2 border-neutral-200 md:border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm text-neutral-900 placeholder:text-neutral-400"
-                      placeholder="أدخل لقبك"
+                      placeholder={t.contact.placeholderLastName}
                     />
                   </div>
 
@@ -97,7 +102,7 @@ export default function ContactSection() {
                       htmlFor="phone"
                       className="block text-sm font-semibold text-neutral-700 md:text-white mb-2 md:mb-1.5 md:drop-shadow-lg"
                     >
-                      رقم الهاتف <span className="text-red-500">*</span>
+                      {t.contact.phone} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -107,7 +112,7 @@ export default function ContactSection() {
                       onChange={handleChange}
                       required
                       className="w-full h-11 px-4 py-2 bg-white md:bg-white/90 border-2 border-neutral-200 md:border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm text-neutral-900 placeholder:text-neutral-400"
-                      placeholder="07XX XXX XXXX"
+                      placeholder={t.contact.placeholderPhone}
                     />
                   </div>
 
@@ -117,7 +122,7 @@ export default function ContactSection() {
                       htmlFor="email"
                       className="block text-sm font-semibold text-neutral-700 md:text-white mb-2 md:mb-1.5 md:drop-shadow-lg"
                     >
-                      البريد الإلكتروني <span className="text-red-500">*</span>
+                      {t.contact.email} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
@@ -127,7 +132,7 @@ export default function ContactSection() {
                       onChange={handleChange}
                       required
                       className="w-full h-11 px-4 py-2 bg-white md:bg-white/90 border-2 border-neutral-200 md:border-white/50 rounded-lg focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm text-neutral-900 placeholder:text-neutral-400"
-                      placeholder="example@email.com"
+                      placeholder={t.contact.placeholderEmail}
                     />
                   </div>
 
@@ -160,10 +165,10 @@ export default function ContactSection() {
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             ></path>
                           </svg>
-                          جاري الإرسال...
+                          {t.contact.sending}
                         </span>
                       ) : (
-                        "إرسال الطلب"
+                        t.contact.submit
                       )}
                     </button>
                   </div>
@@ -181,7 +186,7 @@ export default function ContactSection() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="عنوان كلية الشرق للعلوم التقنية التخصصية"
+                title={t.contact.mapTitle}
                 className="w-full h-full"
               ></iframe>
               {/* Overlay شفاف لتغميق الخريطة قليلاً - pointer-events-none للسماح بالتفاعل مع الخريطة */}

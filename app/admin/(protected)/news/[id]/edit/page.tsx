@@ -39,9 +39,12 @@ export default async function AdminEditNewsPage({
             id={news.id}
             initial={{
               title: news.title,
+              titleEn: news.titleEn,
               slug: news.slug,
               excerpt: news.excerpt,
+              excerptEn: news.excerptEn,
               content: news.content,
+              contentEn: news.contentEn,
               categoryCode: news.categoryCode,
               published: news.published,
               featured: news.featured,

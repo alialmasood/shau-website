@@ -31,8 +31,11 @@ async function ensureUniqueSlug(base: string) {
 
 type CreateNewsBody = {
   title: string;
+  titleEn?: string | null;
   excerpt?: string | null;
+  excerptEn?: string | null;
   content: string;
+  contentEn?: string | null;
   category?: "ADMINISTRATIVE" | "SCIENTIFIC" | "ACTIVITIES" | "ANNOUNCEMENTS" | null;
   published?: boolean;
   featured?: boolean;
@@ -56,8 +59,11 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as CreateNewsBody;
   const title = String(body?.title ?? "").trim();
+  const titleEn = body?.titleEn ? String(body.titleEn).trim() || null : null;
   const content = String(body?.content ?? "").trim();
+  const contentEn = body?.contentEn ? String(body.contentEn).trim() || null : null;
   const excerpt = body?.excerpt ? String(body.excerpt).trim() : null;
+  const excerptEn = body?.excerptEn ? String(body.excerptEn).trim() || null : null;
   const category = body?.category ?? null;
   const published = Boolean(body?.published);
   const featured = Boolean(body?.featured);
@@ -107,15 +113,18 @@ export async function POST(request: Request) {
 
   const res = await query(
     `INSERT INTO news
-      (title, slug, excerpt, content, category, is_published, publish_date, featured, cover_image_id, secondary_image_id, secondary_image2_id, updated_at)
+      (title, title_en, slug, excerpt, excerpt_en, content, content_en, category, is_published, publish_date, featured, cover_image_id, secondary_image_id, secondary_image2_id, updated_at)
      VALUES
-      ($1, $2, $3, $4, $5::"NewsCategory", $6, $7, $8, $9, $10, $11, NOW())
+      ($1, $2, $3, $4, $5, $6, $7, $8::"NewsCategory", $9, $10, $11, $12, $13, $14, NOW())
      RETURNING id`,
     [
       title,
+      titleEn,
       slug,
       excerpt,
+      excerptEn,
       content,
+      contentEn,
       category,
       published,
       publishedAt,

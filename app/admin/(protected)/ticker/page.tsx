@@ -51,6 +51,17 @@ export default async function AdminTickerPage() {
               />
             </div>
 
+            <div className="md:col-span-6">
+              <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                النص (إنجليزي، اختياري)
+              </label>
+              <input
+                name="textEn"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all"
+                placeholder="e.g. The college announces..."
+              />
+            </div>
+
             <div className="md:col-span-4">
               <label className="block text-sm font-semibold text-neutral-700 mb-2">
                 رابط (اختياري)
@@ -128,6 +139,7 @@ export default async function AdminTickerPage() {
                             className="w-24 px-3 py-2 rounded-lg bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20"
                           />
                           <input type="hidden" name="text" value={item.text} />
+                          <input type="hidden" name="textEn" value={item.textEn ?? ""} />
                           <input type="hidden" name="link" value={item.link ?? ""} />
                           <input type="hidden" name="isActive" value={item.isActive ? "on" : ""} />
                           <button
@@ -152,6 +164,15 @@ export default async function AdminTickerPage() {
                               rows={2}
                               required
                             />
+                            <div>
+                              <label className="block text-xs font-semibold text-neutral-600 mb-1">النص (إنجليزي، اختياري)</label>
+                              <textarea
+                                name="textEn"
+                                defaultValue={item.textEn ?? ""}
+                                className="w-full min-w-[320px] px-3 py-2 rounded-lg bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20"
+                                rows={2}
+                              />
+                            </div>
                             <input
                               name="link"
                               defaultValue={item.link ?? ""}

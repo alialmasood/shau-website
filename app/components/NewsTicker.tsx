@@ -1,8 +1,10 @@
 import Image from "next/image";
 import { getActiveTickerItems } from "@/lib/tickerRepo";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
-export default async function NewsTicker() {
-  const items = await getActiveTickerItems();
+export default async function NewsTicker({ locale }: { locale: Locale }) {
+  const t = getTranslations(locale);
+  const items = await getActiveTickerItems(locale);
   if (items.length === 0) return null;
 
   const repeated = [...items, ...items, ...items];
@@ -34,7 +36,7 @@ export default async function NewsTicker() {
                 <div className="relative w-full h-full flex items-center justify-center">
                   <Image
                     src="/logo3333333333.png"
-                    alt="شعار الكلية"
+                    alt={t.ticker.logoAlt}
                     fill
                     className="object-contain"
                     style={{ filter: "brightness(0) invert(1)" }}

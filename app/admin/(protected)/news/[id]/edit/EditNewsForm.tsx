@@ -19,9 +19,12 @@ type Props = {
   id: string;
   initial: {
     title: string;
+    titleEn: string | null;
     slug: string | null;
     excerpt: string | null;
+    excerptEn: string | null;
     content: string;
+    contentEn: string | null;
     categoryCode: CategoryCode | null;
     published: boolean;
     featured: boolean;
@@ -33,9 +36,12 @@ type Props = {
 
 export default function EditNewsForm({ id, initial }: Props) {
   const [title, setTitle] = useState(initial.title);
+  const [titleEn, setTitleEn] = useState(initial.titleEn ?? "");
   const [slug, setSlug] = useState(initial.slug ?? "");
   const [excerpt, setExcerpt] = useState(initial.excerpt ?? "");
+  const [excerptEn, setExcerptEn] = useState(initial.excerptEn ?? "");
   const [content, setContent] = useState(initial.content);
+  const [contentEn, setContentEn] = useState(initial.contentEn ?? "");
   const [category, setCategory] = useState<CategoryCode>(
     initial.categoryCode ?? "SCIENTIFIC"
   );
@@ -125,9 +131,12 @@ export default function EditNewsForm({ id, initial }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
+          titleEn: titleEn.trim() || null,
           slug: slug.trim() || null,
           excerpt: excerpt.trim() || null,
+          excerptEn: excerptEn.trim() || null,
           content,
+          contentEn: contentEn.trim() || null,
           category,
           published,
           featured,
@@ -217,6 +226,41 @@ export default function EditNewsForm({ id, initial }: Props) {
           placeholder={"اكتب المحتوى...\nيمكنك استخدام:\n## عنوان فرعي\n### عنوان فرعي أصغر\nوفصل الفقرات بسطر فارغ."}
           required
         />
+      </div>
+
+      {/* الترجمة الإنجليزية (اختياري) */}
+      <div className="border-t border-neutral-200 pt-5 mt-2">
+        <h3 className="text-base font-bold text-neutral-800 mb-3">الترجمة الإنجليزية (اختياري)</h3>
+        <p className="text-xs text-neutral-500 mb-4">إن تُركت فارغة، سيُعرض النص العربي في الصفحة الإنجليزية كاحتياطي.</p>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-neutral-700 mb-2">عنوان الخبر (إنجليزي)</label>
+            <input
+              value={titleEn}
+              onChange={(e) => setTitleEn(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all"
+              placeholder="News title (English)..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-neutral-700 mb-2">ملخص قصير (إنجليزي)</label>
+            <textarea
+              value={excerptEn}
+              onChange={(e) => setExcerptEn(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all min-h-[70px]"
+              placeholder="Short excerpt (English)..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-neutral-700 mb-2">محتوى الخبر (إنجليزي)</label>
+            <textarea
+              value={contentEn}
+              onChange={(e) => setContentEn(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all min-h-[120px]"
+              placeholder="Content (English). Same markdown: ## and ###."
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -337,7 +381,7 @@ export default function EditNewsForm({ id, initial }: Props) {
         </button>
 
         <a
-          href={`/news/${id}`}
+          href={`/ar/${id}`}
           target="_blank"
           rel="noopener noreferrer"
           className="px-5 py-3 rounded-xl font-bold border border-neutral-200 text-neutral-800 hover:border-[#31BD9C] hover:text-[#31BD9C] transition-colors"

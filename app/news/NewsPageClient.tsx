@@ -4,14 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { NEWS_CATEGORIES } from "./_data";
-
-const ALL = "الكل";
+import { getTranslations } from "@/lib/i18n";
+import { categoryArabicToLabel } from "@/lib/newsCategory";
 
 function normalizeArabicSearch(input: string) {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
+  return input.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function getVisiblePages(current: number, total: number) {
@@ -81,13 +78,17 @@ function getImageSrc(coverImageId: string | null) {
 function NewsCard({
   news,
   className,
+  basePath,
+  readNews,
 }: {
   news: NewsListItemUI;
   className?: string;
+  basePath: "/ar" | "/en";
+  readNews: string;
 }) {
   return (
     <Link
-      href={`/news/${news.id}`}
+      href={`${basePath}/${news.id}`}
       className={[
         "group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1.5 border border-neutral-100 hover:border-[#31BD9C]/30",
         "sm:col-span-2 lg:col-span-2",
@@ -128,7 +129,7 @@ function NewsCard({
 
         <div className="mt-5 flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2 text-[#31BD9C] font-semibold text-sm group-hover:gap-2.5 transition-all duration-300">
-            <span>قراءة الخبر</span>
+            <span>{readNews}</span>
             <svg
               className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300"
               fill="none"
@@ -152,13 +153,17 @@ function NewsCard({
 function FeaturedNewsCard({
   news,
   className,
+  basePath,
+  readNews,
 }: {
   news: NewsListItemUI;
   className?: string;
+  basePath: "/ar" | "/en";
+  readNews: string;
 }) {
   return (
     <Link
-      href={`/news/${news.id}`}
+      href={`${basePath}/${news.id}`}
       className={[
         "group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1.5 border border-neutral-100 hover:border-[#31BD9C]/30",
         "sm:col-span-2 lg:col-span-4",
@@ -199,7 +204,7 @@ function FeaturedNewsCard({
 
         <div className="mt-5 flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2 text-[#31BD9C] font-semibold text-sm group-hover:gap-2.5 transition-all duration-300">
-            <span>قراءة الخبر</span>
+            <span>{readNews}</span>
             <svg
               className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300"
               fill="none"
@@ -229,11 +234,17 @@ type ApiResponse = {
 
 export default function NewsPageClient({
   initial,
+  locale = "ar",
 }: {
   initial: ApiResponse;
+  locale?: "ar" | "en";
 }) {
+  const basePath: "/ar" | "/en" = locale === "ar" ? "/ar" : "/en";
+  const t = getTranslations(locale);
+  const allLabel = t.newsPage.all;
+
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<string>(ALL);
+  const [category, setCategory] = useState<string>(allLabel);
   const [page, setPage] = useState(initial.page || 1);
   const pageSize = 9;
 
@@ -242,7 +253,7 @@ export default function NewsPageClient({
   const [isLoading, setIsLoading] = useState(false);
   const lastReq = useRef(0);
 
-  const categories = useMemo(() => [ALL, ...NEWS_CATEGORIES], []);
+  const categories = useMemo(() => [allLabel, ...NEWS_CATEGORIES], [allLabel]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);
@@ -253,9 +264,9 @@ export default function NewsPageClient({
   const rangeEnd = total === 0 ? 0 : Math.min(safePage * pageSize, total);
 
   // توازن الشبكة (خصوصاً مع RTL) عبر توسيط آخر صف عندما لا يكون مكتمل
-  const smLastIsSingle = paged.length % 2 === 1; // شبكة 2 أعمدة على sm (فعلياً 4 مع col-span-2)
+  const smLastIsSingle = paged.length % 2 === 1; // شبكة 2 أعمدة على sm
   const lgTail = paged.slice(2); // بعد (featured + بطاقة تكمّل أول صف)
-  const lgRemainder = lgTail.length % 3; // شبكة 3 بطاقات/صف على lg (فعلياً 6 مع col-span-2)
+  const lgRemainder = lgTail.length % 3; // شبكة 3 بطاقات/صف على lg
   const lgLastRowStartIndex = lgTail.length - lgRemainder; // index داخل lgTail
 
   const visiblePages = useMemo(
@@ -266,11 +277,11 @@ export default function NewsPageClient({
   // Fetch from DB (API) with debounce for query typing
   useEffect(() => {
     const q = normalizeArabicSearch(query);
-    const cat = category === ALL ? "" : category;
+    const cat = category === allLabel ? "" : category;
     const currentPage = safePage;
 
     const reqId = ++lastReq.current;
-    const t = setTimeout(async () => {
+    const timeoutId = setTimeout(async () => {
       setIsLoading(true);
       try {
         const sp = new URLSearchParams();
@@ -278,6 +289,7 @@ export default function NewsPageClient({
         if (cat) sp.set("category", cat);
         sp.set("page", String(currentPage));
         sp.set("pageSize", String(pageSize));
+        sp.set("locale", locale);
 
         const res = await fetch(`/api/news?${sp.toString()}`, {
           method: "GET",
@@ -285,11 +297,10 @@ export default function NewsPageClient({
         });
         const json = (await res.json()) as ApiResponse;
         if (reqId !== lastReq.current) return;
-        if (!res.ok) throw new Error("فشل جلب الأخبار");
+        if (!res.ok) throw new Error(t.newsPage.fetchError);
         setItems(json.items ?? []);
         setTotal(Number(json.total ?? 0));
       } catch {
-        // لا نكسر الصفحة لو فشل الطلب
         if (reqId === lastReq.current) {
           setItems([]);
           setTotal(0);
@@ -299,7 +310,7 @@ export default function NewsPageClient({
       }
     }, 250);
 
-    return () => clearTimeout(t);
+    return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, category, safePage]);
 
@@ -309,7 +320,7 @@ export default function NewsPageClient({
       <section className="relative w-full h-[28vh] sm:h-[32vh] md:h-[45vh] overflow-hidden">
         <Image
           src="/hero-image-2.jpg"
-          alt="أخبار الكلية"
+          alt={t.newsPage.heroAlt}
           fill
           className="object-cover"
           priority
@@ -321,11 +332,11 @@ export default function NewsPageClient({
         <div className="absolute inset-0 flex items-center justify-center text-center px-4">
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-sm">
-              أخبار الكلية
+              {t.newsPage.heroTitle}
             </h1>
             <div className="mt-3 w-16 h-1 bg-[#31BD9C] mx-auto rounded-full" />
             <p className="mt-3 text-sm md:text-base text-white/90 leading-relaxed">
-              تابع آخر أخبار ونشاطات وفعاليات كلية الشرق للعلوم التقنية التخصصية
+              {t.newsPage.heroDesc}
             </p>
           </div>
         </div>
@@ -348,7 +359,7 @@ export default function NewsPageClient({
                       setQuery(e.target.value);
                       setPage(1);
                     }}
-                    placeholder="ابحث عن خبر..."
+                    placeholder={t.newsPage.searchPlaceholder}
                     className="w-full pr-11 pl-3 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all text-sm sm:text-base"
                   />
                 </div>
@@ -356,42 +367,44 @@ export default function NewsPageClient({
 
               {/* Categories */}
               <div className="flex-1 min-w-0">
-                {/* شريط تمرير أفقي على الموبايل فقط */}
                 <div className="-mx-1 overflow-x-auto scrollbar-hide overscroll-x-contain touch-pan-x md:mx-0 md:overflow-visible">
                   <div className="flex gap-2 px-1 flex-nowrap md:flex-wrap md:px-0">
-                  {categories.map((c) => {
-                    const active = c === category;
-                    return (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => {
-                          setCategory(c);
-                          setPage(1);
-                        }}
-                        className={[
-                          "px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/30 focus:ring-offset-2 whitespace-nowrap",
-                          active
-                            ? "bg-[#31BD9C] text-white shadow-md shadow-[#31BD9C]/25"
-                            : "bg-white text-neutral-700 border border-neutral-200 hover:border-[#31BD9C]/60 hover:bg-[#31BD9C]/5 hover:text-[#31BD9C] hover:shadow-sm",
-                        ].join(" ")}
-                      >
-                        {c}
-                      </button>
-                    );
-                  })}
-                </div>
+                    {categories.map((c) => {
+                      const active = c === category;
+                      const label = c === allLabel ? allLabel : categoryArabicToLabel(c, locale);
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => {
+                            setCategory(c);
+                            setPage(1);
+                          }}
+                          className={[
+                            "px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/30 focus:ring-offset-2 whitespace-nowrap",
+                            active
+                              ? "bg-[#31BD9C] text-white shadow-md shadow-[#31BD9C]/25"
+                              : "bg-white text-neutral-700 border border-neutral-200 hover:border-[#31BD9C]/60 hover:bg-[#31BD9C]/5 hover:text-[#31BD9C] hover:shadow-sm",
+                          ].join(" ")}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="mt-4 text-xs sm:text-sm text-neutral-500">
               {total === 0 ? (
-                <span>لا توجد نتائج مطابقة.</span>
+                <span>{t.newsPage.noResults}</span>
               ) : (
                 <span>
-                  عرض <b className="text-neutral-700">{rangeStart}–{rangeEnd}</b>{" "}
-                  من <b className="text-neutral-700">{total}</b> خبر
+                  {t.newsPage.range
+                    .replace("{start}", String(rangeStart))
+                    .replace("{end}", String(rangeEnd))
+                    .replace("{total}", String(total))}
                   {isLoading ? <span className="mr-2">…</span> : null}
                 </span>
               )}
@@ -407,6 +420,8 @@ export default function NewsPageClient({
             {paged.length > 0 && (
               <FeaturedNewsCard
                 news={paged[0]}
+                basePath={basePath}
+                readNews={t.newsPage.readNews}
                 className={[
                   smLastIsSingle && paged.length === 1 ? "sm:col-start-2" : "",
                   paged.length === 1 ? "lg:col-start-2" : "",
@@ -418,12 +433,17 @@ export default function NewsPageClient({
 
             {paged.slice(1).map((news, idx) => {
               const isLastOverall = idx === paged.length - 2; // لأن slice(1)
-              const smCenter = smLastIsSingle && isLastOverall ? "sm:col-start-2" : "";
+              const smCenter =
+                smLastIsSingle && isLastOverall ? "sm:col-start-2" : "";
 
               // idx=0 هو الذي يُكمل أول صف بعد featured
               const tailIdx = idx - 1; // داخل lgTail
               let lgCenter = "";
-              if (tailIdx >= 0 && lgRemainder !== 0 && tailIdx === lgLastRowStartIndex) {
+              if (
+                tailIdx >= 0 &&
+                lgRemainder !== 0 &&
+                tailIdx === lgLastRowStartIndex
+              ) {
                 lgCenter = lgRemainder === 1 ? "lg:col-start-3" : "lg:col-start-2";
               }
 
@@ -431,6 +451,8 @@ export default function NewsPageClient({
                 <NewsCard
                   key={news.id}
                   news={news}
+                  basePath={basePath}
+                  readNews={t.newsPage.readNews}
                   className={[smCenter, lgCenter].filter(Boolean).join(" ")}
                 />
               );
@@ -441,7 +463,10 @@ export default function NewsPageClient({
           {total > 0 && (
             <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-xs sm:text-sm text-neutral-500">
-                {rangeStart}–{rangeEnd} من {total}
+                {t.newsPage.rangeShort
+                  .replace("{start}", String(rangeStart))
+                  .replace("{end}", String(rangeEnd))
+                  .replace("{total}", String(total))}
               </div>
 
               <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -456,7 +481,7 @@ export default function NewsPageClient({
                       : "bg-white text-neutral-700 border-neutral-200 hover:border-[#31BD9C] hover:text-[#31BD9C] hover:bg-[#31BD9C]/5",
                   ].join(" ")}
                 >
-                  السابق
+                  {t.newsPage.prev}
                 </button>
 
                 {visiblePages.map((p, idx) =>
@@ -495,7 +520,7 @@ export default function NewsPageClient({
                       : "bg-white text-neutral-700 border-neutral-200 hover:border-[#31BD9C] hover:text-[#31BD9C] hover:bg-[#31BD9C]/5",
                   ].join(" ")}
                 >
-                  التالي
+                  {t.newsPage.next}
                 </button>
               </div>
             </div>
@@ -505,4 +530,3 @@ export default function NewsPageClient({
     </div>
   );
 }
-

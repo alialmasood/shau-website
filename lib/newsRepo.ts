@@ -1,5 +1,5 @@
 import { query } from "@/lib/db";
-import { arabicToCategoryCode, categoryToArabic } from "@/lib/newsCategory";
+import { arabicToCategoryCode, categoryCodeToLabel, type NewsCategoryCode } from "@/lib/newsCategory";
 
 export type PublicNewsListItem = {
   id: string;
@@ -17,6 +17,7 @@ export type PublicNewsDetails = {
   content: string;
   excerpt: string | null;
   categoryLabel: string;
+  categoryCode: NewsCategoryCode | null;
   publishedAt: string | null; // ISO
   coverImageId: string | null;
   secondaryImageId: string | null;
@@ -38,10 +39,12 @@ export async function getPublishedNewsPage(params: {
   pageSize: number;
   q?: string | null;
   categoryLabel?: string | null;
+  locale?: "ar" | "en";
 }) {
   const page = clampInt(params.page || 1, 1, 10_000);
   const pageSize = clampInt(params.pageSize || 9, 1, 50);
   const q = (params.q ?? "").trim();
+  const locale = params.locale ?? "ar";
   const categoryCode = arabicToCategoryCode(params.categoryLabel ?? null);
 
   const where: string[] = [`is_published = true`];
@@ -72,7 +75,7 @@ export async function getPublishedNewsPage(params: {
   const total = Number(totalRes.rows[0]?.total ?? 0);
 
   const listRes = await query(
-    `SELECT id, title, excerpt, category, publish_date, cover_image_id, featured
+    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured
      FROM news
      ${whereSql}
      ORDER BY featured DESC, publish_date DESC NULLS LAST, created_at DESC
@@ -82,11 +85,13 @@ export async function getPublishedNewsPage(params: {
 
   const items = listRes.rows.map((r) => {
     const publishedAt = r.publish_date ? new Date(r.publish_date).toISOString() : null;
+    const title = (locale === "en" && r.title_en) ? String(r.title_en) : String(r.title);
+    const excerpt = (locale === "en" && r.excerpt_en) ? String(r.excerpt_en) : (r.excerpt ? String(r.excerpt) : null);
     return {
       id: String(r.id),
-      title: String(r.title),
-      excerpt: r.excerpt ? String(r.excerpt) : null,
-      categoryLabel: categoryToArabic(r.category ? String(r.category) : null),
+      title,
+      excerpt,
+      categoryLabel: categoryCodeToLabel(r.category ? String(r.category) : null, locale),
       publishedAt,
       coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
       featured: Boolean(r.featured),
@@ -96,9 +101,9 @@ export async function getPublishedNewsPage(params: {
   return { items, total, page, pageSize };
 }
 
-export async function getPublishedNewsList() {
+export async function getPublishedNewsList(locale: "ar" | "en" = "ar") {
   const res = await query(
-    `SELECT id, title, excerpt, category, publish_date, cover_image_id, featured
+    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured
      FROM news
      WHERE is_published = true
      ORDER BY featured DESC, publish_date DESC NULLS LAST, created_at DESC
@@ -107,11 +112,13 @@ export async function getPublishedNewsList() {
 
   return res.rows.map((r) => {
     const publishedAt = r.publish_date ? new Date(r.publish_date).toISOString() : null;
+    const title = (locale === "en" && r.title_en) ? String(r.title_en) : String(r.title);
+    const excerpt = (locale === "en" && r.excerpt_en) ? String(r.excerpt_en) : (r.excerpt ? String(r.excerpt) : null);
     return {
       id: String(r.id),
-      title: String(r.title),
-      excerpt: r.excerpt ? String(r.excerpt) : null,
-      categoryLabel: categoryToArabic(r.category ? String(r.category) : null),
+      title,
+      excerpt,
+      categoryLabel: categoryCodeToLabel(r.category ? String(r.category) : null, locale),
       publishedAt,
       coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
       featured: Boolean(r.featured),
@@ -119,9 +126,9 @@ export async function getPublishedNewsList() {
   });
 }
 
-export async function getLatestPublishedNews(limit: number) {
+export async function getLatestPublishedNews(limit: number, locale: "ar" | "en" = "ar") {
   const res = await query(
-    `SELECT id, title, excerpt, category, publish_date, cover_image_id, featured
+    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured
      FROM news
      WHERE is_published = true
      ORDER BY featured DESC, publish_date DESC NULLS LAST, created_at DESC
@@ -131,11 +138,13 @@ export async function getLatestPublishedNews(limit: number) {
 
   return res.rows.map((r) => {
     const publishedAt = r.publish_date ? new Date(r.publish_date).toISOString() : null;
+    const title = (locale === "en" && r.title_en) ? String(r.title_en) : String(r.title);
+    const excerpt = (locale === "en" && r.excerpt_en) ? String(r.excerpt_en) : (r.excerpt ? String(r.excerpt) : null);
     return {
       id: String(r.id),
-      title: String(r.title),
-      excerpt: r.excerpt ? String(r.excerpt) : null,
-      categoryLabel: categoryToArabic(r.category ? String(r.category) : null),
+      title,
+      excerpt,
+      categoryLabel: categoryCodeToLabel(r.category ? String(r.category) : null, locale),
       publishedAt,
       coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
       featured: Boolean(r.featured),
@@ -143,10 +152,10 @@ export async function getLatestPublishedNews(limit: number) {
   });
 }
 
-export async function getPublishedNewsById(id: string) {
+export async function getPublishedNewsById(id: string, locale: "ar" | "en" = "ar") {
   if (!isUuid(id)) return null;
   const res = await query(
-    `SELECT id, title, excerpt, content, category, publish_date, cover_image_id, secondary_image_id, secondary_image2_id
+    `SELECT id, title, title_en, excerpt, excerpt_en, content, content_en, category, publish_date, cover_image_id, secondary_image_id, secondary_image2_id
      FROM news
      WHERE id = $1 AND is_published = true
      LIMIT 1`,
@@ -155,12 +164,17 @@ export async function getPublishedNewsById(id: string) {
   if (res.rows.length === 0) return null;
   const r = res.rows[0];
   const publishedAt = r.publish_date ? new Date(r.publish_date).toISOString() : null;
+  const categoryCode = r.category ? (String(r.category) as NewsCategoryCode) : null;
+  const title = (locale === "en" && r.title_en) ? String(r.title_en) : String(r.title);
+  const excerpt = (locale === "en" && r.excerpt_en) ? String(r.excerpt_en) : (r.excerpt ? String(r.excerpt) : null);
+  const content = (locale === "en" && r.content_en) ? String(r.content_en) : String(r.content ?? "");
   return {
     id: String(r.id),
-    title: String(r.title),
-    excerpt: r.excerpt ? String(r.excerpt) : null,
-    content: String(r.content ?? ""),
-    categoryLabel: categoryToArabic(r.category ? String(r.category) : null),
+    title,
+    excerpt,
+    content,
+    categoryLabel: categoryCodeToLabel(categoryCode, locale),
+    categoryCode,
     publishedAt,
     coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
     secondaryImageId: r.secondary_image_id ? String(r.secondary_image_id) : null,
@@ -170,39 +184,31 @@ export async function getPublishedNewsById(id: string) {
 
 export async function getRelatedPublishedNews(params: {
   id: string;
-  categoryLabel: string;
+  categoryCode: NewsCategoryCode | null;
   limit: number;
+  locale?: "ar" | "en";
 }) {
-  // Reverse-map Arabic label to enum code for filtering in DB
-  const categoryCode =
-    params.categoryLabel === "أخبار إدارية"
-      ? "ADMINISTRATIVE"
-      : params.categoryLabel === "أخبار علمية"
-        ? "SCIENTIFIC"
-        : params.categoryLabel === "نشاطات وفعاليات"
-          ? "ACTIVITIES"
-          : params.categoryLabel === "إعلانات"
-            ? "ANNOUNCEMENTS"
-            : null;
-
+  const locale = params.locale ?? "ar";
   const res = await query(
-    `SELECT id, title, excerpt, category, publish_date, cover_image_id, featured
+    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured
      FROM news
      WHERE is_published = true
        AND id <> $1
        AND ($2::"NewsCategory" IS NULL OR category = $2::"NewsCategory")
      ORDER BY publish_date DESC NULLS LAST, created_at DESC
      LIMIT $3`,
-    [params.id, categoryCode, params.limit]
+    [params.id, params.categoryCode, params.limit]
   );
 
   return res.rows.map((r) => {
     const publishedAt = r.publish_date ? new Date(r.publish_date).toISOString() : null;
+    const title = (locale === "en" && r.title_en) ? String(r.title_en) : String(r.title);
+    const excerpt = (locale === "en" && r.excerpt_en) ? String(r.excerpt_en) : (r.excerpt ? String(r.excerpt) : null);
     return {
       id: String(r.id),
-      title: String(r.title),
-      excerpt: r.excerpt ? String(r.excerpt) : null,
-      categoryLabel: categoryToArabic(r.category ? String(r.category) : null),
+      title,
+      excerpt,
+      categoryLabel: categoryCodeToLabel(r.category ? String(r.category) : null, locale),
       publishedAt,
       coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
       featured: Boolean(r.featured),

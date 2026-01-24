@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
 function CopyIcon({ className }: { className?: string }) {
   return (
@@ -62,8 +64,9 @@ type Props = {
 };
 
 export default function SocialShare({ title, className }: Props) {
-  // لتجنب hydration mismatch: أول render يكون نفس السيرفر (بدون window)
-  // ثم بعد mount نقرأ الرابط الحقيقي من المتصفح.
+  const pathname = usePathname();
+  const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
+  const t = getTranslations(locale);
   const [href, setHref] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -131,7 +134,7 @@ export default function SocialShare({ title, className }: Props) {
                 ? "hover:text-white hover:bg-[#31BD9C] hover:border-[#31BD9C] hover:shadow-md"
                 : "opacity-60 pointer-events-none",
             ].join(" ")}
-            aria-label={`مشاركة عبر ${l.label}`}
+            aria-label={t.social.shareVia.replace("{name}", l.label)}
           >
             <span className="w-5 h-5">{l.icon}</span>
             <span className="text-sm font-semibold">{l.label}</span>
@@ -142,12 +145,12 @@ export default function SocialShare({ title, className }: Props) {
           onClick={copyLink}
           disabled={!href}
           className={copyBtnClass}
-          aria-label="نسخ رابط الخبر"
+          aria-label={t.social.copyAria}
         >
           <span className="w-5 h-5">
             <CopyIcon />
           </span>
-          <span className="text-sm font-semibold">{copied ? "تم النسخ!" : "نسخ الرابط"}</span>
+          <span className="text-sm font-semibold">{copied ? t.social.copied : t.social.copyLink}</span>
         </button>
       </div>
     </div>

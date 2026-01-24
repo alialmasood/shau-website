@@ -1,7 +1,9 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
 // بيانات الأقسام الدراسية
 const departments = [
@@ -68,6 +70,12 @@ const departments = [
 ];
 
 export default function ProgramsSection() {
+  const pathname = usePathname();
+  const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
+  const t = getTranslations(locale);
+  const base = locale === "ar" ? "/ar" : "/en";
+  const deptName = (slug: string, fallback: string) =>
+    (t.programs.dept as Record<string, string>)?.[slug] ?? fallback;
   return (
     <section className="w-full bg-white pt-0 pb-12 sm:pb-16 md:pb-20 lg:pb-24">
       {/* العنوان الرئيسي في شريط أخضر مزخرف - يمتد على عرض الصفحة */}
@@ -96,7 +104,7 @@ export default function ProgramsSection() {
             {/* العنوان */}
             <div className="relative z-10 text-center">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 drop-shadow-lg">
-                برامج الكلية
+                {t.programs.title}
               </h2>
               {/* خط فاصل أبيض */}
               <div className="w-32 h-1 bg-white/80 mx-auto rounded-full"></div>
@@ -109,26 +117,21 @@ export default function ProgramsSection() {
           {/* الخانة الأولى: النص */}
           <div className="lg:sticky lg:top-24 pr-0 lg:pr-8 order-2 lg:order-1">
             <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900 mb-6 leading-tight">
-              الدراسة في كلية الشرق للعلوم التقنية التخصصية
+              {t.programs.h3}
             </h3>
             
             <div className="space-y-4 text-base sm:text-lg md:text-xl text-neutral-700 leading-relaxed">
-              <p>
-                تبدأ رحلتك التعليمية في كلية الشرق من خلال برامج أكاديمية تقنية متخصصة، صُممت لتزويد الطلبة بالمعرفة العلمية والمهارات العملية اللازمة، بما يواكب متطلبات سوق العمل المحلي والإقليمي.
-              </p>
-              
-              <p>
-                ومن خلال اعتماد مناهج تعليمية حديثة تجمع بين الجوانب النظرية والتطبيقية، توفر الكلية أساسًا علميًا رصينًا في تخصصاتها المختلفة، مع التركيز على تنمية مهارات التحليل والتفكير العلمي والعمل المهني، بما يُعدّ الطلبة لمسيرة أكاديمية ومهنية ناجحة في مجالاتهم التخصصية.
-              </p>
+              <p>{t.programs.p1}</p>
+              <p>{t.programs.p2}</p>
             </div>
 
             {/* زر عرض جميع البرامج */}
             <div className="mt-6 sm:mt-8">
               <Link
-                href="/programs"
+                href={`${base}/programs`}
                 className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm sm:text-base md:text-lg rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
               >
-                <span>عرض جميع البرامج</span>
+                <span>{t.programs.viewAll}</span>
                 <svg
                   className="w-4 h-4 sm:w-5 sm:h-5"
                   fill="none"
@@ -152,7 +155,7 @@ export default function ProgramsSection() {
             {departments.map((dept, index) => (
               <Link
                 key={dept.id}
-                href={`/departments/${dept.slug}`}
+                href={`${base}/departments/${dept.slug}`}
                 className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-[#31BD9C]/50"
                 style={{
                   animationDelay: `${index * 50}ms`,
@@ -162,7 +165,7 @@ export default function ProgramsSection() {
                 <div className="relative w-full h-40 md:h-36 lg:h-40 overflow-hidden">
                   <Image
                     src={dept.image}
-                    alt={dept.name}
+                    alt={deptName(dept.slug, dept.name)}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-125"
                     unoptimized
@@ -194,7 +197,7 @@ export default function ProgramsSection() {
 
                   {/* اسم القسم */}
                   <h3 className="text-sm sm:text-base md:text-lg font-bold text-neutral-900 mb-2 pr-10 group-hover:text-[#31BD9C] transition-colors duration-300 leading-tight line-clamp-2">
-                    {dept.name}
+                    {deptName(dept.slug, dept.name)}
                   </h3>
 
                   {/* خط فاصل */}
@@ -202,7 +205,7 @@ export default function ProgramsSection() {
 
                   {/* نص إضافي */}
                   <p className="text-xs sm:text-sm text-neutral-600 line-clamp-2">
-                    اكتشف المزيد عن برامج هذا القسم
+                    {t.programs.discover}
                   </p>
                 </div>
 

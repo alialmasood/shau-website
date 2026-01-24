@@ -8,10 +8,10 @@ function toInt(v: string | null, fallback: number) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-function formatArabicDate(iso: string | null) {
+function formatDate(iso: string | null, locale: "ar" | "en") {
   if (!iso) return "";
   try {
-    return new Intl.DateTimeFormat("ar-IQ", {
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-IQ" : "en-GB", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -24,7 +24,8 @@ function formatArabicDate(iso: string | null) {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get("q") ?? "").trim();
-  const category = (url.searchParams.get("category") ?? "").trim(); // Arabic label or empty
+  const category = (url.searchParams.get("category") ?? "").trim(); // Arabic label or empty (للتوافق مع الفلتر)
+  const locale = (url.searchParams.get("locale") === "en" ? "en" : "ar") as "ar" | "en";
   const page = toInt(url.searchParams.get("page"), 1);
   const pageSize = toInt(url.searchParams.get("pageSize"), 9);
 
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
     pageSize,
     q: q || null,
     categoryLabel: category || null,
+    locale,
   });
 
   return NextResponse.json({
@@ -44,7 +46,7 @@ export async function GET(request: Request) {
       title: n.title,
       excerpt: n.excerpt,
       categoryLabel: n.categoryLabel,
-      dateLabel: formatArabicDate(n.publishedAt),
+      dateLabel: formatDate(n.publishedAt, locale),
       coverImageId: n.coverImageId,
       featured: n.featured,
     })),

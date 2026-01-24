@@ -1,39 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
-// أسماء الصور
 const images = ["/hero-image-1.jpg", "/hero-image-2.jpg", "/hero-image-3.jpg"];
 
 export default function HeroSlider() {
   const pathname = usePathname();
-  const isEn = (pathname ?? "").startsWith("/en");
+  const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
+  const t = getTranslations(locale);
+  const isEn = locale === "en";
 
-  const t = useMemo(() => {
-    if (isEn) {
-      return {
-        imgAlt: (i: number) => `Image ${i + 1}`,
-        h2: "Welcome to Alsharq College for Specialized Technical Sciences",
-        h1: "We prepare future-ready technical professionals",
-        line1:
-          "Built on solid academic foundations and continuous alignment with modern technologies,",
-        line2:
-          "Alsharq College delivers an integrated, hands-on education that prepares capable graduates for society and the labor market.",
-        cta: "Get Started",
-      };
-    }
-    return {
-      imgAlt: (i: number) => `صورة ${i + 1}`,
-      h2: "مرحبًا بكم في كلية الشرق للعلوم التقنية التخصصية",
-      h1: "نُعِدُّ كوادر تقنية مؤهلة للمستقبل",
-      line1: "استنادًا إلى أسس علمية رصينة ومواكبة مستمرة للتطورات التقنية الحديثة،",
-      line2:
-        "تقدم كلية الشرق تعليمًا تطبيقيًا متكاملًا لإعداد كفاءات علمية قادرة على خدمة المجتمع وسوق العمل",
-      cta: "فلنبدأ",
-    };
-  }, [isEn]);
+  const imgAlt = (i: number) =>
+    (t.hero as { imgAlt?: string }).imgAlt?.replace("{n}", String(i + 1)) ??
+    (isEn ? `Image ${i + 1}` : `صورة ${i + 1}`);
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -59,7 +41,7 @@ export default function HeroSlider() {
           >
             <Image
               src={src}
-              alt={t.imgAlt(index)}
+              alt={imgAlt(index)}
               fill
               className="object-cover"
               priority={index === 0}
@@ -82,7 +64,7 @@ export default function HeroSlider() {
               isEn ? "text-left" : "text-right"
             }`}
           >
-            {t.h2}
+            {t.hero.h2}
           </h2>
 
           <p
@@ -90,7 +72,7 @@ export default function HeroSlider() {
               isEn ? "text-left" : "text-right"
             } -mt-2 md:-mt-3`}
           >
-            {t.h1}
+            {t.hero.h1}
           </p>
 
           <div className="pt-2 md:pt-4 border-t border-white/20">
@@ -99,22 +81,19 @@ export default function HeroSlider() {
                 isEn ? "text-left" : "text-right"
               } line-clamp-2 md:line-clamp-none`}
             >
-              <span className="block">{t.line1}</span>
+              <span className="block">{t.hero.line1}</span>
               <span className="block">
                 <span className="font-bold text-[#31BD9C]">
-                  {isEn ? "Alsharq College" : "كلية الشرق"}
+                  {t.hero.collegeName}
                 </span>{" "}
-                {t.line2.replace(
-                  isEn ? "Alsharq College" : "كلية الشرق",
-                  ""
-                )}
+                {t.hero.line2}
               </span>
             </p>
           </div>
 
           <div className={`pt-2 md:pt-4 flex ${isEn ? "justify-start" : "justify-start"}`}>
             <button className="h-9 md:h-11 w-auto px-4 md:px-6 py-2 md:py-2.5 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-xs md:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
-              {t.cta}
+              {t.hero.cta}
             </button>
           </div>
         </div>

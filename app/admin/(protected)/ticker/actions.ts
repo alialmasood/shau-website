@@ -19,6 +19,7 @@ function toNullableText(v: unknown) {
 
 export async function createTickerItem(formData: FormData) {
   const text = toText(formData.get("text"));
+  const textEn = toNullableText(formData.get("textEn"));
   const link = toNullableText(formData.get("link"));
   const isActive = formData.get("isActive") === "on";
   const sortOrderRaw = formData.get("sortOrder");
@@ -34,9 +35,9 @@ export async function createTickerItem(formData: FormData) {
   }
 
   await query(
-    `INSERT INTO ticker_items (text, link, is_active, sort_order, updated_at)
-     VALUES ($1, $2, $3, $4, NOW())`,
-    [text, link, isActive, finalSort]
+    `INSERT INTO ticker_items (text, text_en, link, is_active, sort_order, updated_at)
+     VALUES ($1, $2, $3, $4, $5, NOW())`,
+    [text, textEn, link, isActive, finalSort]
   );
 
   updateTag("ticker");
@@ -45,6 +46,7 @@ export async function createTickerItem(formData: FormData) {
 export async function updateTickerItem(formData: FormData) {
   const id = toText(formData.get("id"));
   const text = toText(formData.get("text"));
+  const textEn = toNullableText(formData.get("textEn"));
   const link = toNullableText(formData.get("link"));
   const isActive = formData.get("isActive") === "on";
   const sortOrder = toInt(formData.get("sortOrder"), 0);
@@ -53,9 +55,9 @@ export async function updateTickerItem(formData: FormData) {
 
   await query(
     `UPDATE ticker_items
-     SET text=$2, link=$3, is_active=$4, sort_order=$5, updated_at=NOW()
+     SET text=$2, text_en=$3, link=$4, is_active=$5, sort_order=$6, updated_at=NOW()
      WHERE id=$1`,
-    [id, text, link, isActive, sortOrder]
+    [id, text, textEn, link, isActive, sortOrder]
   );
 
   updateTag("ticker");

@@ -17,8 +17,11 @@ const categories: Array<{ label: string; value: CategoryCode }> = [
 
 export default function NewNewsForm() {
   const [title, setTitle] = useState("");
+  const [titleEn, setTitleEn] = useState("");
   const [excerpt, setExcerpt] = useState("");
+  const [excerptEn, setExcerptEn] = useState("");
   const [content, setContent] = useState("");
+  const [contentEn, setContentEn] = useState("");
   const [category, setCategory] = useState<CategoryCode>("SCIENTIFIC");
   const [published, setPublished] = useState(true);
   const [featured, setFeatured] = useState(false);
@@ -91,8 +94,11 @@ export default function NewNewsForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
+          titleEn: titleEn.trim() || null,
           excerpt: excerpt.trim() || null,
+          excerptEn: excerptEn.trim() || null,
           content,
+          contentEn: contentEn.trim() || null,
           category,
           published,
           featured,
@@ -109,8 +115,8 @@ export default function NewNewsForm() {
 
       setSuccess("تم إنشاء الخبر بنجاح.");
       const id = String(json.id);
-      // فتح صفحة الخبر العامة
-      window.location.href = `/news/${id}`;
+      // فتح صفحة الخبر العامة (العربية)
+      window.location.href = `/ar/${id}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
     } finally {
@@ -167,6 +173,41 @@ export default function NewNewsForm() {
           placeholder={"اكتب المحتوى...\nيمكنك استخدام:\n## عنوان فرعي\n### عنوان فرعي أصغر\nوفصل الفقرات بسطر فارغ."}
           required
         />
+      </div>
+
+      {/* الترجمة الإنجليزية (اختياري) — للإصدار الإنكليزي من الموقع */}
+      <div className="border-t border-neutral-200 pt-5 mt-2">
+        <h3 className="text-base font-bold text-neutral-800 mb-3">الترجمة الإنجليزية (اختياري)</h3>
+        <p className="text-xs text-neutral-500 mb-4">إن تُركت فارغة، سيُعرض النص العربي في الصفحة الإنجليزية كاحتياطي.</p>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-neutral-700 mb-2">عنوان الخبر (إنجليزي)</label>
+            <input
+              value={titleEn}
+              onChange={(e) => setTitleEn(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all"
+              placeholder="News title (English)..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-neutral-700 mb-2">ملخص قصير (إنجليزي)</label>
+            <textarea
+              value={excerptEn}
+              onChange={(e) => setExcerptEn(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all min-h-[70px]"
+              placeholder="Short excerpt (English)..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-neutral-700 mb-2">محتوى الخبر (إنجليزي)</label>
+            <textarea
+              value={contentEn}
+              onChange={(e) => setContentEn(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all min-h-[120px]"
+              placeholder="Content (English). Same markdown: ## and ###."
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

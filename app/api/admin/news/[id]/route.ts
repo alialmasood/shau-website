@@ -36,9 +36,12 @@ async function ensureUniqueSlugExcept(base: string, excludeId: string) {
 
 type UpdateNewsBody = {
   title?: string;
+  titleEn?: string | null;
   slug?: string | null;
   excerpt?: string | null;
+  excerptEn?: string | null;
   content?: string;
+  contentEn?: string | null;
   category?: "ADMINISTRATIVE" | "SCIENTIFIC" | "ACTIVITIES" | "ANNOUNCEMENTS" | null;
   published?: boolean;
   featured?: boolean;
@@ -62,7 +65,7 @@ export async function PATCH(
 
   // Fetch current row (for defaults + slug)
   const currentRes = await query(
-    `SELECT title, slug, is_published, publish_date
+    `SELECT title, title_en, slug, excerpt, excerpt_en, content, content_en, is_published, publish_date
      FROM news
      WHERE id=$1
      LIMIT 1`,
@@ -75,8 +78,11 @@ export async function PATCH(
   const current = currentRes.rows[0];
 
   const title = body.title !== undefined ? String(body.title).trim() : String(current.title);
+  const titleEn = body.titleEn !== undefined ? (body.titleEn ? String(body.titleEn).trim() : null) : undefined;
   const content = body.content !== undefined ? String(body.content).trim() : undefined;
+  const contentEn = body.contentEn !== undefined ? (body.contentEn ? String(body.contentEn).trim() : null) : undefined;
   const excerpt = body.excerpt !== undefined ? (body.excerpt ? String(body.excerpt).trim() : null) : undefined;
+  const excerptEn = body.excerptEn !== undefined ? (body.excerptEn ? String(body.excerptEn).trim() : null) : undefined;
   const category = body.category !== undefined ? body.category : undefined;
   const featured = body.featured !== undefined ? Boolean(body.featured) : undefined;
   const coverImageId = body.coverImageId !== undefined ? (body.coverImageId ? String(body.coverImageId) : null) : undefined;
@@ -167,7 +173,10 @@ export async function PATCH(
   sets.push(`updated_at=NOW()`);
 
   if (excerpt !== undefined) { sets.push(`excerpt=$${i++}`); values.push(excerpt); }
+  if (excerptEn !== undefined) { sets.push(`excerpt_en=$${i++}`); values.push(excerptEn); }
   if (content !== undefined) { sets.push(`content=$${i++}`); values.push(content); }
+  if (contentEn !== undefined) { sets.push(`content_en=$${i++}`); values.push(contentEn); }
+  if (titleEn !== undefined) { sets.push(`title_en=$${i++}`); values.push(titleEn); }
   if (category !== undefined) { sets.push(`category=$${i++}::"NewsCategory"`); values.push(category); }
   if (featured !== undefined) { sets.push(`featured=$${i++}`); values.push(featured); }
   if (coverImageId !== undefined) { sets.push(`cover_image_id=$${i++}`); values.push(coverImageId); }

@@ -11,7 +11,7 @@ export default function Home() {
     <div className="w-full">
       <HeroSlider />
       <GreenCard />
-      <NewsSection />
+      <NewsSection locale="ar" />
       <ProgramsSection />
       <InnovationSection />
       <TuitionFeesSection />

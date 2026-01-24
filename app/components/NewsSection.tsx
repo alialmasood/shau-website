@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getLatestPublishedNews } from "@/lib/newsRepo";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
-function formatArabicDate(iso: string | null) {
+function formatDate(iso: string | null, locale: Locale) {
   if (!iso) return "";
   try {
-    return new Intl.DateTimeFormat("ar-IQ", {
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-IQ" : "en-GB", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -15,15 +16,16 @@ function formatArabicDate(iso: string | null) {
   }
 }
 
-export default async function NewsSection() {
-  const items = await getLatestPublishedNews(4);
+export default async function NewsSection({ locale }: { locale: Locale }) {
+  const t = getTranslations(locale);
+  const items = await getLatestPublishedNews(4, locale);
   return (
     <section className="w-full bg-gradient-to-b from-white to-neutral-50 py-12 sm:py-16 md:py-20 lg:py-24">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* العنوان الرئيسي */}
         <div className="text-center mb-10 sm:mb-12 md:mb-16">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-4">
-            آخر الأخبار
+            {t.news.title}
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#31BD9C] to-[#2aa88a] mx-auto rounded-full"></div>
         </div>
@@ -33,7 +35,7 @@ export default async function NewsSection() {
           {items.map((news) => (
             <Link
               key={news.id}
-              href={`/news/${news.id}`}
+              href={`/${locale}/${news.id}`}
               className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-neutral-100 hover:border-[#31BD9C]/30 w-[48%] sm:w-[45%] md:w-auto md:min-w-0 snap-start flex-shrink-0"
             >
               {/* الشريط الملون من الأعلى */}
@@ -63,7 +65,7 @@ export default async function NewsSection() {
               <div className="p-5 sm:p-6">
                 {/* التاريخ */}
                 <p className="text-xs sm:text-sm text-[#31BD9C] font-medium mb-3">
-                  {formatArabicDate(news.publishedAt)}
+                  {formatDate(news.publishedAt, locale)}
                 </p>
 
                 {/* العنوان */}
@@ -78,7 +80,7 @@ export default async function NewsSection() {
 
                 {/* زر القراءة */}
                 <div className="flex items-center text-[#31BD9C] font-semibold text-sm group-hover:gap-2 transition-all duration-300">
-                  <span>اقرأ المزيد</span>
+                  <span>{t.news.readMore}</span>
                   <svg
                     className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300"
                     fill="none"
@@ -102,10 +104,10 @@ export default async function NewsSection() {
         {/* زر عرض المزيد */}
         <div className="text-center mt-10 sm:mt-12 md:mt-16">
           <Link
-            href="/news"
+            href={`/${locale}/news`}
             className="inline-flex items-center gap-2 px-8 py-4 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-base sm:text-lg rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
           >
-            <span>عرض جميع الأخبار</span>
+            <span>{t.news.viewAll}</span>
             <svg
               className="w-5 h-5"
               fill="none"

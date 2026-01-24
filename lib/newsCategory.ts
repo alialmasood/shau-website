@@ -19,6 +19,33 @@ export function categoryToArabic(cat: string | null) {
   }
 }
 
+export function categoryToEnglish(cat: string | null) {
+  switch (cat) {
+    case "ADMINISTRATIVE":
+      return "Administrative News";
+    case "SCIENTIFIC":
+      return "Scientific News";
+    case "ACTIVITIES":
+      return "Activities & Events";
+    case "ANNOUNCEMENTS":
+      return "Announcements";
+    default:
+      return "All";
+  }
+}
+
+/** ترجمة كود الفئة إلى النص حسب اللغة (للعرض في واجهة الأخبار فقط) */
+export function categoryCodeToLabel(code: string | null, locale: "ar" | "en") {
+  return locale === "en" ? categoryToEnglish(code) : categoryToArabic(code);
+}
+
+/** ترجمة التسمية العربية للفئة لعرضها في الفلاتر (قيمة الفلتر تبقى عربية للـ API) */
+export function categoryArabicToLabel(ar: string, locale: "ar" | "en") {
+  if (locale === "ar") return ar;
+  const code = arabicToCategoryCode(ar);
+  return code ? categoryToEnglish(code) : ar;
+}
+
 export function arabicToCategoryCode(label: string | null) {
   switch (label) {
     case "أخبار إدارية":

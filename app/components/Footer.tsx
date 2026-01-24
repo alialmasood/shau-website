@@ -1,10 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
+  const t = getTranslations(locale);
+  const linkLabel = (href: string, fallback: string) =>
+    (t.footer.links as Record<string, string>)?.[href] ?? fallback;
   const [email, setEmail] = useState("");
   const [visitorCount, setVisitorCount] = useState(1680);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,8 +62,7 @@ export default function Footer() {
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      // هنا يمكنك إضافة منطق الاشتراك
-      alert("شكراً لاشتراكك في النشرة البريدية!");
+      alert(t.footer.newsletter.thanks);
       setEmail("");
     }
   };
@@ -206,7 +212,7 @@ export default function Footer() {
                 <div className="relative w-32 h-24 sm:w-40 sm:h-30 md:w-56 md:h-42">
                   <Image
                     src="/Untitledoffffffff2 copy.png"
-                    alt="شعار كلية الشرق"
+                    alt={t.footer.logoAlt}
                     fill
                     className="object-contain"
                     priority
@@ -217,14 +223,14 @@ export default function Footer() {
               {/* النشرة البريدية */}
               <div className="w-full">
                 <h4 className="text-sm md:text-base font-semibold text-white mb-2 text-center lg:text-right">
-                  النشرة البريدية
+                  {t.footer.newsletter.title}
                 </h4>
                 <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="أدخل بريدك الإلكتروني"
+                    placeholder={t.footer.newsletter.placeholder}
                     className="w-full px-2.5 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-500 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all duration-300 text-sm md:text-base"
                     required
                   />
@@ -232,7 +238,7 @@ export default function Footer() {
                     type="submit"
                     className="w-full px-3 py-1.5 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 text-sm md:text-base whitespace-nowrap"
                   >
-                    اشترك
+                    {t.footer.newsletter.submit}
                   </button>
                 </form>
               </div>
@@ -241,7 +247,7 @@ export default function Footer() {
             {/* مواقع ذات صلة */}
             <div>
               <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
-                {footerLinks.relatedSites.title}
+                {t.footer.relatedSites.title}
               </h3>
               <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.relatedSites.links.map((link) => (
@@ -250,7 +256,7 @@ export default function Footer() {
                       href={link.href}
                       className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
-                      <span>{link.label}</span>
+                      <span>{linkLabel(link.href, link.label)}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
@@ -263,7 +269,7 @@ export default function Footer() {
             {/* تصنيفات الجامعة */}
             <div>
               <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
-                {footerLinks.rankings.title}
+                {t.footer.rankings.title}
               </h3>
               <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.rankings.links.map((link) => (
@@ -272,7 +278,7 @@ export default function Footer() {
                       href={link.href}
                       className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
-                      <span>{link.label}</span>
+                      <span>{linkLabel(link.href, link.label)}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
@@ -285,7 +291,7 @@ export default function Footer() {
             {/* الخدمات */}
             <div>
               <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
-                {footerLinks.services.title}
+                {t.footer.services.title}
               </h3>
               <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.services.links.map((link) => (
@@ -294,7 +300,7 @@ export default function Footer() {
                       href={link.href}
                       className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
-                      <span>{link.label}</span>
+                      <span>{linkLabel(link.href, link.label)}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
@@ -307,7 +313,7 @@ export default function Footer() {
             {/* الاكاديميين */}
             <div>
               <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
-                {footerLinks.academics.title}
+                {t.footer.academics.title}
               </h3>
               <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.academics.links.map((link) => (
@@ -316,7 +322,7 @@ export default function Footer() {
                       href={link.href}
                       className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
-                      <span>{link.label}</span>
+                      <span>{linkLabel(link.href, link.label)}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
@@ -329,7 +335,7 @@ export default function Footer() {
             {/* البحث العلمي */}
             <div>
               <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
-                {footerLinks.research.title}
+                {t.footer.research.title}
               </h3>
               <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.research.links.map((link) => (
@@ -338,7 +344,7 @@ export default function Footer() {
                       href={link.href}
                       className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
-                      <span>{link.label}</span>
+                      <span>{linkLabel(link.href, link.label)}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
@@ -351,7 +357,7 @@ export default function Footer() {
             {/* اخبار كلية الشرق */}
             <div>
               <h3 className="text-sm md:text-base lg:text-lg font-bold text-white mb-3 md:mb-4">
-                {footerLinks.news.title}
+                {t.footer.news.title}
               </h3>
               <ul className="space-y-1.5 md:space-y-2">
                 {footerLinks.news.links.map((link) => (
@@ -360,7 +366,7 @@ export default function Footer() {
                       href={link.href}
                       className="text-xs sm:text-sm md:text-base text-neutral-400 hover:text-[#31BD9C] transition-colors duration-300 flex items-center gap-1.5 group"
                     >
-                      <span>{link.label}</span>
+                      <span>{linkLabel(link.href, link.label)}</span>
                       <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
@@ -371,7 +377,7 @@ export default function Footer() {
               {/* عدد الزوار - تحت الندوات وورش العمل */}
               <div className="mt-4 pt-4 border-t border-neutral-800">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm text-neutral-400">عدد الزوار:</span>
+                  <span className="text-xs sm:text-sm text-neutral-400">{t.footer.visitors}</span>
                   {isLoading ? (
                     <span className="text-sm sm:text-base font-bold text-[#31BD9C]">...</span>
                   ) : (
@@ -392,13 +398,13 @@ export default function Footer() {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6">
             {/* جميع الحقوق محفوظة - على اليسار */}
             <div className="text-xs sm:text-sm text-neutral-400 text-center lg:text-right order-3 lg:order-1">
-              © {new Date().getFullYear()} كلية الشرق للعلوم التقنية التخصصية – جميع الحقوق محفوظة
+              {t.footer.copyright.replace("{year}", String(new Date().getFullYear()))}
             </div>
 
             {/* أزرار التواصل الاجتماعي - في الوسط */}
             <div className="flex-shrink-0 flex items-center gap-2 lg:gap-3 order-1 lg:order-2">
               <h4 className="text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
-                تابعنا على
+                {t.footer.followUs}
               </h4>
               <div className="flex flex-wrap justify-center lg:justify-end gap-1.5">
                 {socialLinks.map((social) => (
@@ -418,7 +424,7 @@ export default function Footer() {
 
             {/* العنوان - على اليمين */}
             <div className="text-xs sm:text-sm text-neutral-400 text-center lg:text-left order-2 lg:order-3">
-              البصرة - حي الزيتون - طريق حمدان الجديد - قرب مجلس المحافظة
+              {t.footer.address}
             </div>
           </div>
         </div>

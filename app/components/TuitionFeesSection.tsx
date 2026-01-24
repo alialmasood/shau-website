@@ -1,118 +1,34 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { getTranslations, type Locale } from "@/lib/i18n";
 
 // بيانات الأقسام مع الرسوم
 const departments = [
-  {
-    id: 1,
-    name: "قسم تقنيات صناعة الاسنان",
-    image: "/hero-image-1.jpg",
-    admissionType: "أحيائي",
-    morningPrice: "2,500,000",
-    eveningPrice: "1,800,000",
-    morningMinGPA: "75%",
-    eveningMinGPA: "70%",
-  },
-  {
-    id: 2,
-    name: "قسم تقنيات التخدير",
-    image: "/hero-image-2.jpg",
-    admissionType: "أحيائي",
-    morningPrice: "2,400,000",
-    eveningPrice: "1,750,000",
-    morningMinGPA: "74%",
-    eveningMinGPA: "69%",
-  },
-  {
-    id: 3,
-    name: "قسم تقنيات الاشعة",
-    image: "/hero-image-3.jpg",
-    admissionType: "أحيائي",
-    morningPrice: "2,600,000",
-    eveningPrice: "1,900,000",
-    morningMinGPA: "76%",
-    eveningMinGPA: "71%",
-  },
-  {
-    id: 4,
-    name: "قسم تقنيات البصريات",
-    image: "/hero-image-1.jpg",
-    admissionType: "أحيائي",
-    morningPrice: "2,300,000",
-    eveningPrice: "1,700,000",
-    morningMinGPA: "73%",
-    eveningMinGPA: "68%",
-  },
-  {
-    id: 5,
-    name: "قسم تقنيات طب الطوارئ والاسعافات الاولية",
-    image: "/hero-image-2.jpg",
-    admissionType: "أحيائي",
-    morningPrice: "2,550,000",
-    eveningPrice: "1,850,000",
-    morningMinGPA: "75%",
-    eveningMinGPA: "70%",
-  },
-  {
-    id: 6,
-    name: "قسم تقنيات العلاج الطبيعي",
-    image: "/hero-image-3.jpg",
-    admissionType: "أحيائي",
-    morningPrice: "2,450,000",
-    eveningPrice: "1,800,000",
-    morningMinGPA: "74%",
-    eveningMinGPA: "69%",
-  },
-  {
-    id: 7,
-    name: "قسم هندسة تقنيات الفيزياء الصحية والعلاج الاشعاعي",
-    image: "/hero-image-1.jpg",
-    admissionType: "تطبيقي",
-    morningPrice: "2,700,000",
-    eveningPrice: "1,950,000",
-    morningMinGPA: "77%",
-    eveningMinGPA: "72%",
-  },
-  {
-    id: 8,
-    name: "قسم هندسة تقنيات النفط والغاز",
-    image: "/hero-image-2.jpg",
-    admissionType: "تطبيقي",
-    morningPrice: "2,800,000",
-    eveningPrice: "2,000,000",
-    morningMinGPA: "78%",
-    eveningMinGPA: "73%",
-  },
-  {
-    id: 9,
-    name: "قسم هندسة تقنيات الامن السيبراني والحوسبة السحابية",
-    image: "/hero-image-3.jpg",
-    admissionType: "علمي",
-    morningPrice: "2,900,000",
-    eveningPrice: "2,100,000",
-    morningMinGPA: "80%",
-    eveningMinGPA: "75%",
-  },
-  {
-    id: 10,
-    name: "قسم هندسة تقنيات البناء والانشاءات",
-    image: "/hero-image-1.jpg",
-    admissionType: "إعدادية صناعة",
-    morningPrice: "2,600,000",
-    eveningPrice: "1,900,000",
-    morningMinGPA: "76%",
-    eveningMinGPA: "71%",
-  },
+  { id: 1, slug: "dental-technology", name: "قسم تقنيات صناعة الاسنان", image: "/hero-image-1.jpg", admissionKey: "biological" as const, morningPrice: "2,500,000", eveningPrice: "1,800,000", morningMinGPA: "75%", eveningMinGPA: "70%" },
+  { id: 2, slug: "anesthesia-technology", name: "قسم تقنيات التخدير", image: "/hero-image-2.jpg", admissionKey: "biological" as const, morningPrice: "2,400,000", eveningPrice: "1,750,000", morningMinGPA: "74%", eveningMinGPA: "69%" },
+  { id: 3, slug: "radiology-technology", name: "قسم تقنيات الاشعة", image: "/hero-image-3.jpg", admissionKey: "biological" as const, morningPrice: "2,600,000", eveningPrice: "1,900,000", morningMinGPA: "76%", eveningMinGPA: "71%" },
+  { id: 4, slug: "optics-technology", name: "قسم تقنيات البصريات", image: "/hero-image-1.jpg", admissionKey: "biological" as const, morningPrice: "2,300,000", eveningPrice: "1,700,000", morningMinGPA: "73%", eveningMinGPA: "68%" },
+  { id: 5, slug: "emergency-medicine", name: "قسم تقنيات طب الطوارئ والاسعافات الاولية", image: "/hero-image-2.jpg", admissionKey: "biological" as const, morningPrice: "2,550,000", eveningPrice: "1,850,000", morningMinGPA: "75%", eveningMinGPA: "70%" },
+  { id: 6, slug: "physical-therapy", name: "قسم تقنيات العلاج الطبيعي", image: "/hero-image-3.jpg", admissionKey: "biological" as const, morningPrice: "2,450,000", eveningPrice: "1,800,000", morningMinGPA: "74%", eveningMinGPA: "69%" },
+  { id: 7, slug: "medical-physics-radiotherapy", name: "قسم هندسة تقنيات الفيزياء الصحية والعلاج الاشعاعي", image: "/hero-image-1.jpg", admissionKey: "applied" as const, morningPrice: "2,700,000", eveningPrice: "1,950,000", morningMinGPA: "77%", eveningMinGPA: "72%" },
+  { id: 8, slug: "oil-gas-engineering", name: "قسم هندسة تقنيات النفط والغاز", image: "/hero-image-2.jpg", admissionKey: "applied" as const, morningPrice: "2,800,000", eveningPrice: "2,000,000", morningMinGPA: "78%", eveningMinGPA: "73%" },
+  { id: 9, slug: "cybersecurity-cloud-computing", name: "قسم هندسة تقنيات الامن السيبراني والحوسبة السحابية", image: "/hero-image-3.jpg", admissionKey: "scientific" as const, morningPrice: "2,900,000", eveningPrice: "2,100,000", morningMinGPA: "80%", eveningMinGPA: "75%" },
+  { id: 10, slug: "construction-engineering", name: "قسم هندسة تقنيات البناء والانشاءات", image: "/hero-image-1.jpg", admissionKey: "industry" as const, morningPrice: "2,600,000", eveningPrice: "1,900,000", morningMinGPA: "76%", eveningMinGPA: "71%" },
 ];
 
 export default function TuitionFeesSection() {
-  // تكرار البطاقات مرتين لضمان loop مستمر بدون فراغ
-  // مهم: يجب أن تكون مكررة مرتين بالضبط للحركة الدائرية
+  const pathname = usePathname();
+  const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
+  const t = getTranslations(locale);
+  const deptName = (slug: string, fallback: string) =>
+    (t.programs.dept as Record<string, string>)?.[slug] ?? fallback;
+  const admissionLabel = (k: "biological"|"applied"|"scientific"|"industry") =>
+    (t.tuition.admissionType as Record<string, string>)?.[k] ?? k;
   const duplicatedDepartments = [...departments, ...departments];
-  
-  // State لإدارة السحب باليد
+
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -191,7 +107,7 @@ export default function TuitionFeesSection() {
         {/* العنوان */}
         <div className="text-center mb-8 sm:mb-10 md:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-            الرسوم الدراسية
+            {t.tuition.title}
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#31BD9C] to-[#2aa88a] mx-auto rounded-full"></div>
         </div>
@@ -201,12 +117,12 @@ export default function TuitionFeesSection() {
           <a
             href="/tuition-fees-guide"
             className="inline-flex items-center gap-2 w-full md:w-auto px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 justify-center"
-            aria-label="تحميل دليل الرسوم"
+            aria-label={t.tuition.downloadAria}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <span>تحميل دليل الرسوم PDF</span>
+            <span>{t.tuition.downloadGuide}</span>
           </a>
         </div>
       </div>
@@ -247,7 +163,7 @@ export default function TuitionFeesSection() {
                 <div className="relative w-full h-24 sm:h-28 overflow-hidden">
                   <Image
                     src={dept.image}
-                    alt={dept.name}
+                    alt={deptName(dept.slug, dept.name)}
                     fill
                     className="object-cover"
                     unoptimized
@@ -259,37 +175,37 @@ export default function TuitionFeesSection() {
                 <div className="p-4 sm:p-5 flex-1 flex flex-col">
                   {/* اسم القسم */}
                   <h3 className="text-base sm:text-lg font-bold text-neutral-900 mb-2.5 leading-tight line-clamp-2 min-h-[3rem]">
-                    {dept.name}
+                    {deptName(dept.slug, dept.name)}
                   </h3>
 
                   {/* نوع القبول - Pill صغير */}
                   <div className="mb-3">
                     <span className="inline-block px-2.5 py-1 bg-[#31BD9C] text-white text-xs font-semibold rounded-full">
-                      {dept.admissionType}
+                      {admissionLabel(dept.admissionKey)}
                     </span>
                   </div>
 
                   {/* السعر */}
                   <div className="space-y-1.5 mb-3">
                     <div className="flex items-center justify-between p-2.5 bg-blue-50 rounded-lg">
-                      <span className="text-xs font-medium text-neutral-700">صباحي</span>
-                      <span className="text-sm font-bold text-[#31BD9C]">{dept.morningPrice} د.ع</span>
+                      <span className="text-xs font-medium text-neutral-700">{t.tuition.morning}</span>
+                      <span className="text-sm font-bold text-[#31BD9C]">{dept.morningPrice} {t.tuition.currency}</span>
                     </div>
                     <div className="flex items-center justify-between p-2.5 bg-green-50 rounded-lg">
-                      <span className="text-xs font-medium text-neutral-700">مسائي</span>
-                      <span className="text-sm font-bold text-[#31BD9C]">{dept.eveningPrice} د.ع</span>
+                      <span className="text-xs font-medium text-neutral-700">{t.tuition.evening}</span>
+                      <span className="text-sm font-bold text-[#31BD9C]">{dept.eveningPrice} {t.tuition.currency}</span>
                     </div>
                   </div>
 
                   {/* الحد الأدنى للمعدل */}
                   <div className="mt-auto pt-3 border-t border-neutral-200">
-                    <p className="text-[10px] text-neutral-600 mb-1.5">الحد الأدنى لمعدل القبول:</p>
+                    <p className="text-[10px] text-neutral-600 mb-1.5">{t.tuition.minGPAHint}</p>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-neutral-600">صباحي:</span>
+                      <span className="text-neutral-600">{t.tuition.morning}:</span>
                       <span className="font-bold text-neutral-900">{dept.morningMinGPA}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs mt-0.5">
-                      <span className="text-neutral-600">مسائي:</span>
+                      <span className="text-neutral-600">{t.tuition.evening}:</span>
                       <span className="font-bold text-neutral-900">{dept.eveningMinGPA}</span>
                     </div>
                   </div>
