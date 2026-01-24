@@ -84,7 +84,6 @@ export default function SocialShare({ title, className }: Props) {
 
   const links = useMemo(() => {
     const url = href ? encodeURIComponent(href) : "";
-    const text = encodeURIComponent(title);
 
     return [
       {
@@ -96,17 +95,17 @@ export default function SocialShare({ title, className }: Props) {
       {
         key: "whatsapp",
         label: "WhatsApp",
-        href: href ? `https://wa.me/?text=${encodeURIComponent(`${title} - ${href}`)}` : "",
+        href: href ? `https://wa.me/?text=${url}` : "",
         icon: <WhatsAppIcon />,
       },
       {
         key: "telegram",
         label: "Telegram",
-        href: href ? `https://t.me/share/url?url=${url}&text=${text}` : "",
+        href: href ? `https://t.me/share/url?url=${url}&text=` : "",
         icon: <TelegramIcon />,
       },
     ];
-  }, [href, title]);
+  }, [href]);
 
   const copyBtnClass =
     "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-700 transition-all duration-300 shadow-sm " +
