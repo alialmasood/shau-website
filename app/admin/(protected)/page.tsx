@@ -61,18 +61,18 @@ export default async function AdminDashboardPage() {
       <h2 className="text-xl font-bold text-neutral-900">ملخص سريع</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => {
-          const Wrapper = c.href ? Link : "div";
-          const wrapperProps = c.href ? { href: c.href } : {};
-          return (
-            <Wrapper
-              key={c.title}
-              {...wrapperProps}
-              className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3"
-            >
+          const cn = "rounded-xl border border-neutral-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3";
+          const inner = (
+            <>
               <span className="text-neutral-400">{c.icon}</span>
               <p className={`font-extrabold text-neutral-900 ${c.title === "آخر تحديث" ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl"}`}>{c.value}</p>
               <p className="text-sm font-medium text-neutral-500">{c.title}</p>
-            </Wrapper>
+            </>
+          );
+          return c.href ? (
+            <Link key={c.title} href={c.href} className={cn}>{inner}</Link>
+          ) : (
+            <div key={c.title} className={cn}>{inner}</div>
           );
         })}
       </div>
