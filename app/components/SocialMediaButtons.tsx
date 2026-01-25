@@ -72,8 +72,8 @@ export default async function SocialMediaButtons({ className = "", size = "defau
   if (links.length === 0) return null;
 
   const btnCls = size === "sm" 
-    ? "w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#31BD9C] hover:bg-[#2aa88a] text-white flex items-center justify-center transition-all duration-300 hover:scale-110"
-    : "w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#31BD9C] hover:bg-[#2aa88a] text-white flex items-center justify-center transition-all duration-300 hover:scale-110";
+    ? "w-8 h-8 rounded-full bg-[#31BD9C] hover:bg-[#2aa88a] text-white flex items-center justify-center transition-all duration-300 hover:scale-110 flex-shrink-0"
+    : "w-9 h-9 rounded-full bg-[#31BD9C] hover:bg-[#2aa88a] text-white flex items-center justify-center transition-all duration-300 hover:scale-110 flex-shrink-0";
 
   const containerCls = direction === "column"
     ? `flex flex-col gap-2 items-center ${className}`

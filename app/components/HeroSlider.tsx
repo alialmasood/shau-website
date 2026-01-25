@@ -108,9 +108,9 @@ export default function HeroSlider({ socialButtons }: HeroSliderProps) {
         </div>
       </div>
 
-      {/* أزرار السوشيال ميديا (من قاعدة البيانات) — عمودي على الجانب الأيسر */}
+      {/* أزرار السوشيال ميديا (من قاعدة البيانات) — عمودي على الجانب الأيسر، تظهر على الموبايل والديسكتوب */}
       {socialButtons && (
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30">
+        <div className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-30 flex flex-col gap-2 p-2 rounded-xl bg-black/25 backdrop-blur-sm max-md:bg-black/35">
           {socialButtons}
         </div>
       )}

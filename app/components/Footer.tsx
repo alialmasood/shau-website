@@ -322,8 +322,8 @@ export default function Footer({ socialButtons }: FooterProps) {
         </div>
       </div>
 
-      {/* الفوتر الإضافي */}
-      <div className="w-full pt-1.5 sm:pt-2 md:pt-2.5 pb-0" style={{ paddingBottom: 0, marginBottom: 0 }}>
+      {/* الفوتر الإضافي — pb-20 على الموبايل لئلا يغطي الزر العائم (قدم الآن/واتساب) أزرار السوشيال */}
+      <div className="w-full pt-1.5 sm:pt-2 md:pt-2.5 pb-20 md:pb-0" style={{ marginBottom: 0 }}>
         <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6">
             {/* جميع الحقوق محفوظة - على اليسار */}
@@ -331,12 +331,12 @@ export default function Footer({ socialButtons }: FooterProps) {
               {t.footer.copyright.replace("{year}", String(new Date().getFullYear()))}
             </div>
 
-            {/* أزرار التواصل الاجتماعي - في الوسط (من قاعدة البيانات) */}
-            <div className="flex-shrink-0 flex items-center gap-2 lg:gap-3 order-1 lg:order-2">
+            {/* أزرار التواصل الاجتماعي - في الوسط (من قاعدة البيانات)، تظهر على الموبايل والديسكتوب */}
+            <div className="flex-shrink-0 flex items-center justify-center md:justify-start gap-2 lg:gap-3 order-1 lg:order-2 flex-wrap">
               <h4 className="text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
                 {t.footer.followUs}
               </h4>
-              <div className="flex flex-wrap justify-center lg:justify-end gap-1.5">
+              <div className="flex flex-wrap justify-center lg:justify-end gap-1.5 items-center">
                 {socialButtons}
               </div>
             </div>
