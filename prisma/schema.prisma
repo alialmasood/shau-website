@@ -138,25 +138,25 @@ model DepartmentFee {
   display_name_en      String?          @map("display_name_en") @db.VarChar(250)
   categories           Json             @default("[]") @map("categories")
   cardImageId          String?          @map("card_image_id") @db.Uuid
-  brief                String?          @db.VarChar(500)
-  brief_en             String?          @map("brief_en") @db.VarChar(500)
+  brief                String?          @db.Text
+  brief_en             String?          @map("brief_en") @db.Text
   morning_price        Decimal          @map("morning_price") @db.Decimal(14, 0)
   evening_price        Decimal          @map("evening_price") @db.Decimal(14, 0)
   currency             String           @default("د.ع") @db.VarChar(20)
   registration_fee     Decimal?         @map("registration_fee") @db.Decimal(14, 0)
-  extra_fees           String?          @map("extra_fees") @db.VarChar(400)
-  extra_fees_en        String?          @map("extra_fees_en") @db.VarChar(400)
-  fees_notes           String?          @map("fees_notes") @db.VarChar(500)
-  fees_notes_en        String?          @map("fees_notes_en") @db.VarChar(500)
+  extra_fees           String?          @map("extra_fees") @db.Text
+  extra_fees_en        String?          @map("extra_fees_en") @db.Text
+  fees_notes           String?          @map("fees_notes") @db.Text
+  fees_notes_en        String?          @map("fees_notes_en") @db.Text
   morning_min_gpa      Decimal          @map("morning_min_gpa") @db.Decimal(5, 2)
   evening_min_gpa      Decimal          @map("evening_min_gpa") @db.Decimal(5, 2)
-  admission_notes      String?          @map("admission_notes") @db.VarChar(500)
-  admission_notes_en   String?          @map("admission_notes_en") @db.VarChar(500)
+  admission_notes      String?          @map("admission_notes") @db.Text
+  admission_notes_en   String?          @map("admission_notes_en") @db.Text
   show_apply_button    Boolean          @default(true) @map("show_apply_button")
   apply_types          Json             @default("[]") @map("apply_types")
-  apply_url            String?          @map("apply_url") @db.VarChar(500)
-  apply_url_external   String?          @map("apply_url_external") @db.VarChar(500)
-  apply_url_whatsapp  String?          @map("apply_url_whatsapp") @db.VarChar(500)
+  apply_url            String?          @map("apply_url") @db.Text
+  apply_url_external   String?          @map("apply_url_external") @db.Text
+  apply_url_whatsapp  String?          @map("apply_url_whatsapp") @db.Text
   apply_button_text    String?          @map("apply_button_text") @db.VarChar(120)
   apply_button_text_en String?          @map("apply_button_text_en") @db.VarChar(120)
   required_docs        Json?            @map("required_docs")
