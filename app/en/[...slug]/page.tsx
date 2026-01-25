@@ -1,5 +1,12 @@
-export default function EnCatchAllPage({ params }: { params: { slug?: string[] } }) {
-  const path = (params.slug ?? []).join("/");
+import { redirect } from "next/navigation";
+
+export default async function EnCatchAllPage({ params }: { params: Promise<{ slug?: string[] }> }) {
+  const { slug } = await params;
+  const path = (slug ?? []).join("/");
+
+  if (Array.isArray(slug) && slug[0] === "programs" && slug[1]) {
+    redirect(`/en/programs/${slug[1]}`);
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-10">

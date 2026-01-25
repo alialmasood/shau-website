@@ -1,5 +1,13 @@
-export default function ArCatchAllPage({ params }: { params: { slug?: string[] } }) {
-  const path = (params.slug ?? []).join("/");
+import { redirect } from "next/navigation";
+
+export default async function ArCatchAllPage({ params }: { params: Promise<{ slug?: string[] }> }) {
+  const { slug } = await params;
+  const path = (slug ?? []).join("/");
+
+  // إذا كان المسار programs/xxx فيجب أن تخدمه ar/programs/[slug] — إعادة توجيه لتفادي عرض "قيد الإعداد"
+  if (Array.isArray(slug) && slug[0] === "programs" && slug[1]) {
+    redirect(`/ar/programs/${slug[1]}`);
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-10">

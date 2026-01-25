@@ -7,12 +7,14 @@ import { getTranslations, type Locale } from "@/lib/i18n";
 
 export type ProgramItem = { id: string; slug: string; name: string; image: string };
 
+type Props = { items?: ProgramItem[]; base?: string };
+
 /** البطاقات تأتي من جدول programs في قاعدة البيانات (إدارة برامج الكلية) */
-export default function ProgramsSection({ items }: { items?: ProgramItem[] }) {
+export default function ProgramsSection({ items, base: baseProp }: Props) {
   const pathname = usePathname();
-  const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
+  const locale: Locale = baseProp ? (baseProp === "/en" ? "en" : "ar") : ((pathname ?? "").startsWith("/en") ? "en" : "ar");
   const t = getTranslations(locale);
-  const base = locale === "ar" ? "/ar" : "/en";
+  const base = baseProp ?? (locale === "ar" ? "/ar" : "/en");
   const list = items ?? [];
   const tp = (t as { programsPage?: Record<string, string> }).programsPage ?? {};
   return (

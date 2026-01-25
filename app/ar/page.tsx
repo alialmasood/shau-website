@@ -53,7 +53,7 @@ export default async function Home() {
       <HeroSlider />
       <GreenCard />
       <NewsSection locale="ar" />
-      <ProgramsSection items={programItems} />
+      <ProgramsSection items={programItems} base="/ar" />
       <InnovationSection />
       <TuitionFeesSection items={tuitionItems} />
       <ContactSection />

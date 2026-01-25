@@ -53,7 +53,7 @@ export default async function HomeEn() {
       <HeroSlider />
       <GreenCard />
       <NewsSection locale="en" />
-      <ProgramsSection items={programItems} />
+      <ProgramsSection items={programItems} base="/en" />
       <InnovationSection />
       <TuitionFeesSection items={tuitionItems} />
       <ContactSection />
