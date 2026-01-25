@@ -133,6 +133,7 @@ const navItems = [
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openMobileMenus, setOpenMobileMenus] = useState<Set<string>>(new Set());
   const pathname = usePathname();
   const router = useRouter();
 
@@ -157,6 +158,15 @@ export default function Header() {
   
     // أي رابط داخلي
     return `${localePrefix}${href}`;
+  };
+
+  const toggleMobileSubmenu = (key: string) => {
+    setOpenMobileMenus((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   };
   
   
@@ -191,27 +201,21 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) setOpenMobileMenus(new Set());
+  }, [mobileMenuOpen]);
+
   return (
     <header className="sticky top-0 z-[100] w-full bg-white shadow-sm border-b border-neutral-200 overflow-x-hidden overflow-y-visible md:overflow-visible">
-      <div className="w-full px-4 md:pr-8 md:pl-10 lg:pr-10 lg:pl-14 xl:pr-12 xl:pl-20 overflow-visible">
-        <div className="flex items-center justify-between h-16 md:h-20 lg:h-24 gap-2 sm:gap-3 md:gap-4">
+      <div className="w-full px-4 md:px-10 overflow-visible">
+        <div className="flex items-center justify-between h-14 md:h-20 lg:h-24 gap-2 sm:gap-3 md:gap-4">
           
           {/* المنطقة 1: الشعار (Logo) - اليسار - ثابت لا ينضغط */}
           <div 
-            className="flex items-center justify-center shrink whitespace-nowrap overflow-hidden max-w-[220px] sm:max-w-[260px] md:max-w-[320px] md:min-w-[320px] md:w-[320px] md:shrink-0"
+            className="flex items-center justify-center shrink-0 whitespace-nowrap overflow-hidden max-w-[240px] sm:max-w-[280px] md:max-w-[320px] md:min-w-[320px] md:w-[320px]"
           >
             <Link href={localePrefix} className="flex items-center justify-center w-full h-full">
-              <div 
-                className="relative flex items-center justify-center overflow-visible h-10 md:h-auto w-auto"
-                style={{
-                  width: '140px',
-                  height: '112px',
-                  maxWidth: '140px',
-                  maxHeight: '112px',
-                  transform: 'scale(2.15)',
-                  transformOrigin: 'center center'
-                }}
-              >
+              <div className="relative flex items-center justify-center overflow-visible h-14 w-32 md:h-20 md:w-44 lg:h-24 lg:w-60 xl:h-24 xl:w-64">
                 <Image
                   src="/Untit4545led-1.png"
                   alt={t.header.logoAlt}
@@ -219,7 +223,7 @@ export default function Header() {
                   className="object-contain object-center"
                   priority
                   unoptimized
-                  sizes="(max-width: 640px) 70px, (max-width: 768px) 90px, (max-width: 1024px) 110px, 140px"
+                  sizes="(max-width: 640px) 128px, (max-width: 768px) 176px, (max-width: 1024px) 240px, 256px"
                 />
               </div>
             </Link>
@@ -510,9 +514,9 @@ export default function Header() {
               </svg>
             </button>
 
-            {/* Language Switcher Button - كبسولة */}
-            <div className="hidden sm:flex items-center">
-              <div className="h-6 w-px bg-gradient-to-b from-transparent via-neutral-300 to-transparent mx-2"></div>
+            {/* Language Switcher Button - كبسولة (يظهر في الموبايل والديسكتوب) */}
+            <div className="flex items-center">
+              <div className="hidden sm:block h-6 w-px bg-gradient-to-b from-transparent via-neutral-300 to-transparent mx-2"></div>
               <button
                 onClick={toggleLanguage}
                 className="group relative flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#31BD9C] hover:bg-[#2aa88a] text-white transition-all duration-300 ease-in-out shadow-md hover:shadow-lg hover:shadow-[#31BD9C]/30 focus:outline-none focus:ring-2 focus:ring-[#31BD9C] focus:ring-offset-2"
@@ -576,33 +580,96 @@ export default function Header() {
           </div>
         </div>
 
-        {/* القائمة المنسدلة للهواتف المحمولة والشاشات المتوسطة */}
+        {/* القائمة المنسدلة للهواتف المحمولة — مع القوائم المنبثقة */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200">
-            <nav className="flex flex-col py-4">
-              {navItems.map((item) => (
-                item.external ? (
-                  <a
-                    key={item.href}
-                    href={toLocaleHref(item.href)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {getNavLabel(item.href, item.label, item.external)}
-                  </a>
-                ) : (
+          <div className="md:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200 max-h-[70vh] overflow-y-auto">
+            <nav className="flex flex-col py-2">
+              {navItems.map((item) => {
+                if (item.external) {
+                  return (
+                    <a
+                      key={item.href}
+                      href={toLocaleHref(item.href)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors border-b border-neutral-100"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {getNavLabel(item.href, item.label, true)}
+                    </a>
+                  );
+                }
+                if (item.submenu) {
+                  const isOpen = openMobileMenus.has(item.href);
+                  return (
+                    <div key={item.href} className="border-b border-neutral-100">
+                      <button
+                        type="button"
+                        onClick={() => toggleMobileSubmenu(item.href)}
+                        className="w-full px-4 py-3 text-start text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors flex items-center justify-between gap-2"
+                      >
+                        {getNavLabel(item.href, item.label)}
+                        <svg className={`w-4 h-4 flex-shrink-0 text-neutral-500 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                      {isOpen && (
+                        <div className="bg-neutral-50/60 pb-2 flex flex-col">
+                          {(item.submenu as { label: string; href: string; submenu?: unknown[] }[]).map((sub) => {
+                            if (sub.submenu && sub.submenu.length > 0) {
+                              const subOpen = openMobileMenus.has(sub.href);
+                              return (
+                                <div key={sub.href} className="border-b border-neutral-100/80 last:border-b-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleMobileSubmenu(sub.href)}
+                                    className="w-full px-6 py-2.5 text-start text-sm font-medium text-neutral-600 hover:bg-neutral-100/80 transition-colors flex items-center justify-between gap-2"
+                                  >
+                                    {getNavLabel(sub.href, sub.label)}
+                                    <svg className={`w-3.5 h-3.5 flex-shrink-0 text-neutral-400 transition-transform ${subOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                  </button>
+                                  {subOpen && (
+                                    <div className="ps-6 pe-4 pb-2 flex flex-col gap-0.5">
+                                      {(sub.submenu as { label: string; href: string }[]).map((nested) => (
+                                        <Link
+                                          key={nested.href}
+                                          href={toLocaleHref(nested.href)}
+                                          className="py-2 text-sm text-neutral-600 hover:text-[#31BD9C] transition-colors block text-start"
+                                          onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                          {getNavLabel(nested.href, nested.label)}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return (
+                              <Link
+                                key={sub.href}
+                                href={toLocaleHref(sub.href)}
+                                className="px-6 py-2.5 text-sm font-medium text-neutral-600 hover:text-[#31BD9C] hover:bg-neutral-100/80 transition-colors block text-start"
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                {getNavLabel(sub.href, sub.label)}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return (
                   <Link
                     key={item.href}
                     href={toLocaleHref(item.href)}
-                    className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 border-b border-neutral-100 last:border-b-0"
+                    className="px-4 py-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors border-b border-neutral-100"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    {getNavLabel(item.href, item.label, item.external)}
+                    {getNavLabel(item.href, item.label)}
                   </Link>
-                )
-              ))}
+                );
+              })}
             </nav>
           </div>
         )}

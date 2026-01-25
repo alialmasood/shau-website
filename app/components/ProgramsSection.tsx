@@ -92,9 +92,9 @@ export default function ProgramsSection({ items, base: baseProp }: Props) {
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-[#31BD9C] transform -translate-x-1/2 -translate-x-0.5"></div>
 
           {/* الخانة الثانية: بطاقات البرامج (من قاعدة البيانات) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pl-0 lg:pl-8 order-1 lg:order-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pl-0 lg:pl-8 order-1 lg:order-2">
             {list.length === 0 ? (
-              <div className="md:col-span-2 py-8 text-center text-neutral-500 rounded-2xl border border-dashed border-neutral-200">
+              <div className="md:col-span-2 lg:col-span-3 py-8 text-center text-neutral-500 rounded-2xl border border-dashed border-neutral-200">
                 {tp.noPrograms ?? (locale === "ar" ? "لا توجد برامج متاحة." : "No programs available.")}
               </div>
             ) : (
@@ -105,7 +105,7 @@ export default function ProgramsSection({ items, base: baseProp }: Props) {
                   className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-[#31BD9C]/50"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="relative w-full h-40 md:h-36 lg:h-40 overflow-hidden">
+                  <div className="relative w-full h-40 md:h-48 overflow-hidden">
                     <Image src={dept.image} alt={dept.name} fill className="object-cover transition-transform duration-700 group-hover:scale-125" unoptimized />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                     <div className="absolute inset-0 bg-gradient-to-br from-[#31BD9C]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -116,7 +116,7 @@ export default function ProgramsSection({ items, base: baseProp }: Props) {
                     </div>
                     <h3 className="text-sm sm:text-base md:text-lg font-bold text-neutral-900 mb-2 pr-10 group-hover:text-[#31BD9C] transition-colors duration-300 leading-tight line-clamp-2">{dept.name}</h3>
                     <div className="w-10 h-0.5 bg-gradient-to-r from-[#31BD9C] to-transparent mb-2"></div>
-                    <p className="text-xs sm:text-sm text-neutral-600 line-clamp-2">{t.programs.discover}</p>
+                    <p className="text-sm text-neutral-600 line-clamp-2">{t.programs.discover}</p>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-br from-[#31BD9C]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"></div>
                 </Link>

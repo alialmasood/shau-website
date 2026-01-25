@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { getTranslations, type Locale } from "@/lib/i18n";
@@ -8,8 +7,8 @@ import { getCategoryLabel } from "@/lib/deptFeeCategories";
 
 type HomeDeptItem = { id: string; slug: string; name: string; image: string; admissionKey: string; morningPrice: string; eveningPrice: string; morningMinGPA: string; eveningMinGPA: string };
 
-/** البطاقات تظهر فقط للأقسام المُدخَلة في إدارة الرسوم (نفس بيانات صفحة /tuition-fees) */
-export default function TuitionFeesSection({ items }: { items?: HomeDeptItem[] }) {
+/** البطاقات تظهر فقط للأقسام المُدخَلة في إدارة الرسوم (نفس بيانات صفحة /tuition-fees). tuitionPdfMediaId: معرف وسيط ملف PDF المعيّن من الأدمن، عند وجوده يظهر زر التحميل. */
+export default function TuitionFeesSection({ items, tuitionPdfMediaId }: { items?: HomeDeptItem[]; tuitionPdfMediaId?: string | null }) {
   const pathname = usePathname();
   const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
   const t = getTranslations(locale);
@@ -20,47 +19,8 @@ export default function TuitionFeesSection({ items }: { items?: HomeDeptItem[] }
   const list = items ?? [];
   const duplicatedDepartments = [...list, ...list];
 
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  // معالجة بداية السحب
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!trackRef.current) return;
-    setIsDragging(true);
-    setStartX(e.touches[0].pageX - trackRef.current.offsetLeft);
-    setScrollLeft(trackRef.current.scrollLeft);
-    
-    // إيقاف الحركة التلقائية
-    if (trackRef.current) {
-      trackRef.current.style.animationPlayState = 'paused';
-    }
-  };
-
-  // معالجة السحب
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !trackRef.current) return;
-    e.preventDefault();
-    const x = e.touches[0].pageX - trackRef.current.offsetLeft;
-    const walk = (x - startX) * 1.2; // سرعة السحب
-    trackRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  // معالجة نهاية السحب
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    
-    // استئناف الحركة التلقائية بعد تأخير قصير
-    setTimeout(() => {
-      if (trackRef.current) {
-        trackRef.current.style.animationPlayState = 'running';
-      }
-    }, 300);
-  };
-
   return (
-    <section className="relative w-full bg-[#04025E] py-4 sm:py-6 md:py-8 lg:py-10 overflow-x-hidden md:overflow-hidden min-h-[400px] md:min-h-0">
+    <section id="tuition-fees" className="relative w-full bg-[#04025E] py-4 sm:py-6 md:py-8 lg:py-10 overflow-x-hidden md:overflow-hidden min-h-[400px] md:min-h-0">
       {/* خطوط هندسية بيضاء */}
       <div className="absolute inset-0 pointer-events-none opacity-10">
         {/* خطوط متقاطعة */}
@@ -106,16 +66,19 @@ export default function TuitionFeesSection({ items }: { items?: HomeDeptItem[] }
         {/* أزرار CTA */}
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href={locale === "ar" ? "/ar/tuition-fees-guide" : "/en/tuition-fees-guide"}
-              className="inline-flex items-center gap-2 w-full sm:w-auto px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 justify-center"
-              aria-label={t.tuition.downloadAria}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>{t.tuition.downloadGuide}</span>
-            </a>
+            {tuitionPdfMediaId && (
+              <a
+                href={`/api/media/${tuitionPdfMediaId}`}
+                download
+                className="inline-flex items-center gap-2 w-full sm:w-auto px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 justify-center"
+                aria-label={t.tuition.downloadAria}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>{t.tuition.downloadGuide}</span>
+              </a>
+            )}
             <a
               href={locale === "ar" ? "/ar/tuition-fees" : "/en/tuition-fees"}
               className="inline-flex items-center gap-2 w-full sm:w-auto px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 border border-white/40 hover:border-white/60 justify-center"
@@ -132,29 +95,12 @@ export default function TuitionFeesSection({ items }: { items?: HomeDeptItem[] }
 
       {/* Cards Container - Infinite Marquee Loop (يُعرض فقط عند وجود أقسام من إدارة الرسوم) */}
       {list.length > 0 && (
-      <div className="relative z-10 w-full overflow-x-auto md:overflow-hidden scrollbar-hide" style={{ direction: 'ltr' }}>
-        {/* Mask Gradient على الأطراف */}
-        <div className="absolute inset-y-0 right-0 w-16 md:w-64 bg-gradient-to-l from-[#04025E] via-[#04025E]/90 to-transparent z-20 pointer-events-none"></div>
-        <div className="absolute inset-y-0 left-0 w-16 md:w-64 bg-gradient-to-r from-[#04025E] via-[#04025E]/90 to-transparent z-20 pointer-events-none"></div>
-
+      <div className="relative z-10 w-full overflow-x-auto md:overflow-hidden scrollbar-hide" style={{ direction: 'ltr', WebkitOverflowScrolling: 'touch' }}>
         {/* Track - Infinite Loop */}
-        <div 
-          ref={trackRef}
-          className="flex gap-3 md:gap-4 lg:gap-6 animate-marquee-infinite scrollbar-hide pb-2 md:pb-0"
-          style={{ 
-            WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-x',
-            cursor: isDragging ? 'grabbing' : 'grab'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.animationPlayState = 'paused';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.animationPlayState = 'running';
-          }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+        <div
+          className="flex gap-3 md:gap-4 lg:gap-6 animate-marquee-infinite max-md:!animate-none scrollbar-hide pb-2 md:pb-0"
+          onMouseEnter={(e) => { e.currentTarget.style.animationPlayState = 'paused'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.animationPlayState = 'running'; }}
         >
           {duplicatedDepartments.map((dept, index) => (
             <div
@@ -184,7 +130,7 @@ export default function TuitionFeesSection({ items }: { items?: HomeDeptItem[] }
 
                   {/* نوع القبول - Pill صغير */}
                   <div className="mb-3">
-                    <span className="inline-block px-2.5 py-1 bg-[#31BD9C] text-white text-xs font-semibold rounded-full">
+                    <span className="inline-block px-2.5 py-1 bg-[#31BD9C] text-white text-[10px] md:text-xs font-semibold rounded-full">
                       {admissionLabel(dept.admissionKey)}
                     </span>
                   </div>
@@ -192,11 +138,11 @@ export default function TuitionFeesSection({ items }: { items?: HomeDeptItem[] }
                   {/* السعر */}
                   <div className="space-y-1.5 mb-3">
                     <div className="flex items-center justify-between p-2.5 bg-blue-50 rounded-lg">
-                      <span className="text-xs font-medium text-neutral-700">{t.tuition.morning}</span>
+                      <span className="text-[10px] md:text-xs font-medium text-neutral-700">{t.tuition.morning}</span>
                       <span className="text-sm font-bold text-[#31BD9C]">{dept.morningPrice} {t.tuition.currency}</span>
                     </div>
                     <div className="flex items-center justify-between p-2.5 bg-green-50 rounded-lg">
-                      <span className="text-xs font-medium text-neutral-700">{t.tuition.evening}</span>
+                      <span className="text-[10px] md:text-xs font-medium text-neutral-700">{t.tuition.evening}</span>
                       <span className="text-sm font-bold text-[#31BD9C]">{dept.eveningPrice} {t.tuition.currency}</span>
                     </div>
                   </div>
@@ -204,11 +150,11 @@ export default function TuitionFeesSection({ items }: { items?: HomeDeptItem[] }
                   {/* الحد الأدنى للمعدل */}
                   <div className="mt-auto pt-3 border-t border-neutral-200">
                     <p className="text-[10px] text-neutral-600 mb-1.5">{t.tuition.minGPAHint}</p>
-                    <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center justify-between text-[10px] md:text-xs">
                       <span className="text-neutral-600">{t.tuition.morning}:</span>
                       <span className="font-bold text-neutral-900">{dept.morningMinGPA}</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs mt-0.5">
+                    <div className="flex items-center justify-between text-[10px] md:text-xs mt-0.5">
                       <span className="text-neutral-600">{t.tuition.evening}:</span>
                       <span className="font-bold text-neutral-900">{dept.eveningMinGPA}</span>
                     </div>

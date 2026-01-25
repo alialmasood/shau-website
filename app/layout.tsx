@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" suppressHydrationWarning>
       <body
-        className={`${cairo.variable} font-sans antialiased bg-white text-neutral-900 overflow-x-hidden`}
+        className={`${cairo.variable} font-sans antialiased bg-white text-neutral-900 overflow-x-hidden w-full max-w-full`}
         suppressHydrationWarning
       >
         {children}

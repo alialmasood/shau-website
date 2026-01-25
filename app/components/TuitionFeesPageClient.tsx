@@ -16,7 +16,7 @@ function parseGPA(s: string): number {
 type SortKey = "lowest" | "highest" | "gpa" | "alpha";
 type ShiftFilter = "all" | "morning" | "evening";
 
-export default function TuitionFeesPageClient({ locale, departments = [] }: { locale: Locale; departments?: DepartmentFeeRow[] }) {
+export default function TuitionFeesPageClient({ locale, departments = [], tuitionPdfMediaId }: { locale: Locale; departments?: DepartmentFeeRow[]; tuitionPdfMediaId?: string | null }) {
   const t = getTranslations(locale);
   const tp = (t as { tuitionPage?: Record<string, string> }).tuitionPage ?? {};
   const basePath = locale === "ar" ? "/ar" : "/en";
@@ -108,14 +108,17 @@ export default function TuitionFeesPageClient({ locale, departments = [] }: { lo
           <div className="w-20 h-1 bg-[#31BD9C] rounded-full mx-auto mb-6" />
           <p className="text-white/90 text-base sm:text-lg mb-8">{tp.heroSubtitle}</p>
           <div className="flex flex-wrap justify-center gap-3">
-            <a
-              href={`${basePath}/tuition-fees-guide`}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold rounded-full transition-all shadow-lg hover:scale-105"
-              aria-label={t.tuition.downloadAria}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              {t.tuition.downloadGuide}
-            </a>
+            {tuitionPdfMediaId && (
+              <a
+                href={`/api/media/${tuitionPdfMediaId}`}
+                download
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold rounded-full transition-all shadow-lg hover:scale-105"
+                aria-label={t.tuition.downloadAria}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                {t.tuition.downloadGuide}
+              </a>
+            )}
             <button
               type="button"
               onClick={scrollToCards}

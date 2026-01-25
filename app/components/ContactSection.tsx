@@ -176,8 +176,8 @@ export default function ContactSection() {
               </div>
             </div>
       
-            {/* الخريطة - موبايل: تحت الفورم، ديسكتوب: خلفية */}
-            <div className="relative z-0 w-full h-[320px] md:absolute md:inset-0 md:h-full order-2 md:order-none">
+            {/* الخريطة - موبايل: تحت الفورم، ديسكتوب: خلفية — ارتفاع ثابت ومنع overflow */}
+            <div className="relative z-0 w-full h-[300px] md:absolute md:inset-0 md:h-[450px] order-2 md:order-none overflow-hidden">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3323.518648884789!2d44.3661!3d33.3152!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDE4JzU0LjciTiA0NMKwMjEnNTguMCJF!5e0!3m2!1sar!2siq!4v1234567890123!5m2!1sar!2siq"
                 width="100%"

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/* Mobile First: الافتراضي (base) = موبايل، الديسكتوب = md: و lg: فقط. ممنوع تغيير قيم md:/lg: */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -51,6 +53,18 @@ footer > div:last-child {
 }
 
 /* Animation for News Ticker - LTR (معكوس) */
+/* انتقال خفيف لمحتوى الأدمن */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-admin-fade-in {
+  animation: fadeIn 0.25s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-admin-fade-in { animation: none; }
+}
+
 @keyframes scroll-rtl {
   0% {
     transform: translateX(0);

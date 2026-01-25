@@ -1,4 +1,5 @@
 import HeroSlider from "../components/HeroSlider";
+import SocialMediaButtons from "../components/SocialMediaButtons";
 import GreenCard from "../components/GreenCard";
 import NewsSection from "../components/NewsSection";
 import ProgramsSection from "../components/ProgramsSection";
@@ -6,6 +7,7 @@ import InnovationSection from "../components/InnovationSection";
 import TuitionFeesSection from "../components/TuitionFeesSection";
 import ContactSection from "../components/ContactSection";
 import { getDepartmentFeesForPage } from "@/lib/departmentFeeRepo";
+import { getTuitionPdfMediaId } from "@/lib/tuitionPdfRepo";
 import { getActivePrograms } from "@/lib/programsRepo";
 
 function fmt(s: string) {
@@ -19,6 +21,12 @@ function gpa(s: string) {
 export default async function Home() {
   let tuitionItems: { id: string; slug: string; name: string; image: string; admissionKey: string; morningPrice: string; eveningPrice: string; morningMinGPA: string; eveningMinGPA: string }[] | undefined;
   let programItems: { id: string; slug: string; name: string; image: string }[] | undefined;
+  let tuitionPdfMediaId: string | null = null;
+  try {
+    tuitionPdfMediaId = await getTuitionPdfMediaId();
+  } catch {
+    tuitionPdfMediaId = null;
+  }
   try {
     const rows = await getDepartmentFeesForPage();
     tuitionItems = rows.map((r) => ({
@@ -50,12 +58,12 @@ export default async function Home() {
   }
   return (
     <div className="w-full">
-      <HeroSlider />
+      <HeroSlider socialButtons={<SocialMediaButtons direction="column" />} />
       <GreenCard />
       <NewsSection locale="ar" />
       <ProgramsSection items={programItems} base="/ar" />
       <InnovationSection />
-      <TuitionFeesSection items={tuitionItems} />
+      <TuitionFeesSection items={tuitionItems} tuitionPdfMediaId={tuitionPdfMediaId} />
       <ContactSection />
     </div>
   );

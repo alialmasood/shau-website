@@ -15,6 +15,8 @@
     "db:migrate-varchar-to-text": "node scripts/run-varchar-to-text-migration.js",
     "db:migrate-programs": "node scripts/run-programs-migration.js",
     "db:migrate-programs-tables-images": "node scripts/run-programs-lectures-exams-images-migration.js",
+    "db:migrate-tuition-pdf": "node scripts/run-tuition-pdf-migration.js",
+    "db:migrate-social-links": "node scripts/run-social-links-migration.js",
     "admin:reset-password": "node scripts/reset-admin-password.js"
   },
   "dependencies": {
