@@ -36,7 +36,7 @@ export default async function NewsSection({ locale }: { locale: Locale }) {
             <Link
               key={news.id}
               href={`/${locale}/${news.id}`}
-              className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-neutral-100 hover:border-[#31BD9C]/30 min-w-[280px] md:min-w-0 md:w-auto snap-start flex-shrink-0"
+              className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-neutral-100 hover:border-[#31BD9C]/30 w-[280px] min-w-[280px] max-w-[280px] md:min-w-0 md:max-w-none md:w-auto snap-start flex-shrink-0"
             >
               {/* الشريط الملون من الأعلى */}
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#31BD9C] via-[#2aa88a] to-[#31BD9C] z-10"></div>
