@@ -13,6 +13,8 @@
     "db:migrate-apply-types": "node scripts/run-apply-types-migration.js",
     "db:migrate-applications": "node scripts/run-applications-migration.js",
     "db:migrate-varchar-to-text": "node scripts/run-varchar-to-text-migration.js",
+    "db:migrate-programs": "node scripts/run-programs-migration.js",
+    "db:migrate-programs-tables-images": "node scripts/run-programs-lectures-exams-images-migration.js",
     "admin:reset-password": "node scripts/reset-admin-password.js"
   },
   "dependencies": {

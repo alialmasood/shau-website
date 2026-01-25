@@ -173,3 +173,26 @@ model DepartmentFee {
   @@index([is_active, featured, sort_order])
   @@map("department_fees")
 }
+
+model Program {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  slug              String    @unique @db.VarChar(120)
+  nameAr            String?   @map("name_ar") @db.VarChar(250)
+  nameEn            String?   @map("name_en") @db.VarChar(250)
+  briefAr           String?   @map("brief_ar") @db.Text
+  briefEn           String?   @map("brief_en") @db.Text
+  lecturesTables    Json      @default("[]") @map("lectures_tables")
+  examsTables       Json      @default("[]") @map("exams_tables")
+  studyShift        String   @map("study_shift") @db.VarChar(20)
+  image1Id          String?   @map("image_1_id") @db.Uuid
+  image2Id          String?   @map("image_2_id") @db.Uuid
+  image3Id          String?   @map("image_3_id") @db.Uuid
+  image4Id          String?   @map("image_4_id") @db.Uuid
+  sortOrder         Int      @default(0) @map("sort_order")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive, sortOrder])
+  @@map("programs")
+}

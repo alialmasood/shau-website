@@ -6,6 +6,7 @@ import InnovationSection from "../components/InnovationSection";
 import TuitionFeesSection from "../components/TuitionFeesSection";
 import ContactSection from "../components/ContactSection";
 import { getDepartmentFeesForPage } from "@/lib/departmentFeeRepo";
+import { getActivePrograms } from "@/lib/programsRepo";
 
 function fmt(s: string) {
   const n = Number(String(s).replace(/,/g, ""));
@@ -34,12 +35,25 @@ export default async function HomeEn() {
   } catch {
     tuitionItems = undefined;
   }
+  let programItems: { id: string; slug: string; name: string; image: string }[] | undefined;
+  try {
+    const progs = await getActivePrograms();
+    programItems = progs.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.nameEn || p.nameAr || p.slug,
+      image: p.image1Id ? `/api/media/${p.image1Id}` : "/hero-image-1.jpg",
+    }));
+    if (programItems.length === 0) programItems = undefined;
+  } catch {
+    programItems = undefined;
+  }
   return (
     <div className="w-full">
       <HeroSlider />
       <GreenCard />
       <NewsSection locale="en" />
-      <ProgramsSection />
+      <ProgramsSection items={programItems} />
       <InnovationSection />
       <TuitionFeesSection items={tuitionItems} />
       <ContactSection />

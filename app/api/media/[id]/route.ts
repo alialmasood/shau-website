@@ -19,7 +19,7 @@ export async function GET(
   }
 
   const res = await query(
-    `SELECT mime_type, data
+    `SELECT mime_type, filename, data
      FROM media
      WHERE id = $1
      LIMIT 1`,
@@ -31,17 +31,20 @@ export async function GET(
   }
 
   const mimeType = String(res.rows[0].mime_type || "application/octet-stream");
+  const filename = String(res.rows[0].filename || "file");
   const data: Buffer = res.rows[0].data;
-  // ننسخ إلى ArrayBuffer "عادي" لتفادي تعارضات الأنواع (SharedArrayBuffer) في TypeScript
   const body = new ArrayBuffer(data.byteLength);
   new Uint8Array(body).set(data);
 
-  return new Response(body, {
-    status: 200,
-    headers: {
-      "Content-Type": mimeType,
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-  });
+  const headers: Record<string, string> = {
+    "Content-Type": mimeType,
+    "Cache-Control": "public, max-age=31536000, immutable",
+  };
+  if (mimeType === "application/pdf") {
+    const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "document.pdf";
+    headers["Content-Disposition"] = `attachment; filename="${safe}"`;
+  }
+
+  return new Response(body, { status: 200, headers });
 }
 

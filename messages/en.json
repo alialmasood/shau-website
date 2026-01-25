@@ -66,6 +66,7 @@
       "/cybersecurity-cloud-computing": "Cybersecurity & Cloud Computing",
       "/construction-engineering": "Construction Engineering",
       "/campus-life": "Campus Life",
+      "/programs": "College Programs",
       "/academic-programs": "Department Programs",
       "/attendance-certificates": "Attendance Certificates",
       "/research": "Scientific Research",
@@ -154,6 +155,21 @@
     "copied": "Copied!",
     "shareVia": "Share via {name}",
     "copyAria": "Copy news link"
+  },
+  "programsPage": {
+    "studyMorning": "Morning only",
+    "studyEvening": "Evening only",
+    "studyBoth": "Morning and Evening",
+    "lecturesTable": "Lectures Schedule",
+    "examsTable": "Exams Schedule",
+    "stage1": "Stage 1",
+    "stage2": "Stage 2",
+    "stage3": "Stage 3",
+    "stage4": "Stage 4",
+    "shiftMorning": "Morning",
+    "shiftEvening": "Evening",
+    "noPrograms": "No programs available.",
+    "viewDetails": "View details"
   },
   "programs": {
     "title": "College Programs",

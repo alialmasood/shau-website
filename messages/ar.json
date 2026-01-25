@@ -66,6 +66,7 @@
       "/cybersecurity-cloud-computing": "قسم هندسة تقنيات الامن السيبراني والحوسبة السحابية",
       "/construction-engineering": "قسم هندسة تقنيات البناء والانشاءات",
       "/campus-life": "الحياة الجامعية",
+      "/programs": "برامج الكلية",
       "/academic-programs": "البرامج الدراسية للاقسام",
       "/attendance-certificates": "شهادات الحضور",
       "/research": "البحث العلمي",
@@ -154,6 +155,21 @@
     "copied": "تم النسخ!",
     "shareVia": "مشاركة عبر {name}",
     "copyAria": "نسخ رابط الخبر"
+  },
+  "programsPage": {
+    "studyMorning": "صباحي فقط",
+    "studyEvening": "مسائي فقط",
+    "studyBoth": "صباحي ومسائي",
+    "lecturesTable": "جدول المحاضرات",
+    "examsTable": "جدول الامتحانات",
+    "stage1": "المرحلة الأولى",
+    "stage2": "المرحلة الثانية",
+    "stage3": "المرحلة الثالثة",
+    "stage4": "المرحلة الرابعة",
+    "shiftMorning": "صباحي",
+    "shiftEvening": "مسائي",
+    "noPrograms": "لا توجد برامج متاحة.",
+    "viewDetails": "عرض التفاصيل"
   },
   "programs": {
     "title": "برامج الكلية",

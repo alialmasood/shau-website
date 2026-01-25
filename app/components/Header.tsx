@@ -58,6 +58,7 @@ const navItems = [
     label: "الحياة الجامعية", 
     href: "/campus-life",
     submenu: [
+      { label: "برامج الكلية", href: "/programs" },
       { label: "البرامج الدراسية للاقسام", href: "/academic-programs" },
       { label: "شهادات الحضور", href: "/attendance-certificates" },
       { label: "الحياة الجامعية", href: "/campus-life" },

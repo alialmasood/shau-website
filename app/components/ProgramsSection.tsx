@@ -5,77 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { getTranslations, type Locale } from "@/lib/i18n";
 
-// بيانات الأقسام الدراسية
-const departments = [
-  {
-    id: 1,
-    name: "قسم تقنيات صناعة الاسنان",
-    slug: "dental-technology",
-    image: "/hero-image-1.jpg",
-  },
-  {
-    id: 2,
-    name: "قسم تقنيات التخدير",
-    slug: "anesthesia-technology",
-    image: "/hero-image-2.jpg",
-  },
-  {
-    id: 3,
-    name: "قسم تقنيات الاشعة",
-    slug: "radiology-technology",
-    image: "/hero-image-3.jpg",
-  },
-  {
-    id: 4,
-    name: "قسم تقنيات البصريات",
-    slug: "optics-technology",
-    image: "/hero-image-1.jpg",
-  },
-  {
-    id: 5,
-    name: "قسم تقنيات طب الطوارئ والاسعافات الاولية",
-    slug: "emergency-medicine",
-    image: "/hero-image-2.jpg",
-  },
-  {
-    id: 7,
-    name: "قسم تقنيات العلاج الطبيعي",
-    slug: "physical-therapy",
-    image: "/hero-image-1.jpg",
-  },
-  {
-    id: 8,
-    name: "قسم هندسة تقنيات الفيزياء الصحية والعلاج الاشعاعي",
-    slug: "medical-physics-radiotherapy",
-    image: "/hero-image-2.jpg",
-  },
-  {
-    id: 9,
-    name: "قسم هندسة تقنيات النفط والغاز",
-    slug: "oil-gas-engineering",
-    image: "/hero-image-3.jpg",
-  },
-  {
-    id: 10,
-    name: "قسم هندسة تقنيات الامن السيبراني والحوسبة السحابية",
-    slug: "cybersecurity-cloud-computing",
-    image: "/hero-image-1.jpg",
-  },
-  {
-    id: 11,
-    name: "قسم هندسة تقنيات البناء والانشاءات",
-    slug: "construction-engineering",
-    image: "/hero-image-2.jpg",
-  },
-];
+export type ProgramItem = { id: string; slug: string; name: string; image: string };
 
-export default function ProgramsSection() {
+/** البطاقات تأتي من جدول programs في قاعدة البيانات (إدارة برامج الكلية) */
+export default function ProgramsSection({ items }: { items?: ProgramItem[] }) {
   const pathname = usePathname();
   const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
   const t = getTranslations(locale);
   const base = locale === "ar" ? "/ar" : "/en";
-  const deptName = (slug: string, fallback: string) =>
-    (t.programs.dept as Record<string, string>)?.[slug] ?? fallback;
+  const list = items ?? [];
+  const tp = (t as { programsPage?: Record<string, string> }).programsPage ?? {};
   return (
     <section className="w-full bg-white pt-0 pb-12 sm:pb-16 md:pb-20 lg:pb-24">
       {/* العنوان الرئيسي في شريط أخضر مزخرف - يمتد على عرض الصفحة */}
@@ -150,69 +89,37 @@ export default function ProgramsSection() {
           {/* خط عمودي فاصل */}
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-[#31BD9C] transform -translate-x-1/2 -translate-x-0.5"></div>
 
-          {/* الخانة الثانية: بطاقات الأقسام */}
+          {/* الخانة الثانية: بطاقات البرامج (من قاعدة البيانات) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pl-0 lg:pl-8 order-1 lg:order-2">
-            {departments.map((dept, index) => (
-              <Link
-                key={dept.id}
-                href={`${base}/departments/${dept.slug}`}
-                className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-[#31BD9C]/50"
-                style={{
-                  animationDelay: `${index * 50}ms`,
-                }}
-              >
-                {/* الصورة */}
-                <div className="relative w-full h-40 md:h-36 lg:h-40 overflow-hidden">
-                  <Image
-                    src={dept.image}
-                    alt={deptName(dept.slug, dept.name)}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-125"
-                    unoptimized
-                  />
-                  
-                  {/* Overlay متدرج */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                  
-                  {/* تأثير إضاءة عند hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#31BD9C]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                </div>
-
-                {/* المحتوى */}
-                <div className="relative p-4 sm:p-5 bg-white">
-                  {/* أيقونة صغيرة */}
-                  <div className="absolute -top-3 right-4 w-8 h-8 bg-[#31BD9C] rounded-full flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shadow-lg">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path d="M9 5l7 7-7 7"></path>
-                    </svg>
+            {list.length === 0 ? (
+              <div className="md:col-span-2 py-8 text-center text-neutral-500 rounded-2xl border border-dashed border-neutral-200">
+                {tp.noPrograms ?? (locale === "ar" ? "لا توجد برامج متاحة." : "No programs available.")}
+              </div>
+            ) : (
+              list.map((dept, index) => (
+                <Link
+                  key={dept.id}
+                  href={`${base}/programs/${dept.slug}`}
+                  className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-[#31BD9C]/50"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="relative w-full h-40 md:h-36 lg:h-40 overflow-hidden">
+                    <Image src={dept.image} alt={dept.name} fill className="object-cover transition-transform duration-700 group-hover:scale-125" unoptimized />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#31BD9C]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
-
-                  {/* اسم القسم */}
-                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-neutral-900 mb-2 pr-10 group-hover:text-[#31BD9C] transition-colors duration-300 leading-tight line-clamp-2">
-                    {deptName(dept.slug, dept.name)}
-                  </h3>
-
-                  {/* خط فاصل */}
-                  <div className="w-10 h-0.5 bg-gradient-to-r from-[#31BD9C] to-transparent mb-2"></div>
-
-                  {/* نص إضافي */}
-                  <p className="text-xs sm:text-sm text-neutral-600 line-clamp-2">
-                    {t.programs.discover}
-                  </p>
-                </div>
-
-                {/* تأثير إضاءة خلفي */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#31BD9C]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"></div>
-              </Link>
-            ))}
+                  <div className="relative p-4 sm:p-5 bg-white">
+                    <div className="absolute -top-3 right-4 w-8 h-8 bg-[#31BD9C] rounded-full flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shadow-lg">
+                      <svg className="w-4 h-4 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 5l7 7-7 7" /></svg>
+                    </div>
+                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-neutral-900 mb-2 pr-10 group-hover:text-[#31BD9C] transition-colors duration-300 leading-tight line-clamp-2">{dept.name}</h3>
+                    <div className="w-10 h-0.5 bg-gradient-to-r from-[#31BD9C] to-transparent mb-2"></div>
+                    <p className="text-xs sm:text-sm text-neutral-600 line-clamp-2">{t.programs.discover}</p>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#31BD9C]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"></div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </div>

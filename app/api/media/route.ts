@@ -22,10 +22,11 @@ export async function POST(request: Request) {
     );
   }
 
-  // Basic validation (images only)
-  if (!file.type || !file.type.startsWith("image/")) {
+  // صور أو PDF
+  const ok = file.type?.startsWith("image/") || file.type === "application/pdf";
+  if (!file.type || !ok) {
     return NextResponse.json(
-      { error: "Only image uploads are allowed" },
+      { error: "يُقبل الصور (image/*) وملفات PDF فقط" },
       { status: 400 }
     );
   }
