@@ -5,8 +5,35 @@ import ProgramsSection from "../components/ProgramsSection";
 import InnovationSection from "../components/InnovationSection";
 import TuitionFeesSection from "../components/TuitionFeesSection";
 import ContactSection from "../components/ContactSection";
+import { getDepartmentFeesForPage } from "@/lib/departmentFeeRepo";
 
-export default function Home() {
+function fmt(s: string) {
+  const n = Number(String(s).replace(/,/g, ""));
+  return Number.isFinite(n) ? n.toLocaleString("en-US") : String(s);
+}
+function gpa(s: string) {
+  return String(s).includes("%") ? String(s) : String(s) + "%";
+}
+
+export default async function Home() {
+  let tuitionItems: { id: string; slug: string; name: string; image: string; admissionKey: string; morningPrice: string; eveningPrice: string; morningMinGPA: string; eveningMinGPA: string }[] | undefined;
+  try {
+    const rows = await getDepartmentFeesForPage();
+    tuitionItems = rows.map((r) => ({
+      id: r.id,
+      slug: r.departmentSlug,
+      name: r.displayName || r.departmentSlug,
+      image: r.cardImageId ? `/api/media/${r.cardImageId}` : "/hero-image-1.jpg",
+      admissionKey: (r.categories || [])[0] ?? "",
+      morningPrice: fmt(r.morningPrice),
+      eveningPrice: fmt(r.eveningPrice),
+      morningMinGPA: gpa(r.morningMinGpa),
+      eveningMinGPA: gpa(r.eveningMinGpa),
+    }));
+    if (tuitionItems.length === 0) tuitionItems = undefined;
+  } catch {
+    tuitionItems = undefined;
+  }
   return (
     <div className="w-full">
       <HeroSlider />
@@ -14,7 +41,7 @@ export default function Home() {
       <NewsSection locale="ar" />
       <ProgramsSection />
       <InnovationSection />
-      <TuitionFeesSection />
+      <TuitionFeesSection items={tuitionItems} />
       <ContactSection />
     </div>
   );

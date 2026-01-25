@@ -22,6 +22,18 @@ export default function AdminDashboardPage() {
               الشريط الإخباري
             </Link>
             <Link
+              href="/admin/tuition-fees"
+              className="inline-flex items-center px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-800 text-sm font-bold hover:border-[#31BD9C] hover:text-[#31BD9C] transition-colors"
+            >
+              إدارة الرسوم الدراسية
+            </Link>
+            <Link
+              href="/admin/applications"
+              className="inline-flex items-center px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-800 text-sm font-bold hover:border-[#31BD9C] hover:text-[#31BD9C] transition-colors"
+            >
+              طلبات التقديم
+            </Link>
+            <Link
               href="/admin/logout"
               className="inline-flex items-center px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-bold hover:bg-neutral-800 transition-colors"
             >

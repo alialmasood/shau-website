@@ -1,33 +1,24 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { getTranslations, type Locale } from "@/lib/i18n";
+import { getCategoryLabel } from "@/lib/deptFeeCategories";
 
-// بيانات الأقسام مع الرسوم
-const departments = [
-  { id: 1, slug: "dental-technology", name: "قسم تقنيات صناعة الاسنان", image: "/hero-image-1.jpg", admissionKey: "biological" as const, morningPrice: "2,500,000", eveningPrice: "1,800,000", morningMinGPA: "75%", eveningMinGPA: "70%" },
-  { id: 2, slug: "anesthesia-technology", name: "قسم تقنيات التخدير", image: "/hero-image-2.jpg", admissionKey: "biological" as const, morningPrice: "2,400,000", eveningPrice: "1,750,000", morningMinGPA: "74%", eveningMinGPA: "69%" },
-  { id: 3, slug: "radiology-technology", name: "قسم تقنيات الاشعة", image: "/hero-image-3.jpg", admissionKey: "biological" as const, morningPrice: "2,600,000", eveningPrice: "1,900,000", morningMinGPA: "76%", eveningMinGPA: "71%" },
-  { id: 4, slug: "optics-technology", name: "قسم تقنيات البصريات", image: "/hero-image-1.jpg", admissionKey: "biological" as const, morningPrice: "2,300,000", eveningPrice: "1,700,000", morningMinGPA: "73%", eveningMinGPA: "68%" },
-  { id: 5, slug: "emergency-medicine", name: "قسم تقنيات طب الطوارئ والاسعافات الاولية", image: "/hero-image-2.jpg", admissionKey: "biological" as const, morningPrice: "2,550,000", eveningPrice: "1,850,000", morningMinGPA: "75%", eveningMinGPA: "70%" },
-  { id: 6, slug: "physical-therapy", name: "قسم تقنيات العلاج الطبيعي", image: "/hero-image-3.jpg", admissionKey: "biological" as const, morningPrice: "2,450,000", eveningPrice: "1,800,000", morningMinGPA: "74%", eveningMinGPA: "69%" },
-  { id: 7, slug: "medical-physics-radiotherapy", name: "قسم هندسة تقنيات الفيزياء الصحية والعلاج الاشعاعي", image: "/hero-image-1.jpg", admissionKey: "applied" as const, morningPrice: "2,700,000", eveningPrice: "1,950,000", morningMinGPA: "77%", eveningMinGPA: "72%" },
-  { id: 8, slug: "oil-gas-engineering", name: "قسم هندسة تقنيات النفط والغاز", image: "/hero-image-2.jpg", admissionKey: "applied" as const, morningPrice: "2,800,000", eveningPrice: "2,000,000", morningMinGPA: "78%", eveningMinGPA: "73%" },
-  { id: 9, slug: "cybersecurity-cloud-computing", name: "قسم هندسة تقنيات الامن السيبراني والحوسبة السحابية", image: "/hero-image-3.jpg", admissionKey: "scientific" as const, morningPrice: "2,900,000", eveningPrice: "2,100,000", morningMinGPA: "80%", eveningMinGPA: "75%" },
-  { id: 10, slug: "construction-engineering", name: "قسم هندسة تقنيات البناء والانشاءات", image: "/hero-image-1.jpg", admissionKey: "industry" as const, morningPrice: "2,600,000", eveningPrice: "1,900,000", morningMinGPA: "76%", eveningMinGPA: "71%" },
-];
+type HomeDeptItem = { id: string; slug: string; name: string; image: string; admissionKey: string; morningPrice: string; eveningPrice: string; morningMinGPA: string; eveningMinGPA: string };
 
-export default function TuitionFeesSection() {
+/** البطاقات تظهر فقط للأقسام المُدخَلة في إدارة الرسوم (نفس بيانات صفحة /tuition-fees) */
+export default function TuitionFeesSection({ items }: { items?: HomeDeptItem[] }) {
   const pathname = usePathname();
   const locale: Locale = (pathname ?? "").startsWith("/en") ? "en" : "ar";
   const t = getTranslations(locale);
   const deptName = (slug: string, fallback: string) =>
     (t.programs.dept as Record<string, string>)?.[slug] ?? fallback;
-  const admissionLabel = (k: "biological"|"applied"|"scientific"|"industry") =>
-    (t.tuition.admissionType as Record<string, string>)?.[k] ?? k;
-  const duplicatedDepartments = [...departments, ...departments];
+  const admissionLabel = (k: string) => (k ? getCategoryLabel(k, locale) : "—");
+
+  const list = items ?? [];
+  const duplicatedDepartments = [...list, ...list];
 
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -112,22 +103,35 @@ export default function TuitionFeesSection() {
           <div className="w-24 h-1 bg-gradient-to-r from-[#31BD9C] to-[#2aa88a] mx-auto rounded-full"></div>
         </div>
 
-        {/* زر CTA */}
+        {/* أزرار CTA */}
         <div className="text-center mb-6 sm:mb-8">
-          <a
-            href="/tuition-fees-guide"
-            className="inline-flex items-center gap-2 w-full md:w-auto px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 justify-center"
-            aria-label={t.tuition.downloadAria}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span>{t.tuition.downloadGuide}</span>
-          </a>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href={locale === "ar" ? "/ar/tuition-fees-guide" : "/en/tuition-fees-guide"}
+              className="inline-flex items-center gap-2 w-full sm:w-auto px-6 py-3 bg-[#31BD9C] hover:bg-[#2aa88a] text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 justify-center"
+              aria-label={t.tuition.downloadAria}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>{t.tuition.downloadGuide}</span>
+            </a>
+            <a
+              href={locale === "ar" ? "/ar/tuition-fees" : "/en/tuition-fees"}
+              className="inline-flex items-center gap-2 w-full sm:w-auto px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold text-sm sm:text-base rounded-full transition-all duration-300 border border-white/40 hover:border-white/60 justify-center"
+              aria-label={t.tuition.viewDeptFeesAria}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              <span>{t.tuition.viewDeptFees}</span>
+            </a>
+          </div>
         </div>
       </div>
 
-      {/* Cards Container - Infinite Marquee Loop */}
+      {/* Cards Container - Infinite Marquee Loop (يُعرض فقط عند وجود أقسام من إدارة الرسوم) */}
+      {list.length > 0 && (
       <div className="relative z-10 w-full overflow-x-auto md:overflow-hidden scrollbar-hide" style={{ direction: 'ltr' }}>
         {/* Mask Gradient على الأطراف */}
         <div className="absolute inset-y-0 right-0 w-16 md:w-64 bg-gradient-to-l from-[#04025E] via-[#04025E]/90 to-transparent z-20 pointer-events-none"></div>
@@ -215,6 +219,7 @@ export default function TuitionFeesSection() {
           ))}
         </div>
       </div>
+      )}
     </section>
   );
 }
