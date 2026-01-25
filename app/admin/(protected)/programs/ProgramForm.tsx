@@ -337,7 +337,7 @@ export default function ProgramForm({ initial, existingSlugs = [] }: { initial?:
         if (!res.ok) throw new Error(res.error);
         setSuccess("تم حفظ التعديلات.");
       } else {
-        const res = await createProgram(data);
+        const res = await createProgram({ ...data, slug: slug.trim() || "" });
         if (!res.ok) throw new Error(res.error);
         setSuccess("تم إضافة البرنامج.");
         if (res.id) window.location.href = "/admin/programs";

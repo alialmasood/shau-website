@@ -6,7 +6,7 @@ type Props = { id: string };
 
 export function DeleteProgramButton({ id }: Props) {
   return (
-    <form action={deleteProgramAction} className="inline">
+    <form action={async (fd) => { await deleteProgramAction(fd); }} className="inline">
       <input type="hidden" name="id" value={id} />
       <button
         type="submit"
