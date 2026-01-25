@@ -22,12 +22,13 @@ async function loginAction(formData: FormData) {
   redirect("/admin");
 }
 
-export default function AdminLoginPage({
+export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const hasError = Boolean(searchParams?.error);
+  const params = await searchParams;
+  const hasError = Boolean(params?.error);
 
   return (
     <div className="w-full bg-gradient-to-b from-white to-neutral-50">

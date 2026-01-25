@@ -54,7 +54,7 @@ function parseCategories(val: unknown): string[] {
   if (!val) return [];
   try {
     const arr = Array.isArray(val) ? val : JSON.parse(String(val));
-    return (arr || []).filter((x): x is string => typeof x === "string");
+    return (arr || []).filter((x: unknown): x is string => typeof x === "string");
   } catch {
     return [];
   }
@@ -64,7 +64,7 @@ function parseApplyTypes(val: unknown): string[] {
   if (!val) return [];
   try {
     const arr = Array.isArray(val) ? val : JSON.parse(String(val));
-    return (arr || []).filter((x): x is string => typeof x === "string" && ["external_link", "internal_page", "whatsapp"].includes(x));
+    return (arr || []).filter((x: unknown): x is string => typeof x === "string" && ["external_link", "internal_page", "whatsapp"].includes(x));
   } catch {
     return [];
   }

@@ -11,7 +11,8 @@
     "db:migrate-dept-fees": "node scripts/run-dept-fees-migration.js",
     "db:migrate-dept-fee-categories": "node scripts/run-dept-fee-categories-migration.js",
     "db:migrate-apply-types": "node scripts/run-apply-types-migration.js",
-    "db:migrate-applications": "node scripts/run-applications-migration.js"
+    "db:migrate-applications": "node scripts/run-applications-migration.js",
+    "admin:reset-password": "node scripts/reset-admin-password.js"
   },
   "dependencies": {
     "@prisma/client": "^7.2.0",

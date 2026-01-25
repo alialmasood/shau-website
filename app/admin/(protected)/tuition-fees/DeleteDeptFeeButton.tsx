@@ -7,7 +7,7 @@ type Props = {
 
 export function DeleteDeptFeeButton({ id, deleteAction }: Props) {
   return (
-    <form action={deleteAction} className="inline">
+    <form action={async (fd) => { await deleteAction(fd); }} className="inline">
       <input type="hidden" name="id" value={id} />
       <button
         type="submit"
