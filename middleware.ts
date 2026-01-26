@@ -20,6 +20,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/ar/${id}`, request.url));
   }
 
+  // ملاحظة: حماية صفحات الإدارة للمستخدم المحدود تتم في layout.tsx و page.tsx
+  // لأن middleware يعمل في Edge Runtime ولا يدعم Node.js modules مثل crypto و database queries
+
   return NextResponse.next();
 }
 

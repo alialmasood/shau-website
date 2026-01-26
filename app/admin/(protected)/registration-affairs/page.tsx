@@ -1,6 +1,23 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/lib/adminSession";
+import { getAdminUserById } from "@/lib/adminUsersRepo";
 
 export default async function AdminRegistrationAffairsPage() {
+  // التحقق من أن المستخدم المحدود لا يمكنه الوصول إلى هذه الصفحة
+  const session = await getAdminSession();
+  if (session) {
+    const userData = await getAdminUserById(session.sub);
+    if (userData) {
+      const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role !== "ADMIN";
+      if (isLimitedUser && userData.custom_url) {
+        // إذا كان custom_url هو required-documents فقط، إعادة توجيه
+        if (userData.custom_url === "/admin/registration-affairs/required-documents") {
+          redirect(userData.custom_url);
+        }
+      }
+    }
+  }
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="flex items-center justify-between gap-4 mb-6">

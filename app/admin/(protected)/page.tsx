@@ -1,5 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/lib/adminSession";
+import { getAdminUserById } from "@/lib/adminUsersRepo";
 import { getDashboardStats } from "@/lib/dashboardStats";
+import AdminNav from "./AdminNav";
 
 function formatLastUpdated(iso: string | null): string {
   if (!iso) return "—";
@@ -14,6 +18,19 @@ function formatLastUpdated(iso: string | null): string {
 }
 
 export default async function AdminDashboardPage() {
+  // التحقق من أن المستخدم المحدود لا يمكنه الوصول إلى هذه الصفحة
+  const session = await getAdminSession();
+  if (session) {
+    const userData = await getAdminUserById(session.sub);
+    if (userData) {
+      const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role !== "ADMIN";
+      if (isLimitedUser && userData.custom_url) {
+        // إعادة توجيه المستخدم المحدود إلى صفحته المخصصة
+        redirect(userData.custom_url);
+      }
+    }
+  }
+
   let stats = { newsCount: 0, programsCount: 0, applicationsCount: 0, lastUpdated: null as string | null };
   try {
     stats = await getDashboardStats();
@@ -57,24 +74,61 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-bold text-neutral-900">ملخص سريع</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {cards.map((c) => {
-          const cn = "rounded-xl border border-neutral-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3";
-          const inner = (
-            <>
-              <span className="text-neutral-400">{c.icon}</span>
-              <p className={`font-extrabold text-neutral-900 ${c.title === "آخر تحديث" ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl"}`}>{c.value}</p>
-              <p className="text-sm font-medium text-neutral-500">{c.title}</p>
-            </>
-          );
-          return c.href ? (
-            <Link key={c.title} href={c.href} className={cn}>{inner}</Link>
-          ) : (
-            <div key={c.title} className={cn}>{inner}</div>
-          );
-        })}
+    <div className="space-y-8">
+      {/* العنوان الرئيسي */}
+      <div>
+        <h1 className="text-3xl font-extrabold text-neutral-900 mb-2">لوحة التحكم</h1>
+        <p className="text-sm text-neutral-600">نظرة عامة على النظام والإحصائيات</p>
+      </div>
+
+      {/* ملخص سريع */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-xl font-bold text-neutral-900">ملخص سريع</h2>
+          <Link
+            href="/admin/users"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            إدارة المستخدمين
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {cards.map((c) => {
+            const cn = "rounded-xl border border-neutral-200 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4 group";
+            const inner = (
+              <>
+                <div className="flex items-center justify-between">
+                  <div className={`p-3 rounded-lg ${c.title === "آخر تحديث" ? "bg-neutral-100" : "bg-[#31BD9C]/10"} group-hover:scale-110 transition-transform`}>
+                    <span className={`${c.title === "آخر تحديث" ? "text-neutral-600" : "text-[#31BD9C]"}`}>{c.icon}</span>
+                  </div>
+                  {c.href && (
+                    <svg className="w-5 h-5 text-neutral-400 group-hover:text-[#31BD9C] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <p className={`font-extrabold text-neutral-900 mb-1 ${c.title === "آخر تحديث" ? "text-xl" : "text-3xl"}`}>{c.value}</p>
+                  <p className="text-sm font-medium text-neutral-500">{c.title}</p>
+                </div>
+              </>
+            );
+            return c.href ? (
+              <Link key={c.title} href={c.href} className={cn}>{inner}</Link>
+            ) : (
+              <div key={c.title} className={cn}>{inner}</div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* القوائم السريعة */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-neutral-900">القوائم السريعة</h2>
+        <AdminNav />
       </div>
     </div>
   );

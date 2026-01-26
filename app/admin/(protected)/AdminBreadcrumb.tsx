@@ -14,6 +14,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   "social-media": "إدارة السوشيال ميديا",
   applications: "طلبات التقديم",
   edit: "تعديل",
+  "registration-affairs": "شؤون التسجيل",
+  "required-documents": "المستمسكات المطلوبة",
 };
 
 function segmentToLabel(segment: string, prev: string): string {
@@ -26,7 +28,11 @@ function segmentToLabel(segment: string, prev: string): string {
   return segment;
 }
 
-export default function AdminBreadcrumb() {
+type AdminBreadcrumbProps = {
+  isLimitedUser?: boolean;
+};
+
+export default function AdminBreadcrumb({ isLimitedUser = false }: AdminBreadcrumbProps) {
   const pathname = usePathname() ?? "";
   const segments = pathname.split("/").filter(Boolean);
   const items: { href: string; label: string }[] = [];
@@ -47,6 +53,21 @@ export default function AdminBreadcrumb() {
       <ol className="flex flex-wrap items-center gap-1.5 text-sm text-neutral-600">
         {items.map((item, i) => {
           const isLast = i === items.length - 1;
+          const isAdminLink = item.href === "/admin" && item.label === "لوحة التحكم";
+          
+          // للمستخدم المحدود، تعطيل رابط "لوحة التحكم" فقط
+          if (isLimitedUser && isAdminLink) {
+            return (
+              <li key={item.href} className="inline-flex items-center gap-1.5">
+                {i > 0 && <span className="text-neutral-400" aria-hidden>/</span>}
+                <span className="text-neutral-400 cursor-not-allowed" title="غير متاح للمستخدم المحدود">
+                  {item.label}
+                </span>
+              </li>
+            );
+          }
+          
+          // للروابط الأخرى، السماح بالوصول
           return (
             <li key={item.href} className="inline-flex items-center gap-1.5">
               {i > 0 && <span className="text-neutral-400" aria-hidden>/</span>}

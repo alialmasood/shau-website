@@ -1,10 +1,34 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/lib/adminSession";
+import { getAdminUserById, hasPermission } from "@/lib/adminUsersRepo";
 import { getAllRegistrationDocuments } from "@/lib/registrationDocumentsRepo";
 import ExportDocumentsButton from "./ExportDocumentsButton";
 import DownloadStudentButton from "./DownloadStudentButton";
 import DeleteStudentButton from "./DeleteStudentButton";
 
 export default async function AdminRequiredDocumentsPage() {
+  // التحقق من أن المستخدم المحدود يمكنه الوصول إلى هذه الصفحة فقط إذا كانت ضمن custom_url
+  const session = await getAdminSession();
+  let userData = null;
+  let canDelete = false;
+  
+  if (session) {
+    userData = await getAdminUserById(session.sub);
+    if (userData) {
+      const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role !== "ADMIN";
+      if (isLimitedUser && userData.custom_url) {
+        // إذا كان custom_url مختلف عن هذه الصفحة، إعادة توجيه
+        if (userData.custom_url !== "/admin/registration-affairs/required-documents") {
+          redirect(userData.custom_url);
+        }
+      }
+      
+      // التحقق من صلاحية الحذف
+      canDelete = userData.role === "ADMIN" || await hasPermission(session.sub, "registration", "delete");
+    }
+  }
+  
   let documents: Awaited<ReturnType<typeof getAllRegistrationDocuments>> = [];
   try {
     documents = await getAllRegistrationDocuments();
@@ -61,7 +85,9 @@ export default async function AdminRequiredDocumentsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <DownloadStudentButton studentId={doc.id} studentName={doc.fullName} />
-                        <DeleteStudentButton studentId={doc.id} studentName={doc.fullName} />
+                        {canDelete && (
+                          <DeleteStudentButton studentId={doc.id} studentName={doc.fullName} />
+                        )}
                       </div>
                     </div>
                   </div>

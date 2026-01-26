@@ -1,0 +1,325 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import type { AdminUserRow, AdminPermissionRow } from "@/lib/adminUsersRepo";
+
+const ROLES = [
+  { value: "ADMIN", label: "مدير" },
+  { value: "MANAGER", label: "مدير فرعي" },
+  { value: "EDITOR", label: "محرر" },
+  { value: "VIEWER", label: "مشاهد" },
+];
+
+export default function EditUserForm({
+  user,
+  userPermissions,
+  allPermissions,
+  resources,
+}: {
+  user: AdminUserRow;
+  userPermissions: AdminPermissionRow[];
+  allPermissions: AdminPermissionRow[];
+  resources: string[];
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    email: user.email,
+    password: "",
+    confirmPassword: "",
+    role: user.role,
+    full_name: user.full_name || "",
+    custom_url: user.custom_url || "",
+    is_active: user.is_active,
+  });
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(
+    userPermissions.map((p) => p.id)
+  );
+
+  useEffect(() => {
+    setSelectedPermissions(userPermissions.map((p) => p.id));
+  }, [userPermissions]);
+
+  function handleInputChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const { name, value, type } = e.target;
+    if (type === "checkbox") {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  }
+
+  function handlePermissionToggle(permissionId: string) {
+    setSelectedPermissions((prev) =>
+      prev.includes(permissionId)
+        ? prev.filter((id) => id !== permissionId)
+        : [...prev, permissionId]
+    );
+  }
+
+  function handleResourceToggle(resource: string) {
+    const resourcePermissions = allPermissions.filter((p) => p.resource === resource);
+    const allSelected = resourcePermissions.every((p) => selectedPermissions.includes(p.id));
+
+    if (allSelected) {
+      setSelectedPermissions((prev) =>
+        prev.filter((id) => !resourcePermissions.some((p) => p.id === id))
+      );
+    } else {
+      const newIds = resourcePermissions
+        .map((p) => p.id)
+        .filter((id) => !selectedPermissions.includes(id));
+      setSelectedPermissions((prev) => [...prev, ...newIds]);
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      setError("كلمات المرور غير متطابقة");
+      return;
+    }
+
+    // التحقق من صحة البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("البريد الإلكتروني غير صحيح");
+      return;
+    }
+
+    // تحسين قوة كلمة المرور
+    if (formData.password && formData.password.length < 8) {
+      setError("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const updateData: any = {
+        id: user.id,
+        email: formData.email,
+        role: formData.role,
+        full_name: formData.full_name || null,
+        custom_url: formData.custom_url || null,
+        is_active: formData.is_active,
+        permissions: selectedPermissions,
+      };
+
+      if (formData.password) {
+        updateData.password = formData.password;
+      }
+
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(updateData),
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setError(json.error || "فشل تحديث المستخدم");
+        return;
+      }
+
+      router.push("/admin/users");
+      router.refresh();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      setError("حدث خطأ أثناء تحديث المستخدم");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="p-4 rounded-xl bg-red-50 border-2 border-red-300 text-red-800">
+          <p className="font-bold">{error}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-bold text-neutral-900 mb-2">
+            البريد الإلكتروني <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-neutral-900 mb-2">
+            الاسم الكامل
+          </label>
+          <input
+            type="text"
+            name="full_name"
+            value={formData.full_name}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-neutral-900 mb-2">
+            كلمة المرور الجديدة (اتركه فارغاً للاحتفاظ بالحالية)
+          </label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            minLength={6}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-neutral-900 mb-2">
+            تأكيد كلمة المرور الجديدة
+          </label>
+          <input
+            type="password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            minLength={6}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-neutral-900 mb-2">
+            الدور <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleInputChange}
+            required
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+          >
+            {ROLES.map((role) => (
+              <option key={role.value} value={role.value}>
+                {role.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-neutral-900 mb-2">
+            الرابط المخصص
+          </label>
+          <input
+            type="text"
+            name="custom_url"
+            value={formData.custom_url}
+            onChange={handleInputChange}
+            placeholder="/admin/registration-affairs/required-documents"
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+          />
+          <div className="mt-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <p className="text-xs font-bold text-blue-900 mb-2">📌 كيف يعمل الرابط المخصص:</p>
+            <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
+              <li>بعد تسجيل الدخول، سيتم توجيه المستخدم تلقائياً إلى هذا الرابط</li>
+              <li>يجب أن يبدأ الرابط بـ <code className="bg-blue-100 px-1 rounded">/admin</code></li>
+              <li>مثال: <code className="bg-blue-100 px-1 rounded">/admin/registration-affairs</code></li>
+              <li>مثال: <code className="bg-blue-100 px-1 rounded">/admin/news</code></li>
+              <li>اتركه فارغاً للتوجيه إلى لوحة التحكم الرئيسية</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="is_active"
+            checked={formData.is_active}
+            onChange={handleInputChange}
+            className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
+          />
+          <label className="text-sm font-bold text-neutral-900">المستخدم نشط</label>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-neutral-900 mb-4">
+          الصلاحيات
+        </label>
+        <div className="space-y-4">
+          {resources.map((resource) => {
+            const resourcePermissions = allPermissions.filter((p) => p.resource === resource);
+            const allSelected = resourcePermissions.every((p) => selectedPermissions.includes(p.id));
+
+            return (
+              <div key={resource} className="border border-neutral-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-neutral-900 capitalize">{resource}</h3>
+                  <button
+                    type="button"
+                    onClick={() => handleResourceToggle(resource)}
+                    className="text-xs text-[#31BD9C] hover:text-[#2aa88a] font-bold"
+                  >
+                    {allSelected ? "إلغاء الكل" : "تحديد الكل"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {resourcePermissions.map((permission) => (
+                    <label
+                      key={permission.id}
+                      className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-neutral-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedPermissions.includes(permission.id)}
+                        onChange={() => handlePermissionToggle(permission.id)}
+                        className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
+                      />
+                      <span className="text-sm text-neutral-700 capitalize">
+                        {permission.action}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 pt-4">
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-6 py-2.5 rounded-xl bg-[#31BD9C] text-white font-bold hover:bg-[#2aa88a] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {loading ? "جاري التحديث..." : "تحديث المستخدم"}
+        </button>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="px-6 py-2.5 rounded-xl border border-neutral-300 text-neutral-700 font-bold hover:bg-neutral-50 transition-colors"
+        >
+          إلغاء
+        </button>
+      </div>
+    </form>
+  );
+}

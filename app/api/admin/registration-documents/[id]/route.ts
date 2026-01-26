@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/adminSession";
+import { getAdminUserById, hasPermission } from "@/lib/adminUsersRepo";
 import * as registrationRepo from "@/lib/registrationDocumentsRepo";
 
 export async function DELETE(
@@ -9,6 +10,18 @@ export async function DELETE(
   const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+  }
+
+  // التحقق من الصلاحيات
+  const userData = await getAdminUserById(session.sub);
+  if (!userData) {
+    return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 401 });
+  }
+
+  // التحقق من أن المستخدم لديه صلاحية الحذف أو هو ADMIN
+  const canDelete = userData.role === "ADMIN" || await hasPermission(session.sub, "registration", "delete");
+  if (!canDelete) {
+    return NextResponse.json({ error: "ليس لديك صلاحية لحذف البيانات" }, { status: 403 });
   }
 
   const { id } = await params;

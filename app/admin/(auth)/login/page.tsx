@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { verifyAdminCredentials } from "@/lib/adminAuth";
 import { setAdminSessionCookie } from "@/lib/adminSession";
+
+// منع cache هذه الصفحة
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function loginAction(formData: FormData) {
   "use server";
@@ -18,8 +24,30 @@ async function loginAction(formData: FormData) {
     redirect("/admin/login?error=1");
   }
 
+  // جلب بيانات المستخدم قبل تعيين الـ cookie للحصول على custom_url
+  const { getAdminUserByEmail } = await import("@/lib/adminUsersRepo");
+  const userData = await getAdminUserByEmail(email);
+  
+  // تحديد الرابط المخصص
+  let redirectUrl = "/admin"; // القيمة الافتراضية
+  
+  if (userData?.custom_url) {
+    const customUrl = String(userData.custom_url).trim();
+    
+    // التأكد من أن الرابط يبدأ بـ /admin وليس فارغاً
+    if (customUrl && customUrl.length > 0 && customUrl.startsWith("/admin")) {
+      redirectUrl = customUrl;
+    }
+  }
+  
+  // تعيين الـ cookie
   await setAdminSessionCookie(admin.id);
-  redirect("/admin");
+  
+  // إعادة التحقق من المسار قبل التوجيه
+  revalidatePath(redirectUrl);
+  
+  // التوجيه إلى الرابط المحدد
+  redirect(redirectUrl);
 }
 
 export default async function AdminLoginPage({

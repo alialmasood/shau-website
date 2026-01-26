@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/adminSession";
-import AdminNav from "./AdminNav";
+import { getAdminUserById } from "@/lib/adminUsersRepo";
+import AdminNavConditional from "./AdminNavConditional";
+import AdminNavLimited from "./AdminNavLimited";
 import AdminBreadcrumb from "./AdminBreadcrumb";
+
+// منع cache هذه الصفحة
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function AdminProtectedLayout({
   children,
@@ -14,6 +20,14 @@ export default async function AdminProtectedLayout({
     redirect("/admin/login");
   }
 
+  // جلب بيانات المستخدم للتحقق من custom_url
+  const userData = await getAdminUserById(session.sub);
+  if (!userData) {
+    redirect("/admin/login");
+  }
+
+  const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role !== "ADMIN";
+
   return (
     <div className="min-h-screen bg-neutral-50" dir="rtl">
       {/* Header ثابت (Sticky) — مجموعات تنقل منطقية + Active State */}
@@ -21,13 +35,19 @@ export default async function AdminProtectedLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* شريط علوي: لوحة التحكم | تسجيل خروج — موبايل: نص أصغر */}
           <div className="flex items-center justify-between gap-3 py-2.5 sm:py-3 border-b border-neutral-100">
-            <Link
-              href="/admin"
-              title="العودة إلى لوحة التحكم"
-              className="text-base sm:text-lg font-extrabold text-neutral-900 hover:text-[#31BD9C] transition-colors"
-            >
-              لوحة التحكم
-            </Link>
+            {!isLimitedUser ? (
+              <Link
+                href="/admin"
+                title="العودة إلى لوحة التحكم"
+                className="text-base sm:text-lg font-extrabold text-neutral-900 hover:text-[#31BD9C] transition-colors"
+              >
+                لوحة التحكم
+              </Link>
+            ) : (
+              <div className="text-base sm:text-lg font-extrabold text-neutral-900">
+                {userData?.full_name || "لوحة التحكم"}
+              </div>
+            )}
             <Link
               href="/admin/logout"
               title="تسجيل الخروج من لوحة التحكم"
@@ -39,14 +59,18 @@ export default async function AdminProtectedLayout({
           </div>
           {/* التبويبات: المحتوى + الإدارة */}
           <div className="py-4">
-            <AdminNav />
+            {isLimitedUser ? (
+              <AdminNavLimited customUrl={userData?.custom_url || null} />
+            ) : (
+              <AdminNavConditional />
+            )}
           </div>
         </div>
       </header>
 
       {/* المحتوى الرئيسي — Breadcrumb، حركة خفيفة، محتوى الصفحة */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
-        <AdminBreadcrumb />
+        <AdminBreadcrumb isLimitedUser={isLimitedUser} />
         <div className="animate-admin-fade-in">{children}</div>
       </main>
     </div>

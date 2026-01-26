@@ -89,11 +89,13 @@ export async function setAdminSessionCookie(adminId: string) {
 
 export async function clearAdminSessionCookie() {
   const cookieStore = await cookies();
+  // حذف الـ cookie بضبط maxAge إلى 0 و expires إلى تاريخ في الماضي
   cookieStore.set(ADMIN_SESSION_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
+    maxAge: 0,
     expires: new Date(0),
   });
 }
