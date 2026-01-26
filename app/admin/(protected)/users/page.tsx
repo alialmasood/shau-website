@@ -23,8 +23,8 @@ export default async function AdminUsersPage() {
   }
 
   // إحصائيات سريعة
-  const activeUsers = users.filter((u) => u.is_active).length;
-  const inactiveUsers = users.filter((u) => !u.is_active).length;
+  const activeUsers = users.filter((u: { is_active: boolean }) => u.is_active).length;
+  const inactiveUsers = users.filter((u: { is_active: boolean }) => !u.is_active).length;
   const totalUsers = users.length;
 
   function getRoleBadgeColor(role: string): string {
@@ -70,16 +70,16 @@ export default async function AdminUsersPage() {
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <Link
+            <a
               href="/admin/users/create"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
-              style={{ display: 'inline-flex', visibility: 'visible' }}
+              style={{ display: 'inline-flex', visibility: 'visible', opacity: 1 }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               إنشاء مستخدم جديد
-            </Link>
+            </a>
             <Link
               href="/admin"
               className="inline-flex items-center px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-bold hover:bg-neutral-800 transition-colors whitespace-nowrap"
@@ -91,15 +91,16 @@ export default async function AdminUsersPage() {
 
         {/* زر إنشاء مستخدم جديد - نسخة إضافية للتأكد من الظهور */}
         <div className="mb-4 flex justify-end">
-          <Link
+          <a
             href="/admin/users/create"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
+            style={{ display: 'inline-flex' }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             إنشاء مستخدم جديد
-          </Link>
+          </a>
         </div>
 
         {/* إحصائيات سريعة */}
