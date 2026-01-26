@@ -18,10 +18,15 @@ export default async function AdminRequiredDocumentsPage() {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
-              المستمسكات المطلوبة
-            </h1>
-            <p className="mt-2 text-sm text-neutral-600">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
+                المستمسكات المطلوبة
+              </h1>
+              <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-[#31BD9C] text-white text-sm font-bold">
+                {documents.length}
+              </div>
+            </div>
+            <p className="text-sm text-neutral-600">
               عرض جميع المستمسكات المرفوعة من الطلاب
             </p>
           </div>
