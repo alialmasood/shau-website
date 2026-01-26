@@ -17,10 +17,12 @@
     "db:migrate-programs-tables-images": "node scripts/run-programs-lectures-exams-images-migration.js",
     "db:migrate-tuition-pdf": "node scripts/run-tuition-pdf-migration.js",
     "db:migrate-social-links": "node scripts/run-social-links-migration.js",
+    "db:migrate-registration-documents": "node scripts/run-registration-documents-migration.js",
     "admin:reset-password": "node scripts/reset-admin-password.js"
   },
   "dependencies": {
     "@prisma/client": "^7.2.0",
+    "archiver": "^7.0.1",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "next": "^16.1.1",
@@ -31,6 +33,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/archiver": "^6.0.4",
     "@types/node": "^20",
     "@types/pg": "^8.10.9",
     "@types/react": "^19",

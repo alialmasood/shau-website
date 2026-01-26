@@ -250,7 +250,7 @@ export default function Header() {
                       onMouseLeave={() => {
                         timeoutRef.current = setTimeout(() => {
                           setOpenMenu(null);
-                        }, 200); // تأخير 200ms قبل الإغلاق
+                        }, 300); // تأخير 300ms قبل الإغلاق
                       }}
                     >
                       <button
@@ -288,7 +288,7 @@ export default function Header() {
                           onMouseLeave={() => {
                             timeoutRef.current = setTimeout(() => {
                               setOpenMenu(null);
-                            }, 200);
+                            }, 300);
                           }}
                         >
                           <div className="bg-white rounded-2xl shadow-2xl border-2 border-[#31BD9C] overflow-visible backdrop-blur-sm animate-dropdown">
@@ -315,7 +315,7 @@ export default function Header() {
                                   if (subItem.submenu) {
                                     nestedTimeoutRef.current = setTimeout(() => {
                                       setNestedMenuOpen(null);
-                                    }, 200);
+                                    }, 400);
                                   }
                                 }}
                               >
@@ -352,7 +352,8 @@ export default function Header() {
                                     {/* القائمة المتداخلة */}
                                     {isNestedOpen && subItem.submenu && (
                                       <div 
-                                        className="absolute top-0 right-full mr-2 w-64 bg-transparent z-[10000]"
+                                        className="absolute top-0 right-full mr-1 w-64 bg-transparent z-[10000]"
+                                        style={{ paddingLeft: '8px' }}
                                         onMouseEnter={() => {
                                           if (nestedTimeoutRef.current) {
                                             clearTimeout(nestedTimeoutRef.current);
@@ -363,7 +364,7 @@ export default function Header() {
                                         onMouseLeave={() => {
                                           nestedTimeoutRef.current = setTimeout(() => {
                                             setNestedMenuOpen(null);
-                                          }, 200);
+                                          }, 400);
                                         }}
                                       >
                                         <div className="bg-white rounded-2xl shadow-2xl border-2 border-[#31BD9C] overflow-hidden backdrop-blur-sm animate-dropdown" style={{ display: 'block', visibility: 'visible' as const, opacity: 1 }}>
