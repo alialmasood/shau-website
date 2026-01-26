@@ -18,6 +18,7 @@
     "db:migrate-tuition-pdf": "node scripts/run-tuition-pdf-migration.js",
     "db:migrate-social-links": "node scripts/run-social-links-migration.js",
     "db:migrate-registration-documents": "node scripts/run-registration-documents-migration.js",
+    "db:fix-failed-migration": "node scripts/fix-failed-migration.js",
     "admin:reset-password": "node scripts/reset-admin-password.js"
   },
   "dependencies": {
