@@ -26,34 +26,111 @@ CREATE TABLE IF NOT EXISTS "registration_documents" (
 CREATE INDEX IF NOT EXISTS "registration_documents_created_at_idx" ON "registration_documents"("created_at");
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_personal_photo_id_fkey" FOREIGN KEY ("personal_photo_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_personal_photo_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_personal_photo_id_fkey" FOREIGN KEY ("personal_photo_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_student_id_front_id_fkey" FOREIGN KEY ("student_id_front_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_student_id_front_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_student_id_front_id_fkey" FOREIGN KEY ("student_id_front_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_student_id_back_id_fkey" FOREIGN KEY ("student_id_back_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_student_id_back_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_student_id_back_id_fkey" FOREIGN KEY ("student_id_back_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_father_id_front_id_fkey" FOREIGN KEY ("father_id_front_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_father_id_front_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_father_id_front_id_fkey" FOREIGN KEY ("father_id_front_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_father_id_back_id_fkey" FOREIGN KEY ("father_id_back_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_father_id_back_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_father_id_back_id_fkey" FOREIGN KEY ("father_id_back_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_mother_id_front_id_fkey" FOREIGN KEY ("mother_id_front_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_mother_id_front_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_mother_id_front_id_fkey" FOREIGN KEY ("mother_id_front_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_mother_id_back_id_fkey" FOREIGN KEY ("mother_id_back_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_mother_id_back_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_mother_id_back_id_fkey" FOREIGN KEY ("mother_id_back_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_residence_card_front_id_fkey" FOREIGN KEY ("residence_card_front_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_residence_card_front_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_residence_card_front_id_fkey" FOREIGN KEY ("residence_card_front_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_residence_card_back_id_fkey" FOREIGN KEY ("residence_card_back_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_residence_card_back_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_residence_card_back_id_fkey" FOREIGN KEY ("residence_card_back_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_high_school_certificate_id_fkey" FOREIGN KEY ("high_school_certificate_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_high_school_certificate_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_high_school_certificate_id_fkey" FOREIGN KEY ("high_school_certificate_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "registration_documents" ADD CONSTRAINT IF NOT EXISTS "registration_documents_barcode_document_id_fkey" FOREIGN KEY ("barcode_document_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'registration_documents_barcode_document_id_fkey'
+    ) THEN
+        ALTER TABLE "registration_documents" ADD CONSTRAINT "registration_documents_barcode_document_id_fkey" FOREIGN KEY ("barcode_document_id") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+    END IF;
+END $$;
