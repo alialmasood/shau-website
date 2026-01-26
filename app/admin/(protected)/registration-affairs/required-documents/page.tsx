@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAllRegistrationDocuments } from "@/lib/registrationDocumentsRepo";
 import ExportDocumentsButton from "./ExportDocumentsButton";
 import DownloadStudentButton from "./DownloadStudentButton";
+import DeleteStudentButton from "./DeleteStudentButton";
 
 export default async function AdminRequiredDocumentsPage() {
   let documents: Awaited<ReturnType<typeof getAllRegistrationDocuments>> = [];
@@ -53,7 +54,10 @@ export default async function AdminRequiredDocumentsPage() {
                         <p className="text-xs font-bold text-neutral-500 uppercase mb-1">الاسم</p>
                         <p className="text-base font-semibold text-neutral-900">{doc.fullName}</p>
                       </div>
-                      <DownloadStudentButton studentId={doc.id} studentName={doc.fullName} />
+                      <div className="flex items-center gap-2">
+                        <DownloadStudentButton studentId={doc.id} studentName={doc.fullName} />
+                        <DeleteStudentButton studentId={doc.id} studentName={doc.fullName} />
+                      </div>
                     </div>
                   </div>
                   <div>

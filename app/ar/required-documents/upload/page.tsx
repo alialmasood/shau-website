@@ -25,6 +25,7 @@ export default function UploadDocumentsPage() {
     department: "",
     stage: "",
     phone: "",
+    phoneNumber: "", // رقم الهاتف بدون المفتاح
   });
 
   const [files, setFiles] = useState({
@@ -47,7 +48,16 @@ export default function UploadDocumentsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // تنسيق رقم الهاتف: إزالة أي أحرف غير رقمية
+    if (name === "phoneNumber") {
+      const numbersOnly = value.replace(/\D/g, "");
+      // الحد الأقصى 10 أرقام
+      const limited = numbersOnly.slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: limited }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof typeof files) => {
@@ -55,8 +65,17 @@ export default function UploadDocumentsPage() {
     setFiles((prev) => ({ ...prev, [field]: file }));
   };
 
-  const validatePhone = (phone: string): boolean => {
-    return phone.startsWith("+964") && phone.length >= 13;
+  const validatePhone = (phoneNumber: string): boolean => {
+    // رقم هاتف عراقي: يجب أن يكون 10 أرقام ويبدأ بـ 7
+    const cleaned = phoneNumber.replace(/\D/g, "");
+    return /^7\d{9}$/.test(cleaned);
+  };
+
+  const getFullPhone = (): string => {
+    const cleaned = formData.phoneNumber.replace(/\s|-/g, "");
+    // إزالة الصفر الأول إذا كان موجوداً
+    const withoutZero = cleaned.startsWith("0") ? cleaned.slice(1) : cleaned;
+    return `+964${withoutZero}`;
   };
 
   async function uploadFile(file: File | null): Promise<string | null> {
@@ -87,8 +106,12 @@ export default function UploadDocumentsPage() {
       setError("الرجاء اختيار المرحلة");
       return;
     }
-    if (!validatePhone(formData.phone)) {
-      setError("رقم الهاتف يجب أن يبدأ بـ +964 ويحتوي على 13 رقم على الأقل");
+    if (!formData.phoneNumber.trim()) {
+      setError("الرجاء إدخال رقم الهاتف");
+      return;
+    }
+    if (!validatePhone(formData.phoneNumber)) {
+      setError("رقم الهاتف غير صحيح. يجب أن يكون 10 أرقام ويبدأ بـ 7 (مثال: 7901234567)");
       return;
     }
 
@@ -160,7 +183,7 @@ export default function UploadDocumentsPage() {
           fullName: formData.fullName,
           department: formData.department,
           stage: formData.stage,
-          phone: formData.phone,
+          phone: getFullPhone(),
           personalPhotoId,
           studentIdFrontId,
           studentIdBackId,
@@ -180,10 +203,10 @@ export default function UploadDocumentsPage() {
         throw new Error(json?.error || "فشل حفظ البيانات");
       }
 
-      setSuccess("تم إرسال المستمسكات بنجاح!");
+      setSuccess("تم إرسال المستمسكات بنجاح! شكراً لك.");
       setTimeout(() => {
         router.push("/ar/required-documents");
-      }, 2000);
+      }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ أثناء الإرسال");
     } finally {
@@ -199,18 +222,44 @@ export default function UploadDocumentsPage() {
         </h1>
 
         {error && (
-          <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800">
-            {error}
+          <div className="mb-6 p-5 rounded-xl bg-red-50 border-2 border-red-300 text-red-800 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-start gap-3">
+              <svg className="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1">
+                <p className="font-bold text-base mb-1">فشل الإرسال</p>
+                <p className="text-sm">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-600 hover:text-red-800 transition-colors"
+                aria-label="إغلاق"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800">
-            {success}
+          <div className="mb-6 p-5 rounded-xl bg-green-50 border-2 border-green-300 text-green-800 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-start gap-3">
+              <svg className="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1">
+                <p className="font-bold text-base mb-1">تم الإرسال بنجاح!</p>
+                <p className="text-sm">{success}</p>
+                <p className="text-xs mt-2 text-green-700">سيتم توجيهك إلى الصفحة الرئيسية خلال ثوانٍ...</p>
+              </div>
+            </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className={`space-y-6 ${success ? "opacity-50 pointer-events-none" : ""}`}>
           {/* الاسم الرباعي واللقب */}
           <div>
             <label className="block text-sm font-bold text-neutral-900 mb-2">
@@ -273,16 +322,23 @@ export default function UploadDocumentsPage() {
             <label className="block text-sm font-bold text-neutral-900 mb-2">
               رقم الهاتف <span className="text-red-500">*</span>
             </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="+964XXXXXXXXX"
-              required
-              className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
-            />
-            <p className="mt-1 text-xs text-neutral-500">يجب أن يبدأ بـ +964</p>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center px-4 py-2.5 rounded-xl border border-neutral-300 bg-neutral-50 text-neutral-700 font-semibold whitespace-nowrap">
+                +964
+              </div>
+              <input
+                type="tel"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleInputChange}
+                placeholder="7901234567"
+                required
+                maxLength={10}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+                dir="ltr"
+              />
+            </div>
+            <p className="mt-1 text-xs text-neutral-500">أدخل رقم الهاتف العراقي (10 أرقام، يبدأ بـ 7، مثال: 7901234567)</p>
           </div>
 
           {/* الصورة الشخصية */}

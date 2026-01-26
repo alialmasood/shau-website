@@ -117,3 +117,20 @@ export async function createRegistrationDocument(
   );
   return String(res.rows[0].id);
 }
+
+export async function deleteRegistrationDocument(id: string): Promise<boolean> {
+  try {
+    const s = String(id || "").trim();
+    if (!s) return false;
+    
+    const res = await query(
+      `DELETE FROM registration_documents WHERE id = $1 RETURNING id`,
+      [s]
+    );
+    
+    return res.rows.length > 0;
+  } catch (error) {
+    console.error("Error in deleteRegistrationDocument:", error);
+    throw error;
+  }
+}
