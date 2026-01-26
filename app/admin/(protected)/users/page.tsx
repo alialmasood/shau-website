@@ -4,6 +4,10 @@ import { getAdminSession } from "@/lib/adminSession";
 import DeleteUserButton from "./DeleteUserButton";
 import CopyUrlButton from "./CopyUrlButton";
 
+// منع cache هذه الصفحة
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function AdminUsersPage() {
   const session = await getAdminSession();
   if (!session) {
@@ -68,7 +72,7 @@ export default async function AdminUsersPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/admin/users/create"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
