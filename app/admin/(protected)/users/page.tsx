@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllAdminUsers } from "@/lib/adminUsersRepo";
+import { getAllAdminUsers, type AdminUserRow } from "@/lib/adminUsersRepo";
 import { getAdminSession } from "@/lib/adminSession";
 import DeleteUserButton from "./DeleteUserButton";
 import CopyUrlButton from "./CopyUrlButton";
@@ -70,16 +70,15 @@ export default async function AdminUsersPage() {
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <a
+            <Link
               href="/admin/users/create"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
-              style={{ display: 'inline-flex', visibility: 'visible', opacity: 1 }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               إنشاء مستخدم جديد
-            </a>
+            </Link>
             <Link
               href="/admin"
               className="inline-flex items-center px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-bold hover:bg-neutral-800 transition-colors whitespace-nowrap"
@@ -89,18 +88,17 @@ export default async function AdminUsersPage() {
           </div>
         </div>
 
-        {/* زر إنشاء مستخدم جديد - نسخة إضافية للتأكد من الظهور */}
-        <div className="mb-4 flex justify-end">
-          <a
+        {/* زر إنشاء مستخدم جديد - نسخة إضافية قبل الإحصائيات */}
+        <div className="mb-6 flex justify-end">
+          <Link
             href="/admin/users/create"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
-            style={{ display: 'inline-flex' }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             إنشاء مستخدم جديد
-          </a>
+          </Link>
         </div>
 
         {/* إحصائيات سريعة */}
@@ -188,7 +186,7 @@ export default async function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-neutral-200">
-                  {users.map((user) => (
+                  {users.map((user: AdminUserRow) => (
                     <tr key={user.id} className="hover:bg-neutral-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-semibold text-neutral-900">
