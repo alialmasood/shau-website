@@ -72,13 +72,13 @@ export default async function AdminUsersPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <Link
               href="/admin/users/create"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
-              title="إنشاء مستخدم إداري جديد"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
+              style={{ display: 'inline-flex', visibility: 'visible' }}
             >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              <span>إنشاء مستخدم جديد</span>
+              إنشاء مستخدم جديد
             </Link>
             <Link
               href="/admin"
@@ -87,6 +87,19 @@ export default async function AdminUsersPage() {
               رجوع
             </Link>
           </div>
+        </div>
+
+        {/* زر إنشاء مستخدم جديد - نسخة إضافية للتأكد من الظهور */}
+        <div className="mb-4 flex justify-end">
+          <Link
+            href="/admin/users/create"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            إنشاء مستخدم جديد
+          </Link>
         </div>
 
         {/* إحصائيات سريعة */}
@@ -136,7 +149,16 @@ export default async function AdminUsersPage() {
 
         {users.length === 0 ? (
           <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center">
-            <p className="text-neutral-500">لا يوجد مستخدمين بعد</p>
+            <p className="text-neutral-500 mb-4">لا يوجد مستخدمين بعد</p>
+            <Link
+              href="/admin/users/create"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              إنشاء مستخدم جديد
+            </Link>
           </div>
         ) : (
           <div className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
