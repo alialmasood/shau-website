@@ -86,7 +86,9 @@ export default function CreateUserForm({
     try {
       const res = await fetch("/api/admin/users", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
         credentials: "include",
         body: JSON.stringify({
           email: formData.email,
@@ -101,6 +103,14 @@ export default function CreateUserForm({
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
+        // إذا كان الخطأ 401، توجيه المستخدم إلى صفحة تسجيل الدخول
+        if (res.status === 401) {
+          setError(json.error || "انتهت جلسة العمل. يرجى تسجيل الدخول مرة أخرى.");
+          setTimeout(() => {
+            window.location.href = "/admin/login";
+          }, 2000);
+          return;
+        }
         setError(json.error || "فشل إنشاء المستخدم");
         return;
       }
@@ -109,7 +119,7 @@ export default function CreateUserForm({
       router.refresh();
     } catch (error) {
       console.error("Error creating user:", error);
-      setError("حدث خطأ أثناء إنشاء المستخدم");
+      setError("حدث خطأ أثناء إنشاء المستخدم. يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);
     }

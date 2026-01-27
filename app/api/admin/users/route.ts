@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/adminSession";
 import { createAdminUser, getAdminUserByEmail } from "@/lib/adminUsersRepo";
+import { cookies } from "next/headers";
+
+// منع cache هذه الصفحة
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
-  const session = await getAdminSession();
-  if (!session) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-  }
-
   try {
+    // التحقق من الجلسة
+    const session = await getAdminSession();
+    
+    // تسجيل للتحقق من الجلسة (فقط في حالة الخطأ)
+    if (!session) {
+      const cookieStore = await cookies();
+      const cookieValue = cookieStore.get("shau_admin_session");
+      console.error("API /admin/users: No session found", {
+        hasCookie: !!cookieValue,
+        cookieLength: cookieValue?.value?.length || 0,
+        userAgent: request.headers.get("user-agent"),
+        origin: request.headers.get("origin"),
+      });
+      return NextResponse.json({ error: "غير مصرح - يرجى تسجيل الدخول مرة أخرى" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { email, password, role, full_name, custom_url, permissions } = body;
 
@@ -56,7 +72,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, id: userId }, { status: 201 });
   } catch (error) {
-    console.error("Error creating admin user:", error);
+    console.error("Error in POST /api/admin/users:", error);
+    if (error instanceof Error && error.message.includes("غير مصرح")) {
+      return NextResponse.json({ error: "غير مصرح - يرجى تسجيل الدخول مرة أخرى" }, { status: 401 });
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء المستخدم" },
       { status: 500 }
