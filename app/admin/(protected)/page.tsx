@@ -99,6 +99,7 @@ export default async function AdminDashboardPage() {
           <h2 className="text-xl font-bold text-neutral-900">ملخص سريع</h2>
           <Link
             href="/admin/users"
+            prefetch={false}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

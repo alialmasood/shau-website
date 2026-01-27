@@ -36,6 +36,7 @@ export default async function AdminProtectedLayout({
             {!isLimitedUser ? (
               <Link
                 href="/admin"
+                prefetch={false}
                 title="العودة إلى لوحة التحكم"
                 className="text-base sm:text-lg font-extrabold text-neutral-900 hover:text-[#31BD9C] transition-colors"
               >
@@ -48,6 +49,7 @@ export default async function AdminProtectedLayout({
             )}
             <Link
               href="/admin/logout"
+              prefetch={false}
               title="تسجيل الخروج من لوحة التحكم"
               className="h-10 sm:h-11 inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 rounded-xl bg-red-600 text-white text-xs sm:text-sm font-bold hover:bg-red-700 transition-colors"
             >

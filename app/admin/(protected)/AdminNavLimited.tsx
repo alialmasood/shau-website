@@ -90,6 +90,7 @@ export default function AdminNavLimited({ customUrl }: AdminNavLimitedProps) {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={false}
                 className={`h-11 inline-flex items-center gap-2 px-4 rounded-xl transition-colors relative text-sm ${
                   active
                     ? "bg-neutral-200 text-neutral-900 font-bold"

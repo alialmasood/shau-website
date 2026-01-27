@@ -38,9 +38,9 @@ export default async function AdminUsersPage() {
       <div className="w-full bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 font-bold text-xl">❌ غير مصرح - ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
-          <Link href="/admin" className="mt-4 inline-block text-[#31BD9C] hover:underline">
-            العودة إلى لوحة التحكم
-          </Link>
+            <Link href="/admin" prefetch={false} className="mt-4 inline-block text-[#31BD9C] hover:underline">
+              العودة إلى لوحة التحكم
+            </Link>
         </div>
       </div>
     );
@@ -125,6 +125,7 @@ export default async function AdminUsersPage() {
             {canCreate && (
               <Link
                 href="/admin/users/new"
+                prefetch={false}
                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -135,6 +136,7 @@ export default async function AdminUsersPage() {
             )}
             <Link
               href="/admin"
+              prefetch={false}
               className="inline-flex items-center px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-bold hover:bg-neutral-800 transition-colors whitespace-nowrap"
             >
               رجوع
@@ -193,6 +195,7 @@ export default async function AdminUsersPage() {
             {canCreate && (
               <Link
                 href="/admin/users/new"
+                prefetch={false}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,6 +264,7 @@ export default async function AdminUsersPage() {
                           {canEdit && (
                             <Link
                               href={`/admin/users/${userRow.id}/edit`}
+                              prefetch={false}
                               className="text-[#31BD9C] hover:text-[#2aa88a] font-bold"
                             >
                               تعديل
