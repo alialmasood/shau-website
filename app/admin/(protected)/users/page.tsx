@@ -9,10 +9,14 @@ export const revalidate = 0;
 
 export default async function AdminUsersPage() {
   // التحقق من تسجيل الدخول
+  console.log("[AdminUsersPage] Checking current user...");
   const user = await getCurrentAdminUser();
   if (!user) {
+    console.error("[AdminUsersPage] No current user found, redirecting to login");
     redirect("/admin/login");
   }
+
+  console.log(`[AdminUsersPage] User authenticated: ${user.email}, role: ${user.role}`);
 
   // إذا كان ADMIN، صلاحيات كاملة - لا حاجة للتحقق من canAdmin
   const isAdmin = user.role.toUpperCase() === "ADMIN";

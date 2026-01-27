@@ -16,12 +16,14 @@ export default async function AdminProtectedLayout({
 }) {
   try {
     // التحقق من تسجيل الدخول
+    console.log("[AdminProtectedLayout] Checking current user...");
     const userData = await getCurrentAdminUser();
     if (!userData) {
-      console.error("[AdminProtectedLayout] No current user, redirecting to login");
+      console.error("[AdminProtectedLayout] No current user found, redirecting to login");
       redirect("/admin/login");
     }
 
+    console.log(`[AdminProtectedLayout] User authenticated: ${userData.email}, role: ${userData.role}`);
     const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role.toUpperCase() !== "ADMIN";
 
   return (

@@ -101,8 +101,41 @@ export async function clearAdminSessionCookie() {
 }
 
 export async function getAdminSession() {
-  const cookieStore = await cookies();
-  const value = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
-  return verifyAdminSessionValue(value);
+  try {
+    const cookieStore = await cookies();
+    const cookie = cookieStore.get(ADMIN_SESSION_COOKIE);
+    
+    if (!cookie) {
+      console.warn("[getAdminSession] Cookie not found in request");
+      return null;
+    }
+
+    const value = cookie.value;
+    if (!value) {
+      console.warn("[getAdminSession] Cookie value is empty");
+      return null;
+    }
+
+    const secret = getSecret();
+    if (!secret) {
+      console.error("[getAdminSession] ADMIN_SESSION_SECRET is not set");
+      return null;
+    }
+
+    const session = verifyAdminSessionValue(value);
+    if (!session) {
+      console.warn("[getAdminSession] Cookie verification failed - may be expired or invalid signature");
+    } else {
+      console.log(`[getAdminSession] Session verified successfully for user: ${session.sub}`);
+    }
+    
+    return session;
+  } catch (error) {
+    console.error("[getAdminSession] Error getting session:", error);
+    if (error instanceof Error) {
+      console.error("[getAdminSession] Error message:", error.message);
+    }
+    return null;
+  }
 }
 
