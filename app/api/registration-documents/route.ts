@@ -9,6 +9,7 @@ export async function POST(request: Request) {
       fullName,
       department,
       stage,
+      studyType,
       phone,
       personalPhotoId,
       studentIdFrontId,
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       barcodeDocumentId,
     } = body;
 
-    if (!fullName || !department || !stage || !phone) {
+    if (!fullName || !department || !stage || !studyType || !phone) {
       return NextResponse.json(
         { error: "جميع الحقول مطلوبة" },
         { status: 400 }
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
       fullName: String(fullName),
       department: String(department),
       stage: String(stage),
+      studyType: String(studyType),
       phone: String(phone),
       personalPhotoId: personalPhotoId || null,
       studentIdFrontId: studentIdFrontId || null,

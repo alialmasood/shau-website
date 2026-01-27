@@ -112,6 +112,12 @@ export default async function AdminRequiredDocumentsPage() {
                     <p className="text-base font-semibold text-neutral-900">{doc.stage}</p>
                   </div>
                   <div>
+                    <p className="text-xs font-bold text-neutral-500 uppercase mb-1">نوع الدراسة</p>
+                    <p className="text-base font-semibold text-neutral-900">
+                      {doc.studyType === "morning" ? "صباحي" : doc.studyType === "evening" ? "مسائي" : doc.studyType}
+                    </p>
+                  </div>
+                  <div>
                     <p className="text-xs font-bold text-neutral-500 uppercase mb-1">رقم الهاتف</p>
                     <p className="text-base font-semibold text-neutral-900" dir="ltr">{doc.phone}</p>
                   </div>

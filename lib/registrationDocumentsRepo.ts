@@ -5,6 +5,7 @@ export type RegistrationDocumentRow = {
   fullName: string;
   department: string;
   stage: string;
+  studyType: string;
   phone: string;
   personalPhotoId: string | null;
   studentIdFrontId: string | null;
@@ -27,6 +28,7 @@ function mapRow(r: { [k: string]: unknown }): RegistrationDocumentRow {
     fullName: String(r.full_name),
     department: String(r.department),
     stage: String(r.stage),
+    studyType: r.study_type ? String(r.study_type) : "",
     phone: String(r.phone),
     personalPhotoId: r.personal_photo_id ? String(r.personal_photo_id) : null,
     studentIdFrontId: r.student_id_front_id ? String(r.student_id_front_id) : null,
@@ -44,7 +46,7 @@ function mapRow(r: { [k: string]: unknown }): RegistrationDocumentRow {
   };
 }
 
-const COLS = `id, full_name, department, stage, phone,
+const COLS = `id, full_name, department, stage, study_type, phone,
   personal_photo_id, student_id_front_id, student_id_back_id,
   father_id_front_id, father_id_back_id,
   mother_id_front_id, mother_id_back_id,
@@ -70,6 +72,7 @@ export type CreateRegistrationDocumentInput = {
   fullName: string;
   department: string;
   stage: string;
+  studyType: string;
   phone: string;
   personalPhotoId: string | null;
   studentIdFrontId: string | null;
@@ -89,18 +92,19 @@ export async function createRegistrationDocument(
 ): Promise<string> {
   const res = await query(
     `INSERT INTO registration_documents (
-      full_name, department, stage, phone,
+      full_name, department, stage, study_type, phone,
       personal_photo_id, student_id_front_id, student_id_back_id,
       father_id_front_id, father_id_back_id,
       mother_id_front_id, mother_id_back_id,
       residence_card_front_id, residence_card_back_id,
       high_school_certificate_id, barcode_document_id
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
     RETURNING id`,
     [
       input.fullName,
       input.department,
       input.stage,
+      input.studyType,
       input.phone,
       input.personalPhotoId,
       input.studentIdFrontId,

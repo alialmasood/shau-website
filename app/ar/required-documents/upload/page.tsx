@@ -18,12 +18,18 @@ const DEPARTMENTS = [
 
 const STAGES = ["المرحلة الاولى", "المرحلة الثانية", "المرحلة الثالثة", "المرحلة الرابعة"];
 
+const STUDY_TYPES = [
+  { value: "morning", label: "صباحي" },
+  { value: "evening", label: "مسائي" },
+];
+
 export default function UploadDocumentsPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: "",
     department: "",
     stage: "",
+    studyType: "", // نوع الدراسة (صباحي/مسائي)
     phone: "",
     phoneNumber: "", // رقم الهاتف بدون المفتاح
   });
@@ -106,6 +112,10 @@ export default function UploadDocumentsPage() {
       setError("الرجاء اختيار المرحلة");
       return;
     }
+    if (!formData.studyType) {
+      setError("الرجاء اختيار نوع الدراسة");
+      return;
+    }
     if (!formData.phoneNumber.trim()) {
       setError("الرجاء إدخال رقم الهاتف");
       return;
@@ -183,6 +193,7 @@ export default function UploadDocumentsPage() {
           fullName: formData.fullName,
           department: formData.department,
           stage: formData.stage,
+          studyType: formData.studyType,
           phone: getFullPhone(),
           personalPhotoId,
           studentIdFrontId,
@@ -312,6 +323,27 @@ export default function UploadDocumentsPage() {
               {STAGES.map((stage) => (
                 <option key={stage} value={stage}>
                   {stage}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* نوع الدراسة */}
+          <div>
+            <label className="block text-sm font-bold text-neutral-900 mb-2">
+              نوع الدراسة <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="studyType"
+              value={formData.studyType}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+            >
+              <option value="">اختر نوع الدراسة</option>
+              {STUDY_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
                 </option>
               ))}
             </select>

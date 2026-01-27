@@ -305,6 +305,7 @@ model RegistrationDocument {
   full_name                 String   @map("full_name") @db.VarChar(200)
   department                String   @db.VarChar(200)
   stage                     String   @db.VarChar(50)
+  study_type                String   @map("study_type") @db.VarChar(20)
   phone                     String   @db.VarChar(20)
   personal_photo_id         String?  @map("personal_photo_id") @db.Uuid
   student_id_front_id       String?  @map("student_id_front_id") @db.Uuid
