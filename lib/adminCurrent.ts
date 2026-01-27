@@ -9,11 +9,18 @@ import type { AdminUserRow } from "./adminUsersRepo";
 export async function getCurrentAdminUser(): Promise<AdminUserRow | null> {
   const session = await getAdminSession();
   if (!session) {
+    console.error("[getCurrentAdminUser] No session found");
     return null;
   }
 
   const user = await getAdminUserById(session.sub);
-  if (!user || !user.is_active) {
+  if (!user) {
+    console.error(`[getCurrentAdminUser] User not found for session.sub: ${session.sub}`);
+    return null;
+  }
+
+  if (!user.is_active) {
+    console.error(`[getCurrentAdminUser] User ${user.email} is not active`);
     return null;
   }
 

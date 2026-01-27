@@ -14,8 +14,15 @@ export default async function AdminUsersPage() {
     redirect("/admin/login");
   }
 
-  // التحقق من الصلاحية
-  const hasAccess = await canAdmin("users", "access");
+  // إذا كان ADMIN، صلاحيات كاملة - لا حاجة للتحقق من canAdmin
+  const isAdmin = user.role.toUpperCase() === "ADMIN";
+  
+  // التحقق من الصلاحية فقط إذا لم يكن ADMIN
+  let hasAccess = isAdmin;
+  if (!isAdmin) {
+    hasAccess = await canAdmin("users", "access");
+  }
+  
   if (!hasAccess) {
     return (
       <div className="w-full bg-white min-h-screen flex items-center justify-center">

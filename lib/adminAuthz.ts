@@ -12,11 +12,14 @@ type Action = "access" | "view" | "create" | "edit" | "delete" | "upload" | "exp
 export async function canAdmin(pageCode: string, action: Action = "access"): Promise<boolean> {
   const user = await getCurrentAdminUser();
   if (!user) {
+    console.error(`[canAdmin] No current user for pageCode: ${pageCode}, action: ${action}`);
     return false;
   }
 
   // إذا كان دور المستخدم ADMIN => صلاحيات كاملة
-  if (user.role === "ADMIN") {
+  // التحقق من role بحساسية للحالة (uppercase)
+  if (user.role.toUpperCase() === "ADMIN") {
+    console.log(`[canAdmin] User ${user.email} is ADMIN, granting full access to ${pageCode}`);
     return true;
   }
 
@@ -31,6 +34,7 @@ export async function canAdmin(pageCode: string, action: Action = "access"): Pro
   );
 
   if (res.rows.length === 0) {
+    console.warn(`[canAdmin] No permissions found for user ${user.email} (${user.id}) on page ${pageCode}`);
     return false;
   }
 
@@ -75,7 +79,7 @@ export async function getAccessiblePages(): Promise<string[]> {
   }
 
   // إذا كان ADMIN => كل الصفحات
-  if (user.role === "ADMIN") {
+  if (user.role.toUpperCase() === "ADMIN") {
     const res = await query(`SELECT code FROM admin_pages ORDER BY code`);
     return res.rows.map((r) => String(r.code));
   }
