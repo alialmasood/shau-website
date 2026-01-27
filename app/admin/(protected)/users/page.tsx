@@ -4,9 +4,10 @@ import { getAdminSession } from "@/lib/adminSession";
 import DeleteUserButton from "./DeleteUserButton";
 import CopyUrlButton from "./CopyUrlButton";
 
-// منع cache هذه الصفحة
+// منع cache هذه الصفحة بشكل كامل
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export default async function AdminUsersPage() {
   const session = await getAdminSession();
@@ -76,6 +77,26 @@ export default async function AdminUsersPage() {
   return (
     <div className="w-full bg-white min-h-screen">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* معلومات Debug - مؤقتة للتحقق من المشكلة */}
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+          <p className="font-bold text-blue-900 mb-2">🔍 معلومات Debug:</p>
+          <div className="space-y-1 text-blue-800">
+            <p>✅ الجلسة: {session ? `موجودة (ID: ${session.sub.substring(0, 8)}...)` : "❌ غير موجودة"}</p>
+            <p>📊 عدد المستخدمين المُجلبين: <strong>{users.length}</strong></p>
+            {users.length > 0 ? (
+              <div className="mt-2 p-2 bg-white rounded border border-blue-200">
+                <p className="font-bold">المستخدم الأول:</p>
+                <p>• البريد: {users[0].email}</p>
+                <p>• الدور: {users[0].role}</p>
+                <p>• الحالة: {users[0].is_active ? "✅ نشط" : "❌ معطل"}</p>
+                <p>• الاسم: {users[0].full_name || "—"}</p>
+              </div>
+            ) : (
+              <p className="text-red-600 font-bold">⚠️ لا يوجد مستخدمين في المصفوفة!</p>
+            )}
+          </div>
+        </div>
+        
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
