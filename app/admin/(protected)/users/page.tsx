@@ -17,8 +17,24 @@ export default async function AdminUsersPage() {
   let users: Awaited<ReturnType<typeof getAllAdminUsers>> = [];
   try {
     users = await getAllAdminUsers();
+    // تسجيل للتحقق من النتائج
+    console.log(`[AdminUsersPage] Fetched ${users.length} users`);
+    if (users.length > 0) {
+      console.log(`[AdminUsersPage] First user:`, {
+        id: users[0].id,
+        email: users[0].email,
+        role: users[0].role,
+        is_active: users[0].is_active,
+      });
+    }
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("[AdminUsersPage] Error fetching users:", error);
+    if (error instanceof Error) {
+      console.error("[AdminUsersPage] Error details:", {
+        message: error.message,
+        stack: error.stack,
+      });
+    }
     users = [];
   }
 
@@ -136,6 +152,15 @@ export default async function AdminUsersPage() {
         {users.length === 0 ? (
           <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center">
             <p className="text-neutral-500 mb-4">لا يوجد مستخدمين بعد</p>
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+              <p className="font-bold mb-2">💡 ملاحظة:</p>
+              <p className="mb-2">إذا كنت متأكداً من وجود مستخدمين في قاعدة البيانات، تحقق من:</p>
+              <ul className="list-disc list-inside text-right space-y-1">
+                <li>سجلات السيرفر (console logs) للتحقق من أي أخطاء</li>
+                <li>تشغيل: <code className="bg-yellow-100 px-2 py-1 rounded">npm run admin:check-users</code> للتحقق من قاعدة البيانات</li>
+                <li>الاتصال بقاعدة البيانات على السيرفر</li>
+              </ul>
+            </div>
             <Link
               href="/admin/users/create"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"

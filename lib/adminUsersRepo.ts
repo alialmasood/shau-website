@@ -47,12 +47,20 @@ function mapRow(r: { [k: string]: unknown }): AdminUserRow {
 }
 
 export async function getAllAdminUsers(): Promise<AdminUserRow[]> {
-  const res = await query(
-    `SELECT id, email, password_hash, role, full_name, custom_url, is_active, created_at, updated_at
-     FROM admin_users
-     ORDER BY created_at DESC`
-  );
-  return res.rows.map(mapRow);
+  try {
+    const res = await query(
+      `SELECT id, email, password_hash, role, full_name, custom_url, is_active, created_at, updated_at
+       FROM admin_users
+       ORDER BY created_at DESC`
+    );
+    console.log(`[getAllAdminUsers] Query returned ${res.rows.length} rows`);
+    const mapped = res.rows.map(mapRow);
+    console.log(`[getAllAdminUsers] Mapped ${mapped.length} users`);
+    return mapped;
+  } catch (error) {
+    console.error("[getAllAdminUsers] Database error:", error);
+    throw error;
+  }
 }
 
 export async function getAdminUserById(id: string): Promise<AdminUserRow | null> {

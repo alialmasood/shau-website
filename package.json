@@ -21,7 +21,8 @@
     "db:migrate-admin-permissions": "node scripts/run-admin-permissions-migration.js",
     "db:fix-failed-migration": "node scripts/fix-failed-migration.js",
     "admin:reset-password": "node scripts/reset-admin-password.js",
-    "admin:create-default": "node scripts/create-default-admin.js"
+    "admin:create-default": "node scripts/create-default-admin.js",
+    "admin:check-users": "node scripts/check-admin-users.js"
   },
   "dependencies": {
     "@prisma/client": "^7.2.0",
