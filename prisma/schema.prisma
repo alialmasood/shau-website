@@ -133,6 +133,7 @@ model Media {
   residenceCardFrontFor RegistrationDocument[] @relation("ResidenceCardFront")
   residenceCardBackFor  RegistrationDocument[] @relation("ResidenceCardBack")
   highSchoolCertificateFor RegistrationDocument[] @relation("HighSchoolCertificate")
+  highSchoolCertificateBackFor RegistrationDocument[] @relation("HighSchoolCertificateBack")
   barcodeDocumentFor RegistrationDocument[] @relation("BarcodeDocument")
 
   @@map("media")
