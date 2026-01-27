@@ -38,8 +38,8 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
     redirect("/admin/users");
   }
 
-  let pages = [];
-  let userPermissions = [];
+  let pages: Awaited<ReturnType<typeof getAllAdminPages>> = [];
+  let userPermissions: Awaited<ReturnType<typeof getUserPagePermissions>> = [];
   try {
     pages = await getAllAdminPages();
     userPermissions = await getUserPagePermissions(id);

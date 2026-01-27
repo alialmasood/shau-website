@@ -29,7 +29,7 @@ export default async function CreateUserPage() {
     );
   }
 
-  let pages = [];
+  let pages: Awaited<ReturnType<typeof getAllAdminPages>> = [];
   try {
     pages = await getAllAdminPages();
   } catch (error) {
