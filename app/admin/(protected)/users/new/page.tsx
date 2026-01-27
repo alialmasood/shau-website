@@ -32,8 +32,12 @@ export default async function CreateUserPage() {
   let pages: Awaited<ReturnType<typeof getAllAdminPages>> = [];
   try {
     pages = await getAllAdminPages();
+    console.log(`[CreateUserPage] Fetched ${pages.length} pages from database`);
+    pages.forEach((page) => {
+      console.log(`[CreateUserPage] Page: ${page.code} - ${page.nameAr}`);
+    });
   } catch (error) {
-    console.error("Error fetching pages:", error);
+    console.error("[CreateUserPage] Error fetching pages:", error);
     pages = [];
   }
 

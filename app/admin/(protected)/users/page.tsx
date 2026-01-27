@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
 import { getAllAdminUsers, type AdminUserRow } from "@/lib/adminUsersRepo";
+import DeleteUserButton from "./DeleteUserButton";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -269,6 +270,9 @@ export default async function AdminUsersPage() {
                             >
                               تعديل
                             </Link>
+                          )}
+                          {canDelete && userRow.email !== "admin@shau.edu.iq" && (
+                            <DeleteUserButton userId={userRow.id} userEmail={userRow.email} />
                           )}
                         </div>
                       </td>

@@ -193,3 +193,42 @@ export async function updateAdminUserAction(userId: string, formData: FormData) 
 
   redirect("/admin/users");
 }
+
+export async function deleteAdminUserAction(userId: string) {
+  // التحقق من الصلاحية
+  const currentUser = await getCurrentAdminUser();
+  if (!currentUser) {
+    redirect("/admin/login");
+  }
+
+  const hasPermission = await canAdmin("users", "delete");
+  if (!hasPermission) {
+    throw new Error("ليس لديك صلاحية لحذف المستخدمين");
+  }
+
+  // التحقق من أن المستخدم المراد حذفه ليس الادمن الرئيسي
+  const { getAdminUserById } = await import("@/lib/adminUsersRepo");
+  const userToDelete = await getAdminUserById(userId);
+  
+  if (!userToDelete) {
+    throw new Error("المستخدم غير موجود");
+  }
+
+  // منع حذف المستخدم الادمن الرئيسي (admin@shau.edu.iq)
+  if (userToDelete.email === "admin@shau.edu.iq") {
+    throw new Error("لا يمكن حذف المستخدم الادمن الرئيسي");
+  }
+
+  // حذف صلاحيات الصفحات أولاً
+  await deleteUserPagePermissions(userId);
+
+  // حذف المستخدم
+  const { deleteAdminUser } = await import("@/lib/adminUsersRepo");
+  const deleted = await deleteAdminUser(userId);
+  
+  if (!deleted) {
+    throw new Error("فشل حذف المستخدم");
+  }
+
+  redirect("/admin/users");
+}

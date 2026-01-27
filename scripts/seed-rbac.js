@@ -1,11 +1,13 @@
 /**
  * Seed بيانات RBAC (صفحات الإدارة والصلاحيات)
+ * يتم اكتشاف الصفحات تلقائياً من بنية المجلدات
  */
 require("dotenv").config();
 require("dotenv").config({ path: ".env.local", override: true });
 
 const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
+const { discoverAllPages } = require("./discover-admin-pages");
 
 const connectionString = process.env.DATABASE_URL;
 const shouldUseSsl = process.env.DB_SSL === "true";
@@ -30,34 +32,38 @@ async function seed() {
   try {
     await client.query("BEGIN");
 
-    // 1. إنشاء صفحات الإدارة
-    const pages = [
-      { code: "news", nameAr: "الأخبار", nameEn: "News" },
-      { code: "programs", nameAr: "البرامج", nameEn: "Programs" },
-      { code: "departments", nameAr: "الأقسام", nameEn: "Departments" },
-      { code: "users", nameAr: "المستخدمين", nameEn: "Users" },
-      { code: "content", nameAr: "المحتوى", nameEn: "Content" },
-      { code: "admin", nameAr: "لوحة التحكم", nameEn: "Admin Dashboard" },
-      { code: "applications", nameAr: "طلبات التقديم", nameEn: "Applications" },
-      { code: "registration", nameAr: "شؤون التسجيل", nameEn: "Registration" },
-      { code: "ticker", nameAr: "الشريط الإخباري", nameEn: "Ticker" },
-      { code: "social", nameAr: "السوشيال ميديا", nameEn: "Social Media" },
-      { code: "tuition", nameAr: "الرسوم الدراسية", nameEn: "Tuition Fees" },
-    ];
+    // 1. اكتشاف صفحات الإدارة تلقائياً من بنية المجلدات
+    console.log("🔍 اكتشاف صفحات الإدارة من بنية المجلدات...");
+    const discoveredPages = discoverAllPages();
+    console.log(`✅ تم اكتشاف ${discoveredPages.length} صفحة:\n`);
+    discoveredPages.forEach((page, index) => {
+      console.log(`   ${index + 1}. ${page.code} - ${page.nameAr}`);
+    });
+    console.log();
+    
+    const pages = discoveredPages;
 
     console.log("📄 إنشاء صفحات الإدارة...");
     for (const page of pages) {
-      await client.query(
-        `INSERT INTO admin_pages (code, name_ar, name_en, created_at, updated_at)
-         VALUES ($1, $2, $3, NOW(), NOW())
-         ON CONFLICT (code) DO UPDATE SET
-           name_ar = EXCLUDED.name_ar,
-           name_en = EXCLUDED.name_en,
-           updated_at = NOW()`,
-        [page.code, page.nameAr, page.nameEn || null]
-      );
+      try {
+        // ملاحظة: parentCode لا يُحفظ في قاعدة البيانات حالياً
+        // يمكن إضافته لاحقاً إذا لزم الأمر
+        await client.query(
+          `INSERT INTO admin_pages (code, name_ar, name_en, created_at, updated_at)
+           VALUES ($1, $2, $3, NOW(), NOW())
+           ON CONFLICT (code) DO UPDATE SET
+             name_ar = EXCLUDED.name_ar,
+             name_en = EXCLUDED.name_en,
+             updated_at = NOW()`,
+          [page.code, page.nameAr, page.nameEn || null]
+        );
+        const parentInfo = page.parentCode ? ` (تحت: ${page.parentCode})` : "";
+        console.log(`   ✅ ${page.code} - ${page.nameAr}${parentInfo}`);
+      } catch (error) {
+        console.error(`   ❌ خطأ في إضافة صفحة ${page.code}:`, error.message);
+      }
     }
-    console.log(`✅ تم إنشاء/تحديث ${pages.length} صفحة\n`);
+    console.log(`\n✅ تم إنشاء/تحديث ${pages.length} صفحة\n`);
 
     // 2. البحث عن المستخدم admin@shau.edu.iq أو إنشاؤه
     console.log("👤 البحث عن المستخدم admin@shau.edu.iq...");

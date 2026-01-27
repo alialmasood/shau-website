@@ -100,8 +100,10 @@ async function checkRBACStatus() {
       });
     }
 
-    // 5. التحقق من صفحة "users" تحديداً
-    console.log("\n🎯 التحقق من صفحة 'users'...");
+    // 5. التحقق من صفحة "users" و "required-documents" تحديداً
+    console.log("\n🎯 التحقق من صفحات محددة...");
+    
+    // صفحة users
     const usersPageResult = await client.query(
       `SELECT id, code, name_ar FROM admin_pages WHERE code = 'users'`
     );
@@ -124,6 +126,32 @@ async function checkRBACStatus() {
       } else {
         const perm = usersPermissionResult.rows[0];
         console.log(`✅ صلاحيات admin على صفحة 'users': can_access = ${perm.can_access}`);
+      }
+    }
+    
+    // صفحة required-documents
+    const reqDocsPageResult = await client.query(
+      `SELECT id, code, name_ar FROM admin_pages WHERE code = 'required-documents'`
+    );
+    
+    if (reqDocsPageResult.rows.length === 0) {
+      console.warn("⚠️  صفحة 'required-documents' غير موجودة! يجب تشغيل seed.");
+    } else {
+      const reqDocsPage = reqDocsPageResult.rows[0];
+      console.log(`✅ صفحة 'required-documents' موجودة: ${reqDocsPage.name_ar}`);
+      
+      const reqDocsPermissionResult = await client.query(
+        `SELECT can_access FROM admin_page_permissions app
+         INNER JOIN admin_pages ap ON app.page_id = ap.id
+         WHERE app.admin_user_id = $1 AND ap.code = 'required-documents'`,
+        [admin.id]
+      );
+      
+      if (reqDocsPermissionResult.rows.length === 0) {
+        console.warn("⚠️  لا توجد صلاحيات للمستخدم admin على صفحة 'required-documents'! يجب تشغيل seed.");
+      } else {
+        const perm = reqDocsPermissionResult.rows[0];
+        console.log(`✅ صلاحيات admin على صفحة 'required-documents': can_access = ${perm.can_access}`);
       }
     }
 

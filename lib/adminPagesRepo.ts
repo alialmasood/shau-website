@@ -5,6 +5,7 @@ export type AdminPageRow = {
   code: string;
   nameAr: string;
   nameEn: string | null;
+  parentCode: string | null; // كود الصفحة الأساسية (للصفحات الفرعية)
   created_at: string;
   updated_at: string;
 };
@@ -25,20 +26,95 @@ export type AdminPagePermissionRow = {
   updated_at: string;
 };
 
+// ترتيب الصفحات الرئيسية (للعرض)
+const PAGE_ORDER: Record<string, number> = {
+  "admin": 1,
+  "news": 2,
+  "programs": 3,
+  "departments": 4,
+  "registration": 5,
+  "applications": 6,
+  "users": 7,
+  "content": 8,
+  "ticker": 9,
+  "social": 10,
+  "tuition": 11,
+  "tuition-pdf": 12,
+};
+
+// خريطة الصفحات الفرعية -> الصفحات الأساسية
+const CHILD_TO_PARENT: Record<string, string> = {
+  "required-documents": "registration",
+  // يمكن إضافة صفحات فرعية أخرى هنا
+};
+
 export async function getAllAdminPages(): Promise<AdminPageRow[]> {
   const res = await query(
     `SELECT id, code, name_ar, name_en, created_at, updated_at
      FROM admin_pages
      ORDER BY code`
   );
-  return res.rows.map((r) => ({
-    id: String(r.id),
-    code: String(r.code),
-    nameAr: String(r.name_ar),
-    nameEn: r.name_en ? String(r.name_en) : null,
-    created_at: r.created_at ? new Date(r.created_at as string).toISOString() : "",
-    updated_at: r.updated_at ? new Date(r.updated_at as string).toISOString() : "",
-  }));
+  const pages = res.rows.map((r) => {
+    // تحديد parentCode بناءً على code
+    const parentCode = CHILD_TO_PARENT[r.code] || null;
+    
+    return {
+      id: String(r.id),
+      code: String(r.code),
+      nameAr: String(r.name_ar),
+      nameEn: r.name_en ? String(r.name_en) : null,
+      parentCode: parentCode,
+      created_at: r.created_at ? new Date(r.created_at as string).toISOString() : "",
+      updated_at: r.updated_at ? new Date(r.updated_at as string).toISOString() : "",
+    };
+  });
+  
+  // ترتيب الصفحات: الأساسية أولاً (حسب PAGE_ORDER)، ثم الفرعية
+  const sortedPages = pages.sort((a, b) => {
+    // إذا كانت الصفحة فرعية، نضعها بعد الصفحة الأساسية
+    if (a.parentCode && !b.parentCode) {
+      // a فرعية، b أساسية
+      const parentOrder = PAGE_ORDER[a.parentCode] || 999;
+      const bOrder = PAGE_ORDER[b.code] || 999;
+      if (parentOrder === bOrder) return 1; // الفرعية بعد الأساسية
+      return parentOrder - bOrder;
+    }
+    if (!a.parentCode && b.parentCode) {
+      // a أساسية، b فرعية
+      const aOrder = PAGE_ORDER[a.code] || 999;
+      const parentOrder = PAGE_ORDER[b.parentCode] || 999;
+      if (aOrder === parentOrder) return -1; // الأساسية قبل الفرعية
+      return aOrder - parentOrder;
+    }
+    if (a.parentCode && b.parentCode) {
+      // كلاهما فرعية
+      const aParentOrder = PAGE_ORDER[a.parentCode] || 999;
+      const bParentOrder = PAGE_ORDER[b.parentCode] || 999;
+      if (aParentOrder !== bParentOrder) {
+        return aParentOrder - bParentOrder;
+      }
+      // نفس الصفحة الأساسية، نرتب حسب الاسم
+      return a.nameAr.localeCompare(b.nameAr, "ar");
+    }
+    // كلاهما أساسية
+    const aOrder = PAGE_ORDER[a.code] || 999;
+    const bOrder = PAGE_ORDER[b.code] || 999;
+    if (aOrder !== bOrder) {
+      return aOrder - bOrder;
+    }
+    return a.nameAr.localeCompare(b.nameAr, "ar");
+  });
+  
+  // تسجيل للتشخيص
+  console.log(`[getAllAdminPages] Fetched ${sortedPages.length} pages from database`);
+  const withParent = sortedPages.filter(p => p.parentCode);
+  if (withParent.length > 0) {
+    console.log(`[getAllAdminPages] Pages with parentCode:`, withParent.map(p => `${p.code} -> ${p.parentCode}`));
+  } else {
+    console.log(`[getAllAdminPages] No pages with parentCode found. Make sure required-documents exists in database.`);
+  }
+  
+  return sortedPages;
 }
 
 export async function getAdminPageByCode(code: string): Promise<AdminPageRow | null> {

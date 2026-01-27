@@ -1,33 +1,45 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAdminSession } from "@/lib/adminSession";
-import { getAdminUserById, hasPermission } from "@/lib/adminUsersRepo";
+import { getCurrentAdminUser } from "@/lib/adminCurrent";
+import { canAdmin } from "@/lib/adminAuthz";
 import { getAllRegistrationDocuments } from "@/lib/registrationDocumentsRepo";
 import ExportDocumentsButton from "./ExportDocumentsButton";
 import DownloadStudentButton from "./DownloadStudentButton";
 import DeleteStudentButton from "./DeleteStudentButton";
 
 export default async function AdminRequiredDocumentsPage() {
+  // التحقق من تسجيل الدخول
+  const user = await getCurrentAdminUser();
+  if (!user) {
+    redirect("/admin/login");
+  }
+
   // التحقق من أن المستخدم المحدود يمكنه الوصول إلى هذه الصفحة فقط إذا كانت ضمن custom_url
-  const session = await getAdminSession();
-  let userData = null;
-  let canDelete = false;
-  
-  if (session) {
-    userData = await getAdminUserById(session.sub);
-    if (userData) {
-      const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role !== "ADMIN";
-      if (isLimitedUser && userData.custom_url) {
-        // إذا كان custom_url مختلف عن هذه الصفحة، إعادة توجيه
-        if (userData.custom_url !== "/admin/registration-affairs/required-documents") {
-          redirect(userData.custom_url);
-        }
-      }
-      
-      // التحقق من صلاحية الحذف
-      canDelete = userData.role === "ADMIN" || await hasPermission(session.sub, "registration", "delete");
+  const isLimitedUser = user.custom_url && user.custom_url !== "/admin" && user.role.toUpperCase() !== "ADMIN";
+  if (isLimitedUser && user.custom_url) {
+    // إذا كان custom_url مختلف عن هذه الصفحة، إعادة توجيه
+    if (user.custom_url !== "/admin/registration-affairs/required-documents") {
+      redirect(user.custom_url);
     }
   }
+
+  // التحقق من الصلاحية على صفحة required-documents
+  const hasAccess = await canAdmin("required-documents", "access");
+  if (!hasAccess) {
+    return (
+      <div className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-bold text-xl">❌ غير مصرح - ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
+          <Link href="/admin" prefetch={false} className="mt-4 inline-block text-[#31BD9C] hover:underline">
+            العودة إلى لوحة التحكم
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // التحقق من صلاحية الحذف
+  const canDelete = await canAdmin("required-documents", "delete");
   
   let documents: Awaited<ReturnType<typeof getAllRegistrationDocuments>> = [];
   try {

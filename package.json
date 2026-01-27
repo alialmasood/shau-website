@@ -27,7 +27,8 @@
     "admin:reset-password": "node scripts/reset-admin-password.js",
     "admin:create-default": "node scripts/create-default-admin.js",
     "admin:check-users": "node scripts/check-admin-users.js",
-    "logs:view": "node scripts/view-logs.js"
+    "logs:view": "node scripts/view-logs.js",
+    "admin:discover-pages": "node scripts/discover-admin-pages.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createAdminUserAction } from "../actions";
 import type { AdminPageRow } from "@/lib/adminPagesRepo";
@@ -12,10 +12,90 @@ const ROLES = [
   { value: "VIEWER", label: "مشاهد" },
 ];
 
+// مكون لعرض صلاحيات صفحة واحدة
+function PagePermissionSection({
+  page,
+  perm,
+  onChange,
+  isChild = false,
+}: {
+  page: AdminPageRow;
+  perm: {
+    can_access: boolean;
+    can_view: boolean;
+    can_create: boolean;
+    can_edit: boolean;
+    can_delete: boolean;
+    can_upload: boolean;
+    can_export: boolean;
+    can_publish: boolean;
+  };
+  onChange: (pageCode: string, field: string, value: boolean) => void;
+  isChild?: boolean;
+}) {
+  return (
+    <div className={isChild ? "opacity-90" : ""}>
+      <div className="flex items-center justify-between mb-3">
+        <h4 className={`font-bold text-neutral-900 ${isChild ? "text-sm" : ""}`}>
+          {isChild && "└ "}
+          {page.nameAr}
+        </h4>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={perm.can_access}
+            onChange={(e) => onChange(page.code, "can_access", e.target.checked)}
+            className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
+          />
+          <span className="text-sm font-semibold text-neutral-700">الوصول</span>
+        </label>
+      </div>
+
+      {perm.can_access && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-neutral-200">
+          {[
+            { key: "can_view", label: "عرض" },
+            { key: "can_create", label: "إنشاء" },
+            { key: "can_edit", label: "تعديل" },
+            { key: "can_delete", label: "حذف" },
+            { key: "can_upload", label: "رفع" },
+            { key: "can_export", label: "تصدير" },
+            { key: "can_publish", label: "نشر" },
+          ].map((action) => (
+            <label key={action.key} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={perm[action.key as keyof typeof perm] as boolean}
+                onChange={(e) => onChange(page.code, action.key, e.target.checked)}
+                className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
+              />
+              <span className="text-sm text-neutral-700">{action.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CreateUserForm({ pages }: { pages: AdminPageRow[] }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // تسجيل الصفحات المستلمة للتشخيص
+  useEffect(() => {
+    console.log("[CreateUserForm] Pages received:", pages.length);
+    pages.forEach((p) => {
+      console.log(`[CreateUserForm] Page: ${p.code} - ${p.nameAr} - parentCode: ${p.parentCode || "null"}`);
+    });
+    const parentPages = pages.filter((p) => !p.parentCode);
+    const childPages = pages.filter((p) => p.parentCode);
+    console.log(`[CreateUserForm] Parent pages: ${parentPages.length}, Child pages: ${childPages.length}`);
+    if (childPages.length > 0) {
+      console.log("[CreateUserForm] Child pages:", childPages.map(c => `${c.code} (parent: ${c.parentCode})`));
+    }
+  }, [pages]);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -223,63 +303,78 @@ export default function CreateUserForm({ pages }: { pages: AdminPageRow[] }) {
       <div>
         <h3 className="text-lg font-bold text-neutral-900 mb-4">صلاحيات الصفحات</h3>
         <div className="space-y-4">
-          {pages.map((page) => {
-            const perm = pagePermissions[page.code] || {
-              can_access: false,
-              can_view: false,
-              can_create: false,
-              can_edit: false,
-              can_delete: false,
-              can_upload: false,
-              can_export: false,
-              can_publish: false,
-            };
-
-            return (
-              <div key={page.id} className="border border-neutral-200 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-bold text-neutral-900">{page.nameAr}</h4>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={perm.can_access}
-                      onChange={(e) =>
-                        handlePagePermissionChange(page.code, "can_access", e.target.checked)
-                      }
-                      className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
-                    />
-                    <span className="text-sm font-semibold text-neutral-700">الوصول</span>
-                  </label>
+          {(() => {
+            // تجميع الصفحات: الأساسية والفرعية
+            const parentPages = pages.filter((p) => !p.parentCode);
+            const childPages = pages.filter((p) => p.parentCode);
+            
+            console.log(`[CreateUserForm Render] Parent pages: ${parentPages.length}, Child pages: ${childPages.length}`);
+            if (childPages.length > 0) {
+              console.log(`[CreateUserForm Render] Child pages details:`, childPages.map(c => `${c.code} (parent: ${c.parentCode})`));
+            }
+            
+            // إنشاء خريطة للصفحات الفرعية حسب الصفحة الأساسية
+            const childrenByParent = new Map<string, AdminPageRow[]>();
+            childPages.forEach((child) => {
+              if (child.parentCode) {
+                const existing = childrenByParent.get(child.parentCode) || [];
+                existing.push(child);
+                childrenByParent.set(child.parentCode, existing);
+              }
+            });
+            
+            return parentPages.map((parentPage) => {
+              const children = childrenByParent.get(parentPage.code) || [];
+              
+              console.log(`[CreateUserForm Render] Page: ${parentPage.code} has ${children.length} children`);
+              
+              return (
+                <div key={parentPage.id} className="border border-neutral-200 rounded-xl p-4">
+                  {/* الصفحة الأساسية */}
+                  <PagePermissionSection
+                    page={parentPage}
+                    perm={pagePermissions[parentPage.code] || {
+                      can_access: false,
+                      can_view: false,
+                      can_create: false,
+                      can_edit: false,
+                      can_delete: false,
+                      can_upload: false,
+                      can_export: false,
+                      can_publish: false,
+                    }}
+                    onChange={handlePagePermissionChange}
+                  />
+                  
+                  {/* الصفحات الفرعية */}
+                  {children.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
+                      <p className="text-xs font-bold text-neutral-500 uppercase mb-2">الصفحات الفرعية:</p>
+                      {children.map((childPage) => (
+                        <div key={childPage.id} className="mr-4 border-r-2 border-neutral-200 pr-4">
+                          <PagePermissionSection
+                            page={childPage}
+                            perm={pagePermissions[childPage.code] || {
+                              can_access: false,
+                              can_view: false,
+                              can_create: false,
+                              can_edit: false,
+                              can_delete: false,
+                              can_upload: false,
+                              can_export: false,
+                              can_publish: false,
+                            }}
+                            onChange={handlePagePermissionChange}
+                            isChild={true}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-
-                {perm.can_access && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-neutral-200">
-                    {[
-                      { key: "can_view", label: "عرض" },
-                      { key: "can_create", label: "إنشاء" },
-                      { key: "can_edit", label: "تعديل" },
-                      { key: "can_delete", label: "حذف" },
-                      { key: "can_upload", label: "رفع" },
-                      { key: "can_export", label: "تصدير" },
-                      { key: "can_publish", label: "نشر" },
-                    ].map((action) => (
-                      <label key={action.key} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={perm[action.key as keyof typeof perm] as boolean}
-                          onChange={(e) =>
-                            handlePagePermissionChange(page.code, action.key, e.target.checked)
-                          }
-                          className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
-                        />
-                        <span className="text-sm text-neutral-700">{action.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       </div>
 
