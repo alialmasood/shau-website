@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAllAdminUsers, type AdminUserRow } from "@/lib/adminUsersRepo";
 import { getAdminSession } from "@/lib/adminSession";
 import DeleteUserButton from "./DeleteUserButton";
+// @ts-ignore - TypeScript cache issue
 import CopyUrlButton from "./CopyUrlButton";
 
 // منع cache هذه الصفحة بشكل كامل
@@ -12,7 +13,13 @@ export const fetchCache = 'force-no-store';
 export default async function AdminUsersPage() {
   const session = await getAdminSession();
   if (!session) {
-    return null;
+    return (
+      <div className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-bold text-xl">❌ غير مصرح - يرجى تسجيل الدخول</p>
+        </div>
+      </div>
+    );
   }
 
   let users: Awaited<ReturnType<typeof getAllAdminUsers>> = [];
@@ -74,25 +81,40 @@ export default async function AdminUsersPage() {
     }
   }
 
+  // معلومات Debug - دائماً تظهر
+  const debugInfo = {
+    sessionExists: !!session,
+    sessionId: session?.sub?.substring(0, 8) || "N/A",
+    usersCount: users.length,
+    firstUserEmail: users.length > 0 ? users[0].email : "N/A",
+    timestamp: new Date().toISOString(),
+  };
+
   return (
     <div className="w-full bg-white min-h-screen">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* معلومات Debug - مؤقتة للتحقق من المشكلة */}
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-          <p className="font-bold text-blue-900 mb-2">🔍 معلومات Debug:</p>
-          <div className="space-y-1 text-blue-800">
-            <p>✅ الجلسة: {session ? `موجودة (ID: ${session.sub.substring(0, 8)}...)` : "❌ غير موجودة"}</p>
-            <p>📊 عدد المستخدمين المُجلبين: <strong>{users.length}</strong></p>
+        {/* معلومات Debug - دائماً تظهر */}
+        <div className="mb-4 p-4 bg-red-100 border-2 border-red-400 rounded-lg text-sm">
+          <p className="font-bold text-red-900 mb-2 text-lg">🔍 معلومات Debug (دائماً تظهر):</p>
+          <div className="space-y-1 text-red-800 font-mono text-xs">
+            <p>✅ الجلسة: {debugInfo.sessionExists ? `موجودة (ID: ${debugInfo.sessionId}...)` : "❌ غير موجودة"}</p>
+            <p>📊 عدد المستخدمين: <strong className="text-lg">{debugInfo.usersCount}</strong></p>
+            <p>📧 البريد الأول: {debugInfo.firstUserEmail}</p>
+            <p>⏰ الوقت: {debugInfo.timestamp}</p>
             {users.length > 0 ? (
-              <div className="mt-2 p-2 bg-white rounded border border-blue-200">
+              <div className="mt-2 p-2 bg-white rounded border border-red-300">
                 <p className="font-bold">المستخدم الأول:</p>
                 <p>• البريد: {users[0].email}</p>
                 <p>• الدور: {users[0].role}</p>
                 <p>• الحالة: {users[0].is_active ? "✅ نشط" : "❌ معطل"}</p>
                 <p>• الاسم: {users[0].full_name || "—"}</p>
+                <p>• ID: {users[0].id.substring(0, 8)}...</p>
               </div>
             ) : (
-              <p className="text-red-600 font-bold">⚠️ لا يوجد مستخدمين في المصفوفة!</p>
+              <div className="mt-2 p-2 bg-yellow-100 rounded border border-yellow-300">
+                <p className="text-red-600 font-bold">⚠️ لا يوجد مستخدمين في المصفوفة!</p>
+                <p className="text-xs mt-1">تحقق من سجلات السيرفر للخطأ</p>
+              </div>
             )}
           </div>
         </div>

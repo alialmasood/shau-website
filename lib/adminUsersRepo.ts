@@ -138,11 +138,19 @@ export type CreateAdminUserInput = {
 export async function createAdminUser(input: CreateAdminUserInput): Promise<string> {
   const hashedPassword = await bcrypt.hash(input.password, 10);
 
+  // إنشاء المستخدم مع جميع الحقول بشكل صريح
   const res = await query(
-    `INSERT INTO admin_users (email, password_hash, role, full_name, custom_url)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO admin_users (email, password_hash, role, full_name, custom_url, is_active, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
      RETURNING id`,
-    [input.email, hashedPassword, input.role, input.full_name || null, input.custom_url || null]
+    [
+      input.email, 
+      hashedPassword, 
+      input.role, 
+      input.full_name || null, 
+      input.custom_url || null,
+      true // is_active - المستخدم الجديد يكون نشطاً افتراضياً
+    ]
   );
 
   const userId = String(res.rows[0].id);
