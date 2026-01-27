@@ -14,13 +14,15 @@ export default async function AdminProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // التحقق من تسجيل الدخول
-  const userData = await getCurrentAdminUser();
-  if (!userData) {
-    redirect("/admin/login");
-  }
+  try {
+    // التحقق من تسجيل الدخول
+    const userData = await getCurrentAdminUser();
+    if (!userData) {
+      console.error("[AdminProtectedLayout] No current user, redirecting to login");
+      redirect("/admin/login");
+    }
 
-  const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role !== "ADMIN";
+    const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role.toUpperCase() !== "ADMIN";
 
   return (
     <div className="min-h-screen bg-neutral-50" dir="rtl">
@@ -68,6 +70,11 @@ export default async function AdminProtectedLayout({
         <div className="animate-admin-fade-in">{children}</div>
       </main>
     </div>
-  );
+    );
+  } catch (error) {
+    console.error("[AdminProtectedLayout] Fatal error:", error);
+    // في حالة خطأ فادح، إعادة توجيه إلى تسجيل الدخول
+    redirect("/admin/login");
+  }
 }
 

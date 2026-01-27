@@ -8,45 +8,38 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function AdminUsersPage() {
-  try {
-    // التحقق من تسجيل الدخول
-    const user = await getCurrentAdminUser();
-    if (!user) {
-      console.error("[AdminUsersPage] No current user found, redirecting to login");
-      redirect("/admin/login");
-    }
-
-    // إذا كان ADMIN، صلاحيات كاملة - لا حاجة للتحقق من canAdmin
-    const isAdmin = user.role.toUpperCase() === "ADMIN";
-    
-    // التحقق من الصلاحية فقط إذا لم يكن ADMIN
-    let hasAccess = isAdmin;
-    if (!isAdmin) {
-      try {
-        hasAccess = await canAdmin("users", "access");
-      } catch (error) {
-        console.error("[AdminUsersPage] Error checking permissions:", error);
-        // في حالة خطأ، نعطي ADMIN صلاحيات كاملة كـ fallback
-        hasAccess = isAdmin;
-      }
-    }
-    
-    if (!hasAccess) {
-      return (
-        <div className="w-full bg-white min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-600 font-bold text-xl">❌ غير مصرح - ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
-            <Link href="/admin" className="mt-4 inline-block text-[#31BD9C] hover:underline">
-              العودة إلى لوحة التحكم
-            </Link>
-          </div>
-        </div>
-      );
-    }
-  } catch (error) {
-    console.error("[AdminUsersPage] Fatal error:", error);
-    // في حالة خطأ فادح، إعادة توجيه إلى تسجيل الدخول
+  // التحقق من تسجيل الدخول
+  const user = await getCurrentAdminUser();
+  if (!user) {
     redirect("/admin/login");
+  }
+
+  // إذا كان ADMIN، صلاحيات كاملة - لا حاجة للتحقق من canAdmin
+  const isAdmin = user.role.toUpperCase() === "ADMIN";
+  
+  // التحقق من الصلاحية فقط إذا لم يكن ADMIN
+  let hasAccess = isAdmin;
+  if (!isAdmin) {
+    try {
+      hasAccess = await canAdmin("users", "access");
+    } catch (error) {
+      console.error("[AdminUsersPage] Error checking permissions:", error);
+      // في حالة خطأ، نعطي ADMIN صلاحيات كاملة كـ fallback
+      hasAccess = isAdmin;
+    }
+  }
+  
+  if (!hasAccess) {
+    return (
+      <div className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-bold text-xl">❌ غير مصرح - ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
+          <Link href="/admin" className="mt-4 inline-block text-[#31BD9C] hover:underline">
+            العودة إلى لوحة التحكم
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   let users: AdminUserRow[] = [];
@@ -91,9 +84,26 @@ export default async function AdminUsersPage() {
     }
   }
 
-  const canCreate = await canAdmin("users", "create");
-  const canEdit = await canAdmin("users", "edit");
-  const canDelete = await canAdmin("users", "delete");
+  // إذا كان ADMIN، صلاحيات كاملة
+  const userIsAdmin = user.role.toUpperCase() === "ADMIN";
+  let canCreate = userIsAdmin;
+  let canEdit = userIsAdmin;
+  let canDelete = userIsAdmin;
+  
+  // التحقق من الصلاحيات فقط إذا لم يكن ADMIN
+  if (!userIsAdmin) {
+    try {
+      canCreate = await canAdmin("users", "create");
+      canEdit = await canAdmin("users", "edit");
+      canDelete = await canAdmin("users", "delete");
+    } catch (error) {
+      console.error("[AdminUsersPage] Error checking permissions:", error);
+      // في حالة خطأ، نعطي false
+      canCreate = false;
+      canEdit = false;
+      canDelete = false;
+    }
+  }
 
   return (
     <div className="w-full bg-white min-h-screen">

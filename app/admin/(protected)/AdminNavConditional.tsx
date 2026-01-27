@@ -114,6 +114,18 @@ const allNavItems = [
 ];
 
 export default async function AdminNavConditional() {
-  const accessiblePages = await getAccessiblePages();
-  return <AdminNavWithPermissions accessiblePages={accessiblePages} navItems={allNavItems} />;
+  try {
+    const accessiblePages = await getAccessiblePages();
+    // إذا كانت القائمة فارغة (مثل عدم وجود جداول RBAC)، نعرض جميع الصفحات كـ fallback
+    // هذا يضمن أن النظام يعمل حتى لو لم تكن جداول RBAC موجودة
+    const pagesToShow = accessiblePages.length > 0 
+      ? accessiblePages 
+      : allNavItems.map(item => item.pageCode);
+    return <AdminNavWithPermissions accessiblePages={pagesToShow} navItems={allNavItems} />;
+  } catch (error) {
+    console.error("[AdminNavConditional] Error getting accessible pages:", error);
+    // في حالة خطأ، نعرض جميع الصفحات كـ fallback
+    const fallbackPages = allNavItems.map(item => item.pageCode);
+    return <AdminNavWithPermissions accessiblePages={fallbackPages} navItems={allNavItems} />;
+  }
 }
