@@ -71,15 +71,6 @@ export default async function AdminUsersPage() {
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <Link
-              href="/admin/users/create"
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              إنشاء مستخدم جديد
-            </Link>
-            <Link
               href="/admin/users/roles"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
             >
@@ -95,19 +86,6 @@ export default async function AdminUsersPage() {
               رجوع
             </Link>
           </div>
-        </div>
-
-        {/* زر إنشاء مستخدم جديد - نسخة إضافية قبل الإحصائيات */}
-        <div className="mb-6 flex justify-end">
-          <Link
-            href="/admin/users/create"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            إنشاء مستخدم جديد
-          </Link>
         </div>
 
         {/* إحصائيات سريعة */}
