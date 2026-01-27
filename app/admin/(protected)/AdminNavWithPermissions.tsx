@@ -64,13 +64,11 @@ type NavLinkProps = {
 function NavLink({ href, variant, active, children, icon, fullWidth, compact, title }: NavLinkProps) {
   return (
     <Link href={href} title={title} className={navLinkClasses(variant, active, { fullWidth, compact })}>
-      <>
-        {active && (
-          <span className={`absolute start-2 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full ${activeBarColor(variant)}`} aria-hidden />
-        )}
-        {icon}
-        {children}
-      </>
+      {active && (
+        <span key="active-bar" className={`absolute start-2 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full ${activeBarColor(variant)}`} aria-hidden />
+      )}
+      <span key="icon">{icon}</span>
+      <span key="label">{children}</span>
     </Link>
   );
 }
