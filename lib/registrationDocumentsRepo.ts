@@ -17,6 +17,7 @@ export type RegistrationDocumentRow = {
   residenceCardFrontId: string | null;
   residenceCardBackId: string | null;
   highSchoolCertificateId: string | null;
+  highSchoolCertificateBackId: string | null;
   barcodeDocumentId: string | null;
   createdAt: string;
   updatedAt: string;
