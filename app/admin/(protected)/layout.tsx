@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAdminSession } from "@/lib/adminSession";
-import { getAdminUserById } from "@/lib/adminUsersRepo";
+import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import AdminNavConditional from "./AdminNavConditional";
 import AdminNavLimited from "./AdminNavLimited";
 import AdminBreadcrumb from "./AdminBreadcrumb";
@@ -15,13 +14,8 @@ export default async function AdminProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getAdminSession();
-  if (!session) {
-    redirect("/admin/login");
-  }
-
-  // جلب بيانات المستخدم للتحقق من custom_url
-  const userData = await getAdminUserById(session.sub);
+  // التحقق من تسجيل الدخول
+  const userData = await getCurrentAdminUser();
   if (!userData) {
     redirect("/admin/login");
   }

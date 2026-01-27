@@ -43,6 +43,7 @@ model AdminUser {
   updated_at    DateTime  @default(now()) @db.Timestamptz(6)
 
   permissions   AdminUserPermission[]
+  pagePermissions AdminPagePermission[]
 
   @@map("admin_users")
 }
@@ -71,6 +72,41 @@ model AdminUserPermission {
 
   @@unique([admin_user_id, permission_id])
   @@map("admin_user_permissions")
+}
+
+model AdminPage {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code      String   @unique @db.VarChar(50)
+  nameAr    String   @map("name_ar") @db.VarChar(200)
+  nameEn    String?  @map("name_en") @db.VarChar(200)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  permissions AdminPagePermission[]
+
+  @@map("admin_pages")
+}
+
+model AdminPagePermission {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  admin_user_id String   @map("admin_user_id") @db.Uuid
+  page_id       String   @map("page_id") @db.Uuid
+  can_access    Boolean  @default(false) @map("can_access")
+  can_view      Boolean  @default(false) @map("can_view")
+  can_create    Boolean  @default(false) @map("can_create")
+  can_edit      Boolean  @default(false) @map("can_edit")
+  can_delete    Boolean  @default(false) @map("can_delete")
+  can_upload    Boolean  @default(false) @map("can_upload")
+  can_export    Boolean  @default(false) @map("can_export")
+  can_publish   Boolean  @default(false) @map("can_publish")
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+
+  admin_user    AdminUser @relation(fields: [admin_user_id], references: [id], onDelete: Cascade)
+  page          AdminPage @relation(fields: [page_id], references: [id], onDelete: Cascade)
+
+  @@unique([admin_user_id, page_id])
+  @@map("admin_page_permissions")
 }
 
 model Media {

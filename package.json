@@ -19,10 +19,16 @@
     "db:migrate-social-links": "node scripts/run-social-links-migration.js",
     "db:migrate-registration-documents": "node scripts/run-registration-documents-migration.js",
     "db:migrate-admin-permissions": "node scripts/run-admin-permissions-migration.js",
+    "db:migrate-rbac": "node scripts/run-rbac-migration.js",
+    "db:seed": "node prisma/seed.js",
+    "db:seed-rbac": "node scripts/seed-rbac.js",
     "db:fix-failed-migration": "node scripts/fix-failed-migration.js",
     "admin:reset-password": "node scripts/reset-admin-password.js",
     "admin:create-default": "node scripts/create-default-admin.js",
     "admin:check-users": "node scripts/check-admin-users.js"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@prisma/client": "^7.2.0",

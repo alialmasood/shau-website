@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAdminSession } from "@/lib/adminSession";
-import { getAdminUserById } from "@/lib/adminUsersRepo";
+import { getCurrentAdminUser } from "@/lib/adminCurrent";
+import { canAdmin } from "@/lib/adminAuthz";
 import { getDashboardStats } from "@/lib/dashboardStats";
 import AdminNav from "./AdminNav";
 
@@ -18,16 +18,28 @@ function formatLastUpdated(iso: string | null): string {
 }
 
 export default async function AdminDashboardPage() {
+  // التحقق من تسجيل الدخول
+  const user = await getCurrentAdminUser();
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  // التحقق من الصلاحية على صفحة admin
+  const hasAccess = await canAdmin("admin", "access");
+  if (!hasAccess) {
+    return (
+      <div className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-bold text-xl">❌ غير مصرح - ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
+        </div>
+      </div>
+    );
+  }
+
   // التحقق من أن المستخدم المحدود لا يمكنه الوصول إلى هذه الصفحة
-  const session = await getAdminSession();
-  if (session) {
-    const userData = await getAdminUserById(session.sub);
-    if (userData) {
-      const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role !== "ADMIN";
-      if (isLimitedUser && userData.custom_url) {
-        // إعادة توجيه المستخدم المحدود إلى صفحته المخصصة
-        redirect(userData.custom_url);
-      }
+  if (user.custom_url && user.custom_url !== "/admin" && user.role !== "ADMIN") {
+    if (user.custom_url) {
+      redirect(user.custom_url);
     }
   }
 
@@ -90,7 +102,7 @@ export default async function AdminDashboardPage() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors shadow-sm hover:shadow-md"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
             إدارة المستخدمين
           </Link>

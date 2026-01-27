@@ -130,7 +130,7 @@ export default function EditUserForm({
         return;
       }
 
-      router.push("/admin/users");
+      router.push("/admin");
       router.refresh();
     } catch (error) {
       console.error("Error updating user:", error);
