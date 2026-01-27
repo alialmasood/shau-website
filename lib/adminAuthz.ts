@@ -24,14 +24,21 @@ export async function canAdmin(pageCode: string, action: Action = "access"): Pro
   }
 
   // جلب صلاحيات الصفحة للمستخدم
-  const res = await query(
-    `SELECT can_access, can_view, can_create, can_edit, can_delete, can_upload, can_export, can_publish
-     FROM admin_page_permissions app
-     INNER JOIN admin_pages ap ON app.page_id = ap.id
-     WHERE app.admin_user_id = $1 AND ap.code = $2
-     LIMIT 1`,
-    [user.id, pageCode]
-  );
+  let res;
+  try {
+    res = await query(
+      `SELECT can_access, can_view, can_create, can_edit, can_delete, can_upload, can_export, can_publish
+       FROM admin_page_permissions app
+       INNER JOIN admin_pages ap ON app.page_id = ap.id
+       WHERE app.admin_user_id = $1 AND ap.code = $2
+       LIMIT 1`,
+      [user.id, pageCode]
+    );
+  } catch (error) {
+    console.error(`[canAdmin] Database error checking permissions for ${user.email} on ${pageCode}:`, error);
+    // في حالة خطأ في قاعدة البيانات، نرجع false
+    return false;
+  }
 
   if (res.rows.length === 0) {
     console.warn(`[canAdmin] No permissions found for user ${user.email} (${user.id}) on page ${pageCode}`);
@@ -73,26 +80,43 @@ export async function canAdmin(pageCode: string, action: Action = "access"): Pro
  * @returns قائمة بأكواد الصفحات التي can_access = true
  */
 export async function getAccessiblePages(): Promise<string[]> {
-  const user = await getCurrentAdminUser();
-  if (!user) {
+  try {
+    const user = await getCurrentAdminUser();
+    if (!user) {
+      return [];
+    }
+
+    // إذا كان ADMIN => كل الصفحات
+    if (user.role.toUpperCase() === "ADMIN") {
+      try {
+        const res = await query(`SELECT code FROM admin_pages ORDER BY code`);
+        return res.rows.map((r) => String(r.code));
+      } catch (error) {
+        console.error("[getAccessiblePages] Error fetching all pages for ADMIN:", error);
+        // في حالة خطأ (مثل عدم وجود الجدول)، نرجع قائمة افتراضية
+        return ["admin", "news", "programs", "users", "applications", "registration", "ticker", "social", "tuition"];
+      }
+    }
+
+    // غير ذلك: جلب الصفحات التي can_access = true
+    try {
+      const res = await query(
+        `SELECT ap.code
+         FROM admin_page_permissions app
+         INNER JOIN admin_pages ap ON app.page_id = ap.id
+         WHERE app.admin_user_id = $1 AND app.can_access = true
+         ORDER BY ap.code`,
+        [user.id]
+      );
+
+      return res.rows.map((r) => String(r.code));
+    } catch (error) {
+      console.error("[getAccessiblePages] Error fetching accessible pages:", error);
+      // في حالة خطأ، نرجع قائمة فارغة
+      return [];
+    }
+  } catch (error) {
+    console.error("[getAccessiblePages] Fatal error:", error);
     return [];
   }
-
-  // إذا كان ADMIN => كل الصفحات
-  if (user.role.toUpperCase() === "ADMIN") {
-    const res = await query(`SELECT code FROM admin_pages ORDER BY code`);
-    return res.rows.map((r) => String(r.code));
-  }
-
-  // غير ذلك: جلب الصفحات التي can_access = true
-  const res = await query(
-    `SELECT ap.code
-     FROM admin_page_permissions app
-     INNER JOIN admin_pages ap ON app.page_id = ap.id
-     WHERE app.admin_user_id = $1 AND app.can_access = true
-     ORDER BY ap.code`,
-    [user.id]
-  );
-
-  return res.rows.map((r) => String(r.code));
 }

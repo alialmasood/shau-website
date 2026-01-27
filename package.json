@@ -22,6 +22,7 @@
     "db:migrate-rbac": "node scripts/run-rbac-migration.js",
     "db:seed": "node prisma/seed.js",
     "db:seed-rbac": "node scripts/seed-rbac.js",
+    "db:check-rbac": "node scripts/check-rbac-status.js",
     "db:fix-failed-migration": "node scripts/fix-failed-migration.js",
     "admin:reset-password": "node scripts/reset-admin-password.js",
     "admin:create-default": "node scripts/create-default-admin.js",
