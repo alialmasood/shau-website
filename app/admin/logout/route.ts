@@ -5,15 +5,25 @@ export async function GET(request: NextRequest) {
   // حذف الـ cookie باستخدام الدالة المخصصة
   await clearAdminSessionCookie();
   
-  // استخدام مسار نسبي - Next.js سيتعامل معه تلقائياً
-  // أو بناء URL من request.url بشكل صحيح
+  // بناء URL صحيح من headers الطلب (للتعامل مع reverse proxy)
   let loginUrl: string | URL;
   try {
-    // محاولة بناء URL من request.url
-    const url = new URL(request.url);
-    loginUrl = new URL("/admin/login", url.origin);
-  } catch {
-    // في حالة فشل، استخدام مسار نسبي
+    // الحصول على host من headers (يدعم reverse proxy)
+    const host = request.headers.get("host") || request.headers.get("x-forwarded-host");
+    const protocol = request.headers.get("x-forwarded-proto") || 
+                     (request.url.startsWith("https://") ? "https" : "http");
+    
+    if (host) {
+      // بناء URL كامل من host و protocol
+      loginUrl = new URL("/admin/login", `${protocol}://${host}`);
+    } else {
+      // في حالة عدم وجود host في headers، استخدام request.url
+      const url = new URL(request.url);
+      loginUrl = new URL("/admin/login", url.origin);
+    }
+  } catch (error) {
+    console.error("[logout] Error building login URL:", error);
+    // في حالة فشل، استخدام مسار نسبي (Next.js سيتعامل معه)
     loginUrl = "/admin/login";
   }
   
