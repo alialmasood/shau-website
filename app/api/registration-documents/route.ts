@@ -21,6 +21,7 @@ export async function POST(request: Request) {
       residenceCardFrontId,
       residenceCardBackId,
       highSchoolCertificateId,
+      highSchoolCertificateBackId,
       barcodeDocumentId,
     } = body;
 
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
       residenceCardFrontId: residenceCardFrontId || null,
       residenceCardBackId: residenceCardBackId || null,
       highSchoolCertificateId: highSchoolCertificateId || null,
+      highSchoolCertificateBackId: highSchoolCertificateBackId || null,
       barcodeDocumentId: barcodeDocumentId || null,
     });
 

@@ -45,6 +45,7 @@ export default function UploadDocumentsPage() {
     residenceCardFront: null as File | null,
     residenceCardBack: null as File | null,
     highSchoolCertificate: null as File | null,
+    highSchoolCertificateBack: null as File | null,
     barcodeDocument: null as File | null,
   });
 
@@ -146,8 +147,8 @@ export default function UploadDocumentsPage() {
       setError("الرجاء رفع بطاقة السكن (الوجه الأمامي والخلفي)");
       return;
     }
-    if (!files.highSchoolCertificate) {
-      setError("الرجاء رفع وثيقة الدراسة الإعدادية الأصلية");
+    if (!files.highSchoolCertificate || !files.highSchoolCertificateBack) {
+      setError("الرجاء رفع وثيقة الدراسة الإعدادية الأصلية (الوجه الأمامي والخلفي)");
       return;
     }
     if (!files.barcodeDocument) {
@@ -170,6 +171,7 @@ export default function UploadDocumentsPage() {
         residenceCardFrontId,
         residenceCardBackId,
         highSchoolCertificateId,
+        highSchoolCertificateBackId,
         barcodeDocumentId,
       ] = await Promise.all([
         uploadFile(files.personalPhoto),
@@ -182,6 +184,7 @@ export default function UploadDocumentsPage() {
         uploadFile(files.residenceCardFront),
         uploadFile(files.residenceCardBack),
         uploadFile(files.highSchoolCertificate),
+        uploadFile(files.highSchoolCertificateBack),
         uploadFile(files.barcodeDocument),
       ]);
 
@@ -205,6 +208,7 @@ export default function UploadDocumentsPage() {
           residenceCardFrontId,
           residenceCardBackId,
           highSchoolCertificateId,
+          highSchoolCertificateBackId,
           barcodeDocumentId,
         }),
       });
@@ -508,13 +512,28 @@ export default function UploadDocumentsPage() {
             <label className="block text-sm font-bold text-neutral-900 mb-2">
               وثيقة الدراسة الإعدادية الأصلية <span className="text-red-500">*</span>
             </label>
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={(e) => handleFileChange(e, "highSchoolCertificate")}
-              required
-              className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-neutral-600 mb-1">الوجه الأمامي</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => handleFileChange(e, "highSchoolCertificate")}
+                  required
+                  className="w-full px-4 py-2 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-neutral-600 mb-1">الوجه الخلفي</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => handleFileChange(e, "highSchoolCertificateBack")}
+                  required
+                  className="w-full px-4 py-2 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+                />
+              </div>
+            </div>
           </div>
 
           {/* ورقة الباركود */}

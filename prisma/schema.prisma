@@ -317,6 +317,7 @@ model RegistrationDocument {
   residence_card_front_id   String?  @map("residence_card_front_id") @db.Uuid
   residence_card_back_id    String?  @map("residence_card_back_id") @db.Uuid
   high_school_certificate_id String? @map("high_school_certificate_id") @db.Uuid
+  high_school_certificate_back_id String? @map("high_school_certificate_back_id") @db.Uuid
   barcode_document_id       String?  @map("barcode_document_id") @db.Uuid
   created_at                DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updated_at                DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -331,6 +332,7 @@ model RegistrationDocument {
   residence_card_front  Media? @relation("ResidenceCardFront", fields: [residence_card_front_id], references: [id], onDelete: SetNull)
   residence_card_back   Media? @relation("ResidenceCardBack", fields: [residence_card_back_id], references: [id], onDelete: SetNull)
   high_school_certificate Media? @relation("HighSchoolCertificate", fields: [high_school_certificate_id], references: [id], onDelete: SetNull)
+  high_school_certificate_back Media? @relation("HighSchoolCertificateBack", fields: [high_school_certificate_back_id], references: [id], onDelete: SetNull)
   barcode_document      Media? @relation("BarcodeDocument", fields: [barcode_document_id], references: [id], onDelete: SetNull)
 
   @@index([created_at])

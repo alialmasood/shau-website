@@ -254,7 +254,19 @@ export default async function AdminRequiredDocumentsPage() {
                           rel="noopener noreferrer"
                           className="block text-xs text-[#31BD9C] hover:underline"
                         >
-                          وثيقة الدراسة الإعدادية
+                          وثيقة الدراسة الإعدادية (أمامي)
+                        </a>
+                      </div>
+                    )}
+                    {doc.highSchoolCertificateBackId && (
+                      <div>
+                        <a
+                          href={`/api/media/${doc.highSchoolCertificateBackId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs text-[#31BD9C] hover:underline"
+                        >
+                          وثيقة الدراسة الإعدادية (خلفي)
                         </a>
                       </div>
                     )}

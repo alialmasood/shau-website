@@ -40,6 +40,7 @@ function mapRow(r: { [k: string]: unknown }): RegistrationDocumentRow {
     residenceCardFrontId: r.residence_card_front_id ? String(r.residence_card_front_id) : null,
     residenceCardBackId: r.residence_card_back_id ? String(r.residence_card_back_id) : null,
     highSchoolCertificateId: r.high_school_certificate_id ? String(r.high_school_certificate_id) : null,
+    highSchoolCertificateBackId: r.high_school_certificate_back_id ? String(r.high_school_certificate_back_id) : null,
     barcodeDocumentId: r.barcode_document_id ? String(r.barcode_document_id) : null,
     createdAt: r.created_at ? new Date(r.created_at as string).toISOString() : "",
     updatedAt: r.updated_at ? new Date(r.updated_at as string).toISOString() : "",
@@ -51,7 +52,7 @@ const COLS = `id, full_name, department, stage, study_type, phone,
   father_id_front_id, father_id_back_id,
   mother_id_front_id, mother_id_back_id,
   residence_card_front_id, residence_card_back_id,
-  high_school_certificate_id, barcode_document_id,
+  high_school_certificate_id, high_school_certificate_back_id, barcode_document_id,
   created_at, updated_at`;
 
 export async function getAllRegistrationDocuments(): Promise<RegistrationDocumentRow[]> {
@@ -84,6 +85,7 @@ export type CreateRegistrationDocumentInput = {
   residenceCardFrontId: string | null;
   residenceCardBackId: string | null;
   highSchoolCertificateId: string | null;
+  highSchoolCertificateBackId: string | null;
   barcodeDocumentId: string | null;
 };
 
@@ -97,8 +99,8 @@ export async function createRegistrationDocument(
       father_id_front_id, father_id_back_id,
       mother_id_front_id, mother_id_back_id,
       residence_card_front_id, residence_card_back_id,
-      high_school_certificate_id, barcode_document_id
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      high_school_certificate_id, high_school_certificate_back_id, barcode_document_id
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
     RETURNING id`,
     [
       input.fullName,
@@ -116,6 +118,7 @@ export async function createRegistrationDocument(
       input.residenceCardFrontId,
       input.residenceCardBackId,
       input.highSchoolCertificateId,
+      input.highSchoolCertificateBackId,
       input.barcodeDocumentId,
     ]
   );
