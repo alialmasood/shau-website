@@ -24,6 +24,16 @@ export default async function AdminDashboardPage() {
     redirect("/admin/login");
   }
 
+  // التحقق من أن المستخدم المحدود يجب توجيهه إلى custom_url أولاً
+  // هذا يجب أن يحدث قبل التحقق من الصلاحيات
+  if (user.custom_url && user.custom_url !== "/admin" && user.custom_url.trim().length > 0) {
+    const customUrl = String(user.custom_url).trim();
+    if (customUrl.startsWith("/admin")) {
+      console.log(`[AdminDashboardPage] Redirecting user ${user.email} to custom_url: ${customUrl}`);
+      redirect(customUrl);
+    }
+  }
+
   // التحقق من الصلاحية على صفحة admin
   const hasAccess = await canAdmin("admin", "access");
   if (!hasAccess) {
@@ -31,16 +41,12 @@ export default async function AdminDashboardPage() {
       <div className="w-full bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 font-bold text-xl">❌ غير مصرح - ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
+          <Link href="/admin/login" prefetch={false} className="mt-4 inline-block text-[#31BD9C] hover:underline">
+            العودة إلى تسجيل الدخول
+          </Link>
         </div>
       </div>
     );
-  }
-
-  // التحقق من أن المستخدم المحدود لا يمكنه الوصول إلى هذه الصفحة
-  if (user.custom_url && user.custom_url !== "/admin" && user.role !== "ADMIN") {
-    if (user.custom_url) {
-      redirect(user.custom_url);
-    }
   }
 
   let stats = { newsCount: 0, programsCount: 0, applicationsCount: 0, lastUpdated: null as string | null };

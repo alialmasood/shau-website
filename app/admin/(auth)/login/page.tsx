@@ -31,12 +31,14 @@ async function loginAction(formData: FormData) {
   // تحديد الرابط المخصص
   let redirectUrl = "/admin"; // القيمة الافتراضية
   
+  // إذا كان المستخدم لديه custom_url، استخدمه (حتى لو لم يكن ADMIN)
   if (userData?.custom_url) {
     const customUrl = String(userData.custom_url).trim();
     
     // التأكد من أن الرابط يبدأ بـ /admin وليس فارغاً
     if (customUrl && customUrl.length > 0 && customUrl.startsWith("/admin")) {
       redirectUrl = customUrl;
+      console.log(`[loginAction] Redirecting user ${email} to custom_url: ${redirectUrl}`);
     }
   }
   

@@ -5,8 +5,17 @@ export async function GET(request: NextRequest) {
   // حذف الـ cookie باستخدام الدالة المخصصة
   await clearAdminSessionCookie();
   
-  // إنشاء URL للتوجيه
-  const loginUrl = new URL("/admin/login", request.url);
+  // استخدام مسار نسبي - Next.js سيتعامل معه تلقائياً
+  // أو بناء URL من request.url بشكل صحيح
+  let loginUrl: string | URL;
+  try {
+    // محاولة بناء URL من request.url
+    const url = new URL(request.url);
+    loginUrl = new URL("/admin/login", url.origin);
+  } catch {
+    // في حالة فشل، استخدام مسار نسبي
+    loginUrl = "/admin/login";
+  }
   
   // إنشاء response مع redirect
   const res = NextResponse.redirect(loginUrl);
