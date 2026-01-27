@@ -127,11 +127,16 @@ export async function getAdminPageByCode(code: string): Promise<AdminPageRow | n
   );
   if (res.rows.length === 0) return null;
   const r = res.rows[0];
+  
+  // تحديد parentCode بناءً على code
+  const parentCode = CHILD_TO_PARENT[r.code] || null;
+  
   return {
     id: String(r.id),
     code: String(r.code),
     nameAr: String(r.name_ar),
     nameEn: r.name_en ? String(r.name_en) : null,
+    parentCode: parentCode,
     created_at: r.created_at ? new Date(r.created_at as string).toISOString() : "",
     updated_at: r.updated_at ? new Date(r.updated_at as string).toISOString() : "",
   };
