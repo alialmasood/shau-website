@@ -102,6 +102,7 @@ const navItems = [
         label: "خدمات الطلاب", 
         href: "/student-services",
         submenu: [
+          { label: "بوابة الطلبة", href: "/student-portal" },
           { label: "الطلاب", href: "/students" },
           { label: "طلبتنا الاوائل", href: "/top-students" },
           { label: "دعم ذوي الاحتياجات الخاصة", href: "/special-needs-support" },

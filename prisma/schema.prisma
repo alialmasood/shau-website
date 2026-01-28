@@ -11,6 +11,8 @@ enum AdminRole {
   MANAGER
   EDITOR
   VIEWER
+  EXAM_COMMITTEE
+  ACCOUNTS
 }
 
 enum NewsCategory {
@@ -44,6 +46,10 @@ model AdminUser {
 
   permissions   AdminUserPermission[]
   pagePermissions AdminPagePermission[]
+  studentUpdater Student[] @relation("StudentUpdater")
+  studentClearanceUpdater Student[] @relation("StudentClearanceUpdater")
+  resultUploader Result[] @relation("ResultUploader")
+  batchCreator ResultsBatch[] @relation("BatchCreator")
 
   @@map("admin_users")
 }
@@ -338,4 +344,103 @@ model RegistrationDocument {
 
   @@index([created_at])
   @@map("registration_documents")
+}
+
+model Student {
+  id                    String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  student_id            String   @unique @map("student_id") @db.VarChar(50)
+  full_name             String   @map("full_name") @db.VarChar(200)
+  department_code       String   @map("department_code") @db.VarChar(50)
+  stage                 String   @db.VarChar(50)
+  study_type            String   @map("study_type") @db.VarChar(20) // صباحي/مسائي
+  academic_year         String   @map("academic_year") @db.VarChar(20)
+  semester              String   @db.VarChar(50)
+  financial_clearance    Boolean  @default(false) @map("financial_clearance")
+  clearance_updated_at   DateTime? @map("clearance_updated_at") @db.Timestamptz(6)
+  clearance_updated_by   String?  @map("clearance_updated_by") @db.Uuid
+  created_at            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at            DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updated_by            String?  @map("updated_by") @db.Uuid
+
+  results Result[]
+  user    StudentUser?
+  updater AdminUser? @relation("StudentUpdater", fields: [updated_by], references: [id], onDelete: SetNull)
+  clearanceUpdater AdminUser? @relation("StudentClearanceUpdater", fields: [clearance_updated_by], references: [id], onDelete: SetNull)
+
+  @@index([student_id])
+  @@index([department_code, stage, study_type, academic_year, semester])
+  @@index([financial_clearance])
+  @@map("students")
+}
+
+model Result {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  student_id        String   @map("student_id") @db.VarChar(50)
+  department_code   String   @map("department_code") @db.VarChar(50)
+  academic_year     String   @map("academic_year") @db.VarChar(20)
+  semester          String   @db.VarChar(50)
+  stage             String   @db.VarChar(50)
+  study_type        String   @map("study_type") @db.VarChar(20) // صباحي/مسائي
+  attempt           String   @db.VarChar(50)
+  summary_json      Json     @map("summary_json") // المجموع، المعدل، التقييم، النتيجة النهائية، أعلى درجة
+  subjects_json     Json     @map("subjects_json") // array of subjects with units and attempt values
+  raw_row_json      Json?    @map("raw_row_json") // optional: full row data
+  uploaded_batch_id String?  @map("uploaded_batch_id") @db.Uuid
+  uploaded_at       DateTime @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+  uploaded_by       String?  @map("uploaded_by") @db.Uuid
+
+  student         Student      @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  batch           ResultsBatch? @relation(fields: [uploaded_batch_id], references: [id], onDelete: SetNull)
+  uploader        AdminUser?   @relation("ResultUploader", fields: [uploaded_by], references: [id], onDelete: SetNull)
+
+  @@unique([student_id, department_code, stage, study_type, academic_year, semester, attempt])
+  @@index([student_id])
+  @@index([department_code, academic_year, semester, stage, study_type, attempt])
+  @@index([uploaded_batch_id])
+  @@map("results")
+}
+
+model ResultsBatch {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  department_code    String   @map("department_code") @db.VarChar(50)
+  academic_year      String   @map("academic_year") @db.VarChar(20)
+  semester           String   @db.VarChar(50)
+  stage              String   @db.VarChar(50)
+  study_type         String   @map("study_type") @db.VarChar(20) // صباحي/مسائي
+  attempt            String   @db.VarChar(50)
+  file_name          String   @map("file_name") @db.VarChar(255)
+  file_hash          String?  @map("file_hash") @db.VarChar(64) // SHA-256 hash
+  rows_count         Int      @map("rows_count")
+  imported_count     Int      @default(0) @map("imported_count")
+  skipped_count      Int      @default(0) @map("skipped_count")
+  meta_subjects_json Json?    @map("meta_subjects_json") // detected subjects + units + mapping
+  errors_json        Json?    @map("errors_json")
+  created_at         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  created_by         String?  @map("created_by") @db.Uuid
+
+  results Result[]
+  creator AdminUser? @relation("BatchCreator", fields: [created_by], references: [id], onDelete: SetNull)
+
+  @@index([department_code, academic_year, semester, stage, study_type, attempt])
+  @@index([created_at])
+  @@index([file_hash])
+  @@map("results_batches")
+}
+
+model StudentUser {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  username            String    @unique @db.VarChar(100)
+  password_hash       String    @map("password_hash")
+  student_id          String    @unique @map("student_id") @db.VarChar(50)
+  is_active           Boolean   @default(true) @map("is_active")
+  must_change_password Boolean  @default(false) @map("must_change_password")
+  last_login_at       DateTime? @map("last_login_at") @db.Timestamptz(6)
+  created_at          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@index([student_id])
+  @@index([username])
+  @@map("student_users")
 }
