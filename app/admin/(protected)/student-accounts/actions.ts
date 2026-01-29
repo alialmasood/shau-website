@@ -69,10 +69,10 @@ export async function importStudentAccounts(
       if (existingBatch) {
         return {
           success: false,
-          error: "DUPLICATE_FILE",
+          error: `تم استيراد هذا الملف مسبقاً في ${new Date(existingBatch.createdAt).toLocaleDateString("ar-IQ")}`,
           imported: 0,
           updated: 0,
-          errors: [`تم استيراد هذا الملف مسبقاً في ${new Date(existingBatch.createdAt).toLocaleDateString("ar-IQ")}`],
+          errors: [{ row: 0, error: `تم استيراد هذا الملف مسبقاً في ${new Date(existingBatch.createdAt).toLocaleDateString("ar-IQ")}` }],
           credentials: [],
           generatedCredentials: [],
         };
