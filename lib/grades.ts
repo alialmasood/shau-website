@@ -214,7 +214,8 @@ export function getFinalEvaluationAndResult(
   let evaluation: string | null = null;
   if (avg !== undefined && avg !== null && avg !== "") {
     // Always calculate evaluation from average - NEVER from stored evaluation
-    evaluation = calculateFinalEvaluation(avg);
+    // Cast avg: summaryJson is Record<string, unknown> so avg is unknown
+    evaluation = calculateFinalEvaluation(avg as number | string);
     
     // Debug logging (only in development)
     if (process.env.NODE_ENV === "development") {

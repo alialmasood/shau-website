@@ -102,8 +102,9 @@ function parseExcel(fileBase64: string): ParsedExcelData {
         console.log(`[parseExcel] Row at index ${unitsRowIndex + 1} has student_id/full_name data -> treating as DATA row, not units row`);
       } else {
         const numericCount = potentialUnitsRow.filter((cell: any) => {
+          if (cell === null || cell === undefined || cell === "") return false;
           const num = Number(cell);
-          return !isNaN(num) && num !== "" && cell !== null && cell !== undefined;
+          return !isNaN(num);
         }).length;
         const textCount = potentialUnitsRow.filter((cell: any) => {
           const str = String(cell || "").trim().toLowerCase();

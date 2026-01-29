@@ -104,7 +104,8 @@ export default async function VerifyResultPage({
         
         evaluation = calculated.evaluation;
         finalStatus = calculated.finalStatus;
-        avg = summary?.avg ?? summary?.average ?? null;
+        const rawAvg = summary?.avg ?? summary?.average ?? null;
+        avg = rawAvg != null ? (rawAvg as number | string) : null;
       }
     } catch (error) {
       console.error("Error fetching result data:", error);

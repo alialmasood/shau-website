@@ -153,8 +153,11 @@ export default async function PrintResultPage({
   // Extract calculated total and average from summary
   // These are calculated from (score × units) during import
   // If missing in summary (e.g. old data or different Excel columns), compute from subjectsJson
-  let total: number | string | null = summary?.total ?? null;
-  let avg: number | string | null = summary?.avg ?? summary?.average ?? null;
+  // Convert from unknown to number | string | null (summary is Record<string, unknown>)
+  const rawTotal = summary?.total;
+  const rawAvg = summary?.avg ?? summary?.average;
+  let total: number | string | null = rawTotal != null ? (rawTotal as number | string) : null;
+  let avg: number | string | null = rawAvg != null ? (rawAvg as number | string) : null;
   if (total === null || total === undefined || avg === null || avg === undefined) {
     const subjects = result.subjectsJson as Array<{ name?: string; score?: number | string | null; units?: number | string | null }> | undefined;
     const computed = computeTotalAndAvgFromSubjects(subjects);

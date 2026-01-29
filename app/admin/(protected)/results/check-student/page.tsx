@@ -74,11 +74,11 @@ export default async function CheckStudentPage({
             : null;
           
           const avg = summary?.avg ?? summary?.average;
-          const storedEvaluation = summary?.evaluation;
+          const storedEvaluation = summary?.evaluation != null ? String(summary.evaluation) : null;
           
-          // Calculate evaluation from average
+          // Calculate evaluation from average (avg may be unknown from Record<string, unknown>)
           const calculatedEvaluation = avg !== undefined && avg !== null && avg !== ""
-            ? calculateFinalEvaluation(avg)
+            ? calculateFinalEvaluation(avg as number | string)
             : null;
           
           // Get final evaluation and result using ministerial logic
@@ -123,7 +123,7 @@ export default async function CheckStudentPage({
                     calculatedTotalUnits += unitsNum;
                     
                     subjectContributions.push({
-                      name: subject.name || "-",
+                      name: (subject.name != null ? String(subject.name) : "").trim() || "-",
                       score: scoreNum,
                       units: unitsNum,
                       contribution
