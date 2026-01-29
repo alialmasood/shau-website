@@ -319,6 +319,38 @@ export async function findBatchByHash(
   return mapBatchRow(res.rows[0]);
 }
 
+/**
+ * Delete a batch and optionally remove uploaded_batch_id from related results
+ * Note: This does NOT delete the results themselves, only removes the batch reference
+ */
+export async function deleteBatch(batchId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    // First, remove batch reference from results (set uploaded_batch_id to NULL)
+    await query(
+      `UPDATE results SET uploaded_batch_id = NULL WHERE uploaded_batch_id = $1`,
+      [batchId]
+    );
+
+    // Then delete the batch record
+    const res = await query(
+      `DELETE FROM results_batches WHERE id = $1 RETURNING id`,
+      [batchId]
+    );
+
+    if (res.rows.length === 0) {
+      return { success: false, error: "الاستيراد غير موجود" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting batch:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "حدث خطأ أثناء حذف الاستيراد" 
+    };
+  }
+}
+
 export type ResultsStats = {
   totalUploads: number;
   uploadedDepartments: number;

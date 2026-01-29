@@ -13,6 +13,7 @@
     "db:migrate-apply-types": "node scripts/run-apply-types-migration.js",
     "db:migrate-applications": "node scripts/run-applications-migration.js",
     "db:migrate-varchar-to-text": "node scripts/run-varchar-to-text-migration.js",
+    "db:migrate-student-accounts-batches": "node scripts/run-student-accounts-batches-migration.js",
     "db:migrate-programs": "node scripts/run-programs-migration.js",
     "db:migrate-programs-tables-images": "node scripts/run-programs-lectures-exams-images-migration.js",
     "db:migrate-tuition-pdf": "node scripts/run-tuition-pdf-migration.js",
@@ -32,7 +33,8 @@
     "admin:create-default": "node scripts/create-default-admin.js",
     "admin:check-users": "node scripts/check-admin-users.js",
     "logs:view": "node scripts/view-logs.js",
-    "admin:discover-pages": "node scripts/discover-admin-pages.js"
+    "admin:discover-pages": "node scripts/discover-admin-pages.js",
+    "data:clear-students": "node scripts/clear-student-data.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

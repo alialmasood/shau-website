@@ -118,38 +118,55 @@ export async function getAllStudents(filters?: {
   studyType?: string;
   financialClearance?: boolean;
   search?: string;
+  batchId?: string; // Filter by batch ID - show only students imported in this batch
   page?: number;
   pageSize?: number;
 }): Promise<{ students: StudentRow[]; total: number }> {
-  // Build WHERE clause
-  let whereSql = `WHERE 1=1`;
+  // IMPORTANT: We need to show students from RESULTS table, not just STUDENTS table
+  // Because the same student can have results in different departments
+  // We'll join students with results to get all unique (student_id, department_code) combinations
+  
+  // Build WHERE clause for results and students together
+  let whereSql = `WHERE r.student_id = s.student_id`;
   const params: unknown[] = [];
   let paramIndex = 1;
 
+  // If batchId is provided, filter by students who have results in that batch
+  if (filters?.batchId) {
+    whereSql += ` AND r.uploaded_batch_id = $${paramIndex++}`;
+    params.push(filters.batchId);
+  }
+
   if (filters?.departmentCode) {
-    whereSql += ` AND department_code = $${paramIndex++}`;
+    whereSql += ` AND r.department_code = $${paramIndex++}`;
     params.push(filters.departmentCode);
   }
   if (filters?.stage) {
-    whereSql += ` AND stage = $${paramIndex++}`;
+    whereSql += ` AND r.stage = $${paramIndex++}`;
     params.push(filters.stage);
   }
   if (filters?.studyType) {
-    whereSql += ` AND study_type = $${paramIndex++}`;
+    whereSql += ` AND r.study_type = $${paramIndex++}`;
     params.push(filters.studyType);
   }
+
   if (filters?.financialClearance !== undefined) {
-    whereSql += ` AND financial_clearance = $${paramIndex++}`;
+    whereSql += ` AND s.financial_clearance = $${paramIndex++}`;
     params.push(filters.financialClearance);
   }
   if (filters?.search) {
-    whereSql += ` AND (full_name ILIKE $${paramIndex} OR student_id ILIKE $${paramIndex})`;
+    whereSql += ` AND (s.full_name ILIKE $${paramIndex} OR s.student_id ILIKE $${paramIndex})`;
     params.push(`%${filters.search}%`);
     paramIndex++;
   }
 
-  // Get total count
-  const countSql = `SELECT COUNT(*) as total FROM students ${whereSql}`;
+  // Get total count: Count distinct (student_id, department_code) from results
+  const countSql = `
+    SELECT COUNT(DISTINCT r.student_id || '|' || r.department_code) as total
+    FROM results r
+    INNER JOIN students s ON r.student_id = s.student_id
+    ${whereSql}
+  `;
   const countRes = await query(countSql, params);
   const total = Number(countRes.rows[0]?.total || 0);
 
@@ -158,18 +175,36 @@ export async function getAllStudents(filters?: {
   const pageSize = filters?.pageSize ?? 25;
   const offset = (page - 1) * pageSize;
 
-  let dataSql = `SELECT id, student_id, full_name, department_code, stage, study_type, academic_year, semester, 
-                        financial_clearance, clearance_updated_at, clearance_updated_by, created_at, updated_at, updated_by
-                 FROM students ${whereSql}
-                 ORDER BY updated_at DESC, created_at DESC`;
+  // Get distinct students with their department from results
+  // Use the department_code from results (not from students table) to show all departments
+  let dataSql = `
+    SELECT DISTINCT ON (r.student_id, r.department_code)
+      s.id,
+      r.student_id,
+      s.full_name,
+      r.department_code,  -- Use department_code from results, not students
+      r.stage,
+      r.study_type,
+      r.academic_year,
+      r.semester,
+      s.financial_clearance,
+      s.clearance_updated_at,
+      s.clearance_updated_by,
+      s.created_at,
+      s.updated_at,
+      s.updated_by
+    FROM results r
+    INNER JOIN students s ON r.student_id = s.student_id
+    ${whereSql}
+    ORDER BY r.student_id, r.department_code, r.uploaded_at DESC
+    LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+  `;
   
-  // Always add pagination (default pageSize = 25)
-  dataSql += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-  params.push(pageSize, offset);
+  const dataParams = [...params, pageSize, offset];
 
-  console.log(`📊 getAllStudents query: page=${page}, pageSize=${pageSize}, total=${total}, whereSql=${whereSql}`);
+  console.log(`📊 getAllStudents query: page=${page}, pageSize=${pageSize}, total=${total}, batchId=${filters?.batchId || "none"}, departmentCode=${filters?.departmentCode || "all"}`);
   
-  const res = await query(dataSql, params);
+  const res = await query(dataSql, dataParams);
   
   console.log(`✅ getAllStudents returned ${res.rows.length} rows out of ${total} total`);
   

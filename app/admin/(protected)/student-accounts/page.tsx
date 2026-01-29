@@ -1,13 +1,28 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { getStudentAccountsStats } from "./actions";
+import { getAllStudentAccountsBatches } from "@/lib/studentAccountsBatchesRepo";
 import StudentAccountsTable from "./StudentAccountsTable";
 import StudentAccountsImport from "./StudentAccountsImport";
+import StudentAccountsBatchCard from "./StudentAccountsBatchCard";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function StudentAccountsPage() {
+const DEPARTMENTS = [
+  { code: "DENTAL_TECH", name: "تقنيات صناعة الأسنان" },
+  { code: "ANESTHESIA_TECH", name: "تقنيات التخدير" },
+  { code: "RADIOLOGY_TECH", name: "تقنيات الأشعة" },
+];
+
+export default async function StudentAccountsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ 
+    batchId?: string;
+  }>;
+}) {
   const user = await getCurrentAdminUser();
   if (!user) {
     redirect("/admin/login");
@@ -26,7 +41,20 @@ export default async function StudentAccountsPage() {
     );
   }
 
+  const params = await searchParams;
   const stats = await getStudentAccountsStats();
+  
+  // Get all batches for the import history section
+  const batches = await getAllStudentAccountsBatches();
+  
+  // Group batches by department
+  const batchesByDepartment = batches.reduce((acc, batch) => {
+    if (!acc[batch.departmentCode]) {
+      acc[batch.departmentCode] = [];
+    }
+    acc[batch.departmentCode].push(batch);
+    return acc;
+  }, {} as Record<string, typeof batches>);
 
   return (
     <div className="w-full bg-white min-h-screen">
@@ -54,12 +82,50 @@ export default async function StudentAccountsPage() {
           </div>
         </div>
 
+        {/* Import History Section */}
+        {batches.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-neutral-900 mb-4">سجل الاستيرادات</h2>
+            <div className="space-y-4">
+              {Object.entries(batchesByDepartment).map(([deptCode, deptBatches]) => {
+                const deptName = DEPARTMENTS.find(d => d.code === deptCode)?.name || deptCode;
+                return (
+                  <div key={deptCode} className="border border-neutral-200 rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-neutral-700 mb-3">{deptName}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {deptBatches.map((batch) => (
+                        <StudentAccountsBatchCard
+                          key={batch.id}
+                          batch={batch}
+                          isSelected={params.batchId === batch.id}
+                          userRole={user.role}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {params.batchId && (
+              <div className="mt-4 pt-4 border-t border-neutral-200">
+                <Link
+                  href="/admin/student-accounts"
+                  prefetch={false}
+                  className="text-sm text-[#31BD9C] hover:underline"
+                >
+                  ← عرض جميع الحسابات (إلغاء الفلتر)
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
           <StudentAccountsImport />
         </div>
 
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-          <StudentAccountsTable />
+          <StudentAccountsTable selectedBatchId={params.batchId} />
         </div>
       </div>
     </div>

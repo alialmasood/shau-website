@@ -16,6 +16,7 @@ export default function AccountsTable({
   stages,
   studyTypes,
   currentFilters,
+  selectedBatchId,
 }: {
   students: StudentRow[];
   total: number;
@@ -30,7 +31,9 @@ export default function AccountsTable({
     studyType?: string;
     financialClearance?: boolean;
     search?: string;
+    batchId?: string;
   };
+  selectedBatchId?: string;
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(currentFilters.search || "");
@@ -49,6 +52,8 @@ export default function AccountsTable({
     if (studyTypeFilter) params.set("studyType", studyTypeFilter);
     if (paidFilter) params.set("paid", paidFilter);
     if (search) params.set("search", search);
+    // Preserve batchId if it exists
+    if (selectedBatchId) params.set("batchId", selectedBatchId);
     params.set("page", String(newPage));
     params.set("pageSize", String(pageSize));
     router.push(`/admin/accounts?${params.toString()}`);
@@ -138,18 +143,41 @@ export default function AccountsTable({
           </select>
         </div>
       </div>
-      <button
-        onClick={() => applyFilters(1)}
-        className="px-4 py-2 rounded-lg bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a]"
-      >
-        تطبيق الفلاتر
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => applyFilters(1)}
+          className="px-4 py-2 rounded-lg bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a]"
+        >
+          تطبيق الفلاتر
+        </button>
+        <button
+          onClick={() => {
+            setDepartmentFilter("");
+            setStageFilter("");
+            setStudyTypeFilter("");
+            setPaidFilter("");
+            setSearch("");
+            // Remove batchId filter as well
+            router.push("/admin/accounts?page=1&pageSize=" + pageSize);
+          }}
+          className="px-4 py-2 rounded-lg border border-neutral-300 text-neutral-700 text-sm font-bold hover:bg-neutral-50"
+        >
+          إعادة تعيين
+        </button>
+      </div>
 
       {/* Total count */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-neutral-600">
-          إجمالي النتائج: <span className="font-bold text-neutral-900">{total}</span>
-        </p>
+        <div>
+          <p className="text-sm text-neutral-600">
+            إجمالي النتائج: <span className="font-bold text-neutral-900">{total}</span>
+          </p>
+          {selectedBatchId && (
+            <p className="text-xs text-orange-600 mt-1">
+              ⚠ عرض الطلاب من استيراد محدد فقط
+            </p>
+          )}
+        </div>
         <p className="text-sm text-neutral-600">
           عرض {students.length > 0 ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, total)} من {total}
         </p>
@@ -178,7 +206,7 @@ export default function AccountsTable({
               </tr>
             ) : (
               students.map((student) => (
-                <tr key={student.id} className="hover:bg-neutral-50">
+                <tr key={`${student.studentId}-${student.departmentCode}`} className="hover:bg-neutral-50">
                   <td className="px-4 py-3 text-sm text-neutral-900">{student.studentId}</td>
                   <td className="px-4 py-3 text-sm text-neutral-900">{student.fullName}</td>
                   <td className="px-4 py-3 text-sm text-neutral-900">

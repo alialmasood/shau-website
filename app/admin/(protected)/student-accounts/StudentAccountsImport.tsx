@@ -5,9 +5,16 @@ import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import { importStudentAccounts } from "./actions";
 
+const DEPARTMENTS = [
+  { code: "DENTAL_TECH", name: "تقنيات صناعة الأسنان" },
+  { code: "ANESTHESIA_TECH", name: "تقنيات التخدير" },
+  { code: "RADIOLOGY_TECH", name: "تقنيات الأشعة" },
+];
+
 export default function StudentAccountsImport() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
+  const [departmentCode, setDepartmentCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -53,6 +60,11 @@ export default function StudentAccountsImport() {
       return;
     }
 
+    if (!departmentCode) {
+      setError("الرجاء اختيار القسم");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -70,7 +82,7 @@ export default function StudentAccountsImport() {
       }
       const base64 = btoa(binary);
 
-      const result = await importStudentAccounts(base64);
+      const result = await importStudentAccounts(base64, file.name, departmentCode);
 
       if (result.success) {
         setSuccess(`تم الاستيراد بنجاح: ${result.imported} جديد، ${result.updated} محدث`);
@@ -104,20 +116,41 @@ export default function StudentAccountsImport() {
     <div className="space-y-4">
       <h2 className="text-xl font-bold text-neutral-900">استيراد حسابات الطلاب</h2>
       
-      <div>
-        <label className="block text-sm font-bold text-neutral-900 mb-2">
-          ملف Excel <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
-        />
-        <p className="mt-1 text-xs text-neutral-500">
-          يجب أن يحتوي الملف على الأعمدة التالية: student_id (مطلوب), full_name (مطلوب), username (اختياري), password (اختياري)
-        </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-bold text-neutral-900 mb-2">
+            القسم <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={departmentCode}
+            onChange={(e) => setDepartmentCode(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+          >
+            <option value="">اختر القسم</option>
+            {DEPARTMENTS.map((dept) => (
+              <option key={dept.code} value={dept.code}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-neutral-900 mb-2">
+            ملف Excel <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 outline-none"
+          />
+        </div>
       </div>
+      
+      <p className="text-xs text-neutral-500">
+        يجب أن يحتوي الملف على الأعمدة التالية: student_id (مطلوب), full_name (مطلوب), username (اختياري), password (اختياري)
+      </p>
 
       <button
         onClick={handleImport}

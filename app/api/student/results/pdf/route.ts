@@ -138,12 +138,40 @@ export async function GET(request: NextRequest) {
     try {
       browser = await chromium.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'], // Important for production servers
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--disable-gpu',
+        ], // Important for production servers
       });
     } catch (launchError) {
       console.error("Failed to launch browser:", launchError);
+      const errorDetails = launchError instanceof Error ? launchError.message : String(launchError);
+      console.error("Error details:", errorDetails);
+      
+      // Check if it's a browser not found error
+      if (errorDetails.includes("Executable doesn't exist") || 
+          errorDetails.includes("BrowserType.launch") ||
+          errorDetails.includes("chromium") ||
+          errorDetails.includes("browserType")) {
+        return NextResponse.json(
+          { 
+            error: "فشل تشغيل المتصفح - تأكد من تثبيت متصفحات Playwright",
+            details: "قم بتنفيذ الأمر التالي على السيرفر: npx playwright install chromium",
+            installCommand: "npx playwright install chromium"
+          },
+          { status: 500 }
+        );
+      }
+      
       return NextResponse.json(
-        { error: "فشل تشغيل المتصفح - تأكد من تثبيت متصفحات Playwright (npx playwright install chromium)" },
+        { 
+          error: "فشل تشغيل المتصفح",
+          details: errorDetails,
+          solution: "تأكد من تثبيت متصفحات Playwright: npx playwright install chromium"
+        },
         { status: 500 }
       );
     }

@@ -50,6 +50,7 @@ model AdminUser {
   studentClearanceUpdater Student[] @relation("StudentClearanceUpdater")
   resultUploader Result[] @relation("ResultUploader")
   batchCreator ResultsBatch[] @relation("BatchCreator")
+  studentAccountsBatchCreator StudentAccountsBatch[] @relation("StudentAccountsBatchCreator")
 
   @@map("admin_users")
 }
@@ -435,12 +436,37 @@ model StudentUser {
   is_active           Boolean   @default(true) @map("is_active")
   must_change_password Boolean  @default(false) @map("must_change_password")
   last_login_at       DateTime? @map("last_login_at") @db.Timestamptz(6)
+  uploaded_batch_id   String?   @map("uploaded_batch_id") @db.Uuid
   created_at          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updated_at          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  batch   StudentAccountsBatch? @relation(fields: [uploaded_batch_id], references: [id], onDelete: SetNull)
 
   @@index([student_id])
   @@index([username])
+  @@index([uploaded_batch_id])
   @@map("student_users")
+}
+
+model StudentAccountsBatch {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  department_code    String   @map("department_code") @db.VarChar(50)
+  file_name          String   @map("file_name") @db.VarChar(255)
+  file_hash          String?  @map("file_hash") @db.VarChar(64) // SHA-256 hash
+  rows_count         Int      @map("rows_count")
+  imported_count     Int      @default(0) @map("imported_count")
+  updated_count      Int      @default(0) @map("updated_count")
+  skipped_count      Int      @default(0) @map("skipped_count")
+  errors_json        Json?    @map("errors_json")
+  created_at         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  created_by         String?  @map("created_by") @db.Uuid
+
+  studentUsers StudentUser[]
+  creator AdminUser? @relation("StudentAccountsBatchCreator", fields: [created_by], references: [id], onDelete: SetNull)
+
+  @@index([department_code])
+  @@index([created_at])
+  @@index([file_hash])
+  @@map("student_accounts_batches")
 }

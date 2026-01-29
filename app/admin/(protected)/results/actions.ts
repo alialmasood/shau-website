@@ -906,19 +906,22 @@ export async function importExcel(
 
         // Upsert student
         // Unique constraint: student_id (defined in schema as @unique)
-        // On conflict: update all fields except financial_clearance (preserve existing value to avoid overwriting manual changes)
+        // IMPORTANT: Do NOT update department_code on conflict to preserve existing department data
+        // If student exists with different department_code, skip updating student record but still process result
+        // On conflict: update all fields EXCEPT department_code and financial_clearance (preserve existing values)
         const studentRes = await rowClient.query(
           `INSERT INTO students (student_id, full_name, department_code, stage, study_type, academic_year, semester, financial_clearance)
            VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, false))
            ON CONFLICT (student_id) DO UPDATE SET
              full_name = EXCLUDED.full_name,
-             department_code = EXCLUDED.department_code,
+             -- DO NOT update department_code: preserve existing department to avoid overwriting data from other departments
+             -- department_code = EXCLUDED.department_code,  -- REMOVED: prevents overwriting department when importing different department
              stage = EXCLUDED.stage,
              study_type = EXCLUDED.study_type,
              academic_year = EXCLUDED.academic_year,
              semester = EXCLUDED.semester,
              updated_at = NOW()
-           RETURNING id, (xmax = 0) AS is_insert`,
+           RETURNING id, department_code, (xmax = 0) AS is_insert`,
           [
             sid,
             fullName,
@@ -955,12 +958,21 @@ export async function importExcel(
         }
         
         const isStudentInsert = studentRes.rows[0].is_insert;
-        if (isStudentInsert) {
-          insertedStudents++;
-          console.log(`  ✅ Student INSERTED: student_id="${sid}"`);
+        const existingDepartmentCode = studentRes.rows[0].department_code;
+        
+        // Check if department_code matches (important: student might exist in different department)
+        if (!isStudentInsert && existingDepartmentCode !== departmentCode) {
+          // Student exists but in different department - skip student update but still process result
+          console.warn(`  ⚠️ Student exists in different department: student_id="${sid}", existing_dept="${existingDepartmentCode}", new_dept="${departmentCode}" - Skipping student update but processing result`);
+          // Don't increment insertedStudents/updatedStudents, but continue to process result
         } else {
-          updatedStudents++;
-          console.log(`  ✅ Student UPDATED: student_id="${sid}"`);
+          if (isStudentInsert) {
+            insertedStudents++;
+            console.log(`  ✅ Student INSERTED: student_id="${sid}", department="${departmentCode}"`);
+          } else {
+            updatedStudents++;
+            console.log(`  ✅ Student UPDATED: student_id="${sid}", department="${existingDepartmentCode}"`);
+          }
         }
 
         // Upsert result

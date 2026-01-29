@@ -14,7 +14,7 @@ type StudentAccount = {
   fullName: string;
 };
 
-export default function StudentAccountsTable() {
+export default function StudentAccountsTable({ selectedBatchId }: { selectedBatchId?: string }) {
   const [accounts, setAccounts] = useState<StudentAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,12 +69,12 @@ export default function StudentAccountsTable() {
     
     window.addEventListener('studentAccountsImported', handleImport);
     return () => window.removeEventListener('studentAccountsImported', handleImport);
-  }, []);
+  }, [selectedBatchId]);
 
   async function loadAccounts() {
     try {
       setLoading(true);
-      const data = await getStudentAccounts();
+      const data = await getStudentAccounts(selectedBatchId);
       setAccounts(data as StudentAccount[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ أثناء تحميل البيانات");
@@ -159,6 +159,13 @@ export default function StudentAccountsTable() {
 
   return (
     <div>
+      {selectedBatchId && (
+        <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+          <p className="text-xs text-orange-600">
+            ⚠ عرض الحسابات من استيراد محدد فقط
+          </p>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-neutral-900">قائمة حسابات الطلاب</h2>
         <button

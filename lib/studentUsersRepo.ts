@@ -124,13 +124,26 @@ export async function toggleStudentUserActive(username: string): Promise<boolean
   return res.rows.length > 0 ? Boolean(res.rows[0].is_active) : false;
 }
 
-export async function getAllStudentUsers(): Promise<StudentUserRow[]> {
+export async function getAllStudentUsers(filters?: {
+  batchId?: string; // Filter by batch ID - show only users imported in this batch
+}): Promise<StudentUserRow[]> {
+  let whereSql = `WHERE 1=1`;
+  const params: unknown[] = [];
+  let paramIndex = 1;
+
+  if (filters?.batchId) {
+    whereSql += ` AND uploaded_batch_id = $${paramIndex++}`;
+    params.push(filters.batchId);
+  }
+
   const res = await query(
     `SELECT id, username, password_hash, student_id, is_active, must_change_password, last_login_at, created_at, updated_at
      FROM student_users
-     ORDER BY created_at DESC`
+     ${whereSql}
+     ORDER BY created_at DESC`,
+    params
   );
-  console.log(`[getAllStudentUsers] Found ${res.rows.length} student users in database`);
+  console.log(`[getAllStudentUsers] Found ${res.rows.length} student users in database${filters?.batchId ? ` (filtered by batch: ${filters.batchId})` : ""}`);
   return res.rows.map(mapRow);
 }
 

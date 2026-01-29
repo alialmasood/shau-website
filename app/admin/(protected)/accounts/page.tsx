@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { getAllStudents } from "@/lib/studentsRepo";
+import { getAllBatches } from "@/lib/resultsRepo";
 import AccountsTable from "./AccountsTable";
+import BatchCard from "./BatchCard";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -25,6 +27,7 @@ export default async function AdminAccountsPage({
     studyType?: string; 
     paid?: string; 
     search?: string;
+    batchId?: string; // Filter by batch ID
     page?: string;
     pageSize?: string;
   }>;
@@ -60,9 +63,22 @@ export default async function AdminAccountsPage({
     studyType: params.studyType || undefined,
     financialClearance: params.paid === "true" ? true : params.paid === "false" ? false : undefined,
     search: params.search || undefined,
+    batchId: params.batchId || undefined,
     page,
     pageSize,
   };
+
+  // Get all batches for the import history section
+  const batches = await getAllBatches();
+  
+  // Group batches by department
+  const batchesByDepartment = batches.reduce((acc, batch) => {
+    if (!acc[batch.departmentCode]) {
+      acc[batch.departmentCode] = [];
+    }
+    acc[batch.departmentCode].push(batch);
+    return acc;
+  }, {} as Record<string, typeof batches>);
 
   const { students, total } = await getAllStudents(filters);
 
@@ -78,6 +94,44 @@ export default async function AdminAccountsPage({
           </p>
         </div>
 
+        {/* Import History Section */}
+        {batches.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-neutral-900 mb-4">سجل الاستيرادات</h2>
+            <div className="space-y-4">
+              {Object.entries(batchesByDepartment).map(([deptCode, deptBatches]) => {
+                const deptName = DEPARTMENTS.find(d => d.code === deptCode)?.name || deptCode;
+                return (
+                  <div key={deptCode} className="border border-neutral-200 rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-neutral-700 mb-3">{deptName}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {deptBatches.map((batch) => (
+                        <BatchCard
+                          key={batch.id}
+                          batch={batch}
+                          isSelected={params.batchId === batch.id}
+                          userRole={user.role}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {params.batchId && (
+              <div className="mt-4 pt-4 border-t border-neutral-200">
+                <Link
+                  href="/admin/accounts?page=1"
+                  prefetch={false}
+                  className="text-sm text-[#31BD9C] hover:underline"
+                >
+                  ← عرض جميع الطلاب (إلغاء الفلتر)
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
           <AccountsTable 
             students={students} 
@@ -88,6 +142,7 @@ export default async function AdminAccountsPage({
             stages={STAGES}
             studyTypes={STUDY_TYPES}
             currentFilters={filters}
+            selectedBatchId={params.batchId}
           />
         </div>
       </div>

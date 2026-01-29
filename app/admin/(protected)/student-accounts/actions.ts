@@ -4,9 +4,12 @@ import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { upsertStudent } from "@/lib/studentsRepo";
 import { createStudentUser, getAllStudentUsers, resetStudentPassword, toggleStudentUserActive } from "@/lib/studentUsersRepo";
+import { createStudentAccountsBatch, updateStudentAccountsBatch, findStudentAccountsBatchByHash, getAllStudentAccountsBatches, deleteStudentAccountsBatch } from "@/lib/studentAccountsBatchesRepo";
 import { query } from "@/lib/db";
 import * as XLSX from "xlsx";
 import bcrypt from "bcryptjs";
+import { createHash } from "crypto";
+import { revalidatePath } from "next/cache";
 
 const ACADEMIC_YEAR = "2025-2026";
 const SEMESTER = "الفصل الأول";
@@ -37,7 +40,12 @@ type ImportResult = {
   generatedCredentials: Array<{ studentId: string; fullName: string; username: string; tempPassword: string }>;
 };
 
-export async function importStudentAccounts(fileBase64: string): Promise<ImportResult> {
+export async function importStudentAccounts(
+  fileBase64: string,
+  fileName: string,
+  departmentCode: string,
+  forceReimport: boolean = false
+): Promise<ImportResult> {
   const currentUser = await getCurrentAdminUser();
   if (!currentUser) {
     redirect("/admin/login");
@@ -49,6 +57,28 @@ export async function importStudentAccounts(fileBase64: string): Promise<ImportR
 
   try {
     const fileBuffer = Buffer.from(fileBase64, "base64");
+    
+    // Calculate file hash (SHA-256) for duplicate detection
+    const fileHash = createHash("sha256").update(fileBuffer).digest("hex");
+    console.log(`🔐 File hash (SHA-256): ${fileHash}`);
+
+    // Check for duplicate batch (same department, file_hash)
+    if (!forceReimport) {
+      const existingBatch = await findStudentAccountsBatchByHash(departmentCode, fileHash);
+      
+      if (existingBatch) {
+        return {
+          success: false,
+          error: "DUPLICATE_FILE",
+          imported: 0,
+          updated: 0,
+          errors: [`تم استيراد هذا الملف مسبقاً في ${new Date(existingBatch.createdAt).toLocaleDateString("ar-IQ")}`],
+          credentials: [],
+          generatedCredentials: [],
+        };
+      }
+    }
+
     const workbook = XLSX.read(fileBuffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
@@ -141,8 +171,24 @@ export async function importStudentAccounts(fileBase64: string): Promise<ImportR
       };
     }
 
+    // Create batch (before processing rows)
+    const batchId = await createStudentAccountsBatch({
+      departmentCode,
+      fileName,
+      fileHash,
+      rowsCount: records.length,
+      importedCount: 0, // Will be updated after processing
+      updatedCount: 0,
+      skippedCount: errors.length,
+      errorsJson: errors.length > 0 
+        ? { errors: errors.map((e) => ({ row: e.row, error: e.error })) } 
+        : undefined,
+      createdBy: currentUser.id,
+    });
+
     let imported = 0;
     let updated = 0;
+    let skipped = 0;
     const credentials: Array<{ studentId: string; username: string; password: string }> = [];
     const generatedCredentials: Array<{ studentId: string; fullName: string; username: string; tempPassword: string }> = [];
 
@@ -165,11 +211,12 @@ export async function importStudentAccounts(fileBase64: string): Promise<ImportR
           ? String(existingStudent.rows[0].study_type || "")
           : "صباحي"; // Default
 
-        // Upsert student - update full_name if exists, create if not
+        // Upsert student - IMPORTANT: Do NOT update department_code on conflict
+        // This preserves existing department data when importing different departments
         await upsertStudent({
           studentId: record.studentId,
           fullName: record.fullName,
-          departmentCode,
+          departmentCode, // Will be used for new students, but not updated for existing ones
           stage,
           studyType,
           academicYear: ACADEMIC_YEAR,
@@ -195,10 +242,11 @@ export async function importStudentAccounts(fileBase64: string): Promise<ImportR
              SET password_hash = $1, 
                  must_change_password = $2, 
                  username = $3,
+                 uploaded_batch_id = $4,
                  updated_at = NOW() 
-             WHERE student_id = $4
+             WHERE student_id = $5
              RETURNING id`,
-            [hashedPassword, passwordWasGenerated, username, record.studentId]
+            [hashedPassword, passwordWasGenerated, username, batchId, record.studentId]
           );
           console.log(`[importStudentAccounts] Updated user: student_id=${record.studentId}, username=${username}, rows=${updateRes.rows.length}`);
           updated++;
@@ -206,10 +254,10 @@ export async function importStudentAccounts(fileBase64: string): Promise<ImportR
           // Create new user
           const hashedPassword = await bcrypt.hash(password, 10);
           const insertRes = await query(
-            `INSERT INTO student_users (username, password_hash, student_id, must_change_password)
-             VALUES ($1, $2, $3, $4)
+            `INSERT INTO student_users (username, password_hash, student_id, must_change_password, uploaded_batch_id)
+             VALUES ($1, $2, $3, $4, $5)
              RETURNING id`,
-            [username, hashedPassword, record.studentId, passwordWasGenerated]
+            [username, hashedPassword, record.studentId, passwordWasGenerated, batchId]
           );
           console.log(`[importStudentAccounts] Created user: student_id=${record.studentId}, username=${username}, id=${insertRes.rows[0]?.id}`);
           imported++;
@@ -231,12 +279,26 @@ export async function importStudentAccounts(fileBase64: string): Promise<ImportR
           });
         }
       } catch (error) {
+        skipped++;
         errors.push({
           row: records.indexOf(record) + headerRowIndex + 2,
           error: error instanceof Error ? error.message : "خطأ غير معروف",
         });
       }
     }
+
+    // Update batch with final counts
+    await updateStudentAccountsBatch(batchId, {
+      importedCount: imported,
+      updatedCount: updated,
+      skippedCount: skipped + errors.length,
+      errorsJson: errors.length > 0 
+        ? { errors: errors.map((e) => ({ row: e.row, error: e.error })) } 
+        : undefined,
+    });
+
+    // Revalidate the page
+    revalidatePath("/admin/student-accounts");
 
     return {
       success: true,
@@ -259,7 +321,7 @@ export async function importStudentAccounts(fileBase64: string): Promise<ImportR
   }
 }
 
-export async function getStudentAccounts() {
+export async function getStudentAccounts(batchId?: string) {
   const currentUser = await getCurrentAdminUser();
   if (!currentUser) {
     redirect("/admin/login");
@@ -269,8 +331,8 @@ export async function getStudentAccounts() {
     throw new Error("ليس لديك صلاحية لعرض حسابات الطلاب");
   }
 
-  const users = await getAllStudentUsers();
-  console.log(`[getStudentAccounts] Retrieved ${users.length} users from getAllStudentUsers()`);
+  const users = await getAllStudentUsers({ batchId });
+  console.log(`[getStudentAccounts] Retrieved ${users.length} users from getAllStudentUsers()${batchId ? ` (filtered by batch: ${batchId})` : ""}`);
   
   // Get student info for each user
   const accountsWithStudent = await Promise.all(
@@ -354,6 +416,25 @@ export async function toggleActiveAction(username: string): Promise<{ success: b
       error: error instanceof Error ? error.message : "حدث خطأ أثناء تغيير حالة الحساب",
     };
   }
+}
+
+export async function deleteStudentAccountsBatchAction(batchId: string): Promise<{ success: boolean; error?: string }> {
+  const currentUser = await getCurrentAdminUser();
+  if (!currentUser) {
+    redirect("/admin/login");
+  }
+
+  if (currentUser.role !== "ADMIN") {
+    return { success: false, error: "ليس لديك صلاحية لحذف الاستيرادات" };
+  }
+
+  const result = await deleteStudentAccountsBatch(batchId);
+  
+  if (result.success) {
+    revalidatePath("/admin/student-accounts");
+  }
+
+  return result;
 }
 
 export async function bulkResetPasswords(): Promise<{ 
