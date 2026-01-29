@@ -6,6 +6,7 @@ import { getAllStudentAccountsBatches } from "@/lib/studentAccountsBatchesRepo";
 import StudentAccountsTable from "./StudentAccountsTable";
 import StudentAccountsImport from "./StudentAccountsImport";
 import StudentAccountsBatchCard from "./StudentAccountsBatchCard";
+import RealtimeWrapper from "./RealtimeWrapper";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -57,8 +58,10 @@ export default async function StudentAccountsPage({
   }, {} as Record<string, typeof batches>);
 
   return (
-    <div className="w-full bg-white min-h-screen">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <>
+      <RealtimeWrapper />
+      <div className="w-full bg-white min-h-screen">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
             إدارة حسابات الطلاب
@@ -129,5 +132,6 @@ export default async function StudentAccountsPage({
         </div>
       </div>
     </div>
+    </>
   );
 }

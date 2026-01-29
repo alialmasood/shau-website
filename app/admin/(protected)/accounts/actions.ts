@@ -5,6 +5,7 @@ import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { deleteBatch } from "@/lib/resultsRepo";
 import { updateStudentFinancialClearance } from "@/lib/studentsRepo";
 import { revalidatePath } from "next/cache";
+import { broadcast } from "@/lib/sseHub";
 
 export async function toggleFinancialClearance(
   studentId: string,
@@ -29,6 +30,22 @@ export async function toggleFinancialClearance(
 
     if (success) {
       revalidatePath("/admin/accounts");
+      revalidatePath("/admin/student-accounts");
+      revalidatePath("/ar/student/dashboard");
+      
+      // Broadcast real-time update
+      console.log(`[toggleFinancialClearance] 📡 About to broadcast ACCOUNTS_UPDATED for studentId: ${studentId}, financialClearance: ${financialClearance}`);
+      
+      try {
+        broadcast({
+          type: "ACCOUNTS_UPDATED",
+          payload: { studentId, financialClearance },
+        });
+        console.log(`[toggleFinancialClearance] ✅ Broadcast function called successfully`);
+      } catch (error) {
+        console.error(`[toggleFinancialClearance] ❌ Error calling broadcast:`, error);
+      }
+      
       return { success: true };
     } else {
       return { success: false, error: "الطالب غير موجود" };
@@ -58,6 +75,12 @@ export async function deleteBatchAction(batchId: string): Promise<{ success: boo
   if (result.success) {
     // Revalidate the accounts page to refresh the batch list
     revalidatePath("/admin/accounts");
+    
+    // Broadcast real-time update
+    broadcast({
+      type: "RESULTS_IMPORTED",
+      payload: { batchId },
+    });
   }
 
   return result;

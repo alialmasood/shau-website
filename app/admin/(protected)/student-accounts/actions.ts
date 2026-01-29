@@ -10,6 +10,7 @@ import * as XLSX from "xlsx";
 import bcrypt from "bcryptjs";
 import { createHash } from "crypto";
 import { revalidatePath } from "next/cache";
+import { broadcast } from "@/lib/sseHub";
 
 const ACADEMIC_YEAR = "2025-2026";
 const SEMESTER = "الفصل الأول";
@@ -299,6 +300,18 @@ export async function importStudentAccounts(
 
     // Revalidate the page
     revalidatePath("/admin/student-accounts");
+    
+    // Broadcast real-time update
+    console.log(`[importStudentAccounts] Broadcasting STUDENT_ACCOUNTS_UPDATED for department: ${departmentCode}, batchId: ${batchId}`);
+    broadcast({
+      type: "STUDENT_ACCOUNTS_UPDATED",
+      payload: {
+        departmentCode,
+        batchId,
+        importedCount: imported,
+        updatedCount: updated,
+      },
+    });
 
     return {
       success: true,
@@ -388,6 +401,14 @@ export async function resetPasswordAction(username: string): Promise<{ success: 
   try {
     const newPassword = generateRandomPassword();
     await resetStudentPassword(username, newPassword);
+    
+    // Revalidate and broadcast
+    revalidatePath("/admin/student-accounts");
+    broadcast({
+      type: "STUDENT_ACCOUNTS_UPDATED",
+      payload: { username },
+    });
+    
     return { success: true, password: newPassword };
   } catch (error) {
     return {
@@ -409,6 +430,14 @@ export async function toggleActiveAction(username: string): Promise<{ success: b
 
   try {
     const isActive = await toggleStudentUserActive(username);
+    
+    // Revalidate and broadcast
+    revalidatePath("/admin/student-accounts");
+    broadcast({
+      type: "STUDENT_ACCOUNTS_UPDATED",
+      payload: { username, isActive },
+    });
+    
     return { success: true, isActive };
   } catch (error) {
     return {
@@ -432,6 +461,12 @@ export async function deleteStudentAccountsBatchAction(batchId: string): Promise
   
   if (result.success) {
     revalidatePath("/admin/student-accounts");
+    
+    // Broadcast real-time update
+    broadcast({
+      type: "STUDENT_ACCOUNTS_UPDATED",
+      payload: { batchId },
+    });
   }
 
   return result;
@@ -485,6 +520,13 @@ export async function bulkResetPasswords(): Promise<{
         tempPassword,
       });
     }
+
+    // Revalidate and broadcast
+    revalidatePath("/admin/student-accounts");
+    broadcast({
+      type: "STUDENT_ACCOUNTS_UPDATED",
+      payload: { bulkReset: true },
+    });
 
     return {
       success: true,

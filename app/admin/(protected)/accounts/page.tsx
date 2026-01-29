@@ -5,6 +5,7 @@ import { getAllStudents } from "@/lib/studentsRepo";
 import { getAllBatches } from "@/lib/resultsRepo";
 import AccountsTable from "./AccountsTable";
 import BatchCard from "./BatchCard";
+import RealtimeWrapper from "./RealtimeWrapper";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -83,7 +84,9 @@ export default async function AdminAccountsPage({
   const { students, total } = await getAllStudents(filters);
 
   return (
-    <div className="w-full bg-white min-h-screen">
+    <>
+      <RealtimeWrapper />
+      <div className="w-full bg-white min-h-screen">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
@@ -147,5 +150,6 @@ export default async function AdminAccountsPage({
         </div>
       </div>
     </div>
+    </>
   );
 }

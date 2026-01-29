@@ -4,6 +4,8 @@ import ResultsImportForm from "./ResultsImportForm";
 import { getImportStats, getImportHistory } from "./actions";
 import ResultsStatsCards from "./ResultsStatsCards";
 import ImportHistoryTable from "./ImportHistoryTable";
+import RealtimeWrapper from "./RealtimeWrapper";
+import RealtimeStatus from "./RealtimeStatus";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -42,31 +44,35 @@ export default async function AdminResultsPage() {
   ]);
 
   return (
-    <div className="w-full bg-white min-h-screen">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
-            إدارة النتائج
-          </h1>
-          <p className="mt-2 text-sm text-neutral-600">
-            استيراد نتائج الطلاب من ملف Excel (نوع الدراسة والمرحلة سيتم قراءتهما من الملف)
-          </p>
-        </div>
+    <>
+      <RealtimeWrapper />
+      <RealtimeStatus />
+      <div className="w-full bg-white min-h-screen">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
+              إدارة النتائج
+            </h1>
+            <p className="mt-2 text-sm text-neutral-600">
+              استيراد نتائج الطلاب من ملف Excel (نوع الدراسة والمرحلة سيتم قراءتهما من الملف)
+            </p>
+          </div>
 
-        {/* Stats Cards */}
-        <ResultsStatsCards stats={stats} />
+          {/* Stats Cards */}
+          <ResultsStatsCards stats={stats} />
 
-        {/* Import Form */}
-        <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-          <ResultsImportForm departments={DEPARTMENTS} attempts={ATTEMPTS} />
-        </div>
+          {/* Import Form */}
+          <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <ResultsImportForm departments={DEPARTMENTS} attempts={ATTEMPTS} />
+          </div>
 
-        {/* Import History */}
-        <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-neutral-900 mb-4">سجل الاستيراد</h2>
-          <ImportHistoryTable history={history} departments={DEPARTMENTS} />
+          {/* Import History */}
+          <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-bold text-neutral-900 mb-4">سجل الاستيراد</h2>
+            <ImportHistoryTable history={history} departments={DEPARTMENTS} />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

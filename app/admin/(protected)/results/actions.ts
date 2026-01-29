@@ -8,6 +8,8 @@ import { query } from "@/lib/db";
 import * as XLSX from "xlsx";
 import { createHash } from "crypto";
 import { calculateGrade } from "@/lib/grades";
+import { revalidatePath } from "next/cache";
+import { broadcast } from "@/lib/sseHub";
 
 const ACADEMIC_YEAR = "2025-2026";
 const SEMESTER = "الفصل الأول";
@@ -1152,6 +1154,28 @@ export async function importExcel(
       })
     ).sort((a, b) => a.rowIndex - b.rowIndex);
     
+    // Revalidate paths and broadcast event
+    revalidatePath("/admin/results");
+    revalidatePath("/admin/accounts");
+    
+    // Broadcast real-time update
+    console.log(`[importExcel] 📡 About to broadcast RESULTS_IMPORTED for department: ${departmentCode}, batchId: ${batchId}`);
+    console.log(`[importExcel] 📊 Import stats: insertedResults=${insertedResults}, updatedResults=${updatedResults}`);
+    
+    try {
+      broadcast({
+        type: "RESULTS_IMPORTED",
+        payload: {
+          departmentCode,
+          batchId,
+          importedCount: insertedResults + updatedResults,
+        },
+      });
+      console.log(`[importExcel] ✅ Broadcast function called successfully`);
+    } catch (error) {
+      console.error(`[importExcel] ❌ Error calling broadcast:`, error);
+    }
+
     return { 
       success: true, 
       batchId,

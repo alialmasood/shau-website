@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { StudentRow } from "@/lib/studentsRepo";
 import type { ResultRow } from "@/lib/resultsRepo";
 import { calculateGrade } from "@/lib/grades";
+import { useRealtimeRefresh } from "@/lib/hooks/useRealtimeRefresh";
 
 export default function StudentDashboardContent({
   student,
@@ -14,6 +15,12 @@ export default function StudentDashboardContent({
 }) {
   const [activeTab, setActiveTab] = useState<"results" | "info">("results");
   const [selectedAttempt, setSelectedAttempt] = useState<string>("الدور الأول");
+
+  // Listen for real-time updates - only refresh if event is for this student
+  useRealtimeRefresh({
+    studentId: student.studentId,
+    eventTypes: ["ACCOUNTS_UPDATED"],
+  });
 
   const ATTEMPTS = ["الدور الأول", "الدور الثاني"];
 
