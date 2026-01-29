@@ -127,9 +127,22 @@ export async function getAllStudents(filters?: {
   // We'll join students with results to get all unique (student_id, department_code) combinations
   
   // Build WHERE clause for results and students together
+  // IMPORTANT: This query uses INNER JOIN, so it only returns students who have results
+  // This is intentional - we only show students who have been imported via results
   let whereSql = `WHERE r.student_id = s.student_id`;
   const params: unknown[] = [];
   let paramIndex = 1;
+  
+  console.log(`[getAllStudents] 🔍 Starting query with filters:`, {
+    departmentCode: filters?.departmentCode || "all",
+    stage: filters?.stage || "all",
+    studyType: filters?.studyType || "all",
+    financialClearance: filters?.financialClearance,
+    search: filters?.search || "none",
+    batchId: filters?.batchId || "none",
+    page: filters?.page || 1,
+    pageSize: filters?.pageSize || 25,
+  });
 
   // If batchId is provided, filter by students who have results in that batch
   if (filters?.batchId) {
@@ -202,11 +215,20 @@ export async function getAllStudents(filters?: {
   
   const dataParams = [...params, pageSize, offset];
 
-  console.log(`📊 getAllStudents query: page=${page}, pageSize=${pageSize}, total=${total}, batchId=${filters?.batchId || "none"}, departmentCode=${filters?.departmentCode || "all"}`);
+  console.log(`[getAllStudents] 📊 Data query: page=${page}, pageSize=${pageSize}, total=${total}, batchId=${filters?.batchId || "none"}, departmentCode=${filters?.departmentCode || "all"}`);
+  console.log(`[getAllStudents] 📝 Data SQL:`, dataSql);
+  console.log(`[getAllStudents] 📝 Data params:`, dataParams);
   
   const res = await query(dataSql, dataParams);
   
-  console.log(`✅ getAllStudents returned ${res.rows.length} rows out of ${total} total`);
+  console.log(`[getAllStudents] ✅ Data query returned ${res.rows.length} rows out of ${total} total`);
+  
+  if (res.rows.length === 0 && total === 0) {
+    console.warn(`[getAllStudents] ⚠️  No students found! This might mean:`);
+    console.warn(`  - No results have been imported yet`);
+    console.warn(`  - Results table is empty`);
+    console.warn(`  - JOIN condition failed (no matching students in students table)`);
+  }
   
   return {
     students: res.rows.map(mapRow),

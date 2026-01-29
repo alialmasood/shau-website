@@ -82,6 +82,17 @@ export default async function AdminAccountsPage({
   }, {} as Record<string, typeof batches>);
 
   const { students, total } = await getAllStudents(filters);
+  
+  // Debug logging
+  console.log(`[AdminAccountsPage] 📊 Data loaded: students=${students.length}, total=${total}`);
+  console.log(`[AdminAccountsPage] 🔍 Filters:`, filters);
+  if (students.length > 0) {
+    console.log(`[AdminAccountsPage] 📋 Sample student:`, {
+      studentId: students[0].studentId,
+      fullName: students[0].fullName,
+      departmentCode: students[0].departmentCode,
+    });
+  }
 
   return (
     <>

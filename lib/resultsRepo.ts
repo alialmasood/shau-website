@@ -217,6 +217,22 @@ export async function getStudentResults(
 }
 
 /**
+ * Get a single result by ID (for verification purposes)
+ * This is used for QR Code verification - public read-only access
+ */
+export async function getResultById(resultId: string): Promise<ResultRow | null> {
+  const res = await query(
+    `SELECT id, student_id, department_code, academic_year, semester, stage, study_type, attempt, 
+            summary_json, subjects_json, raw_row_json, payload_json, uploaded_batch_id, uploaded_at, uploaded_by
+     FROM results
+     WHERE id = $1 LIMIT 1`,
+    [resultId]
+  );
+  if (res.rows.length === 0) return null;
+  return mapResultRow(res.rows[0]);
+}
+
+/**
  * Secure function to get student results - validates session and financial clearance
  * Always derives student_id from session, never from query params
  * Returns 403 error if financial_clearance is false

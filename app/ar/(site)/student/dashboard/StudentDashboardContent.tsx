@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { StudentRow } from "@/lib/studentsRepo";
 import type { ResultRow } from "@/lib/resultsRepo";
-import { calculateGrade } from "@/lib/grades";
+import { calculateGrade, getFinalEvaluationAndResult } from "@/lib/grades";
 import { useRealtimeRefresh } from "@/lib/hooks/useRealtimeRefresh";
 
 export default function StudentDashboardContent({
@@ -185,12 +185,16 @@ export default function StudentDashboardContent({
                 </div>
               ) : (
                 filteredResults.map((result) => {
-                  // Extract summary values for type safety
+                  // Extract summary values and calculate evaluation/result using ministerial logic
                   const summary = result.summaryJson && typeof result.summaryJson === "object" 
                     ? result.summaryJson as Record<string, unknown>
                     : null;
-                  const finalStatus = summary?.finalStatus ? String(summary.finalStatus) : null;
-                  const evaluation = summary?.evaluation ? String(summary.evaluation) : null;
+                  
+                  // Calculate evaluation from average, finalStatus from MIN of subject scores
+                  const { evaluation, finalStatus } = getFinalEvaluationAndResult(
+                    summary,
+                    result.subjectsJson as Array<{ score?: number | string | null }> | undefined
+                  );
 
                   return (
                   <div key={result.id} className="rounded-2xl shadow-sm border border-neutral-200 bg-white p-4 md:p-6">
@@ -221,70 +225,83 @@ export default function StudentDashboardContent({
                     </div>
 
                 {/* Subjects - Mobile: Cards, Desktop: Table */}
-                {result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0 && (
-                  <div className="mb-4 md:mb-6">
-                    <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-3 md:mb-4">المواد الدراسية</h3>
-                    
-                        {/* Mobile: Subject Cards */}
-                    <div className="grid grid-cols-1 gap-3 md:hidden">
-                      {result.subjectsJson.map((subject: any, idx: number) => {
-                        // Always calculate grade from score (don't trust stored grade)
-                        const scoreNum = typeof subject.score === "number" 
-                          ? subject.score 
-                          : Number(subject.score) || 0;
-                        const calculatedGrade = calculateGrade(scoreNum);
-                        
-                        return (
-                          <div key={idx} className="rounded-2xl border border-neutral-200 shadow-sm bg-white p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-[#31BD9C] text-white text-xs font-bold flex items-center justify-center">
-                                {idx + 1}
-                              </span>
-                              <span className="text-sm leading-6 font-medium text-neutral-900 flex-1 line-clamp-2">{subject.name || "-"}</span>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              {calculatedGrade && (
-                                <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-medium">
-                                  {calculatedGrade}
+                {result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0 && (() => {
+                  // Filter out "عدد الوحدات" (units) - it's NOT a subject, it's metadata
+                  // عدد الوحدات لا يُعرض للطالب - هو خاصية للمادة وليس مادة دراسية
+                  const actualSubjects = result.subjectsJson.filter((subject: any) => {
+                    const subjectName = String(subject.name || "").trim().toLowerCase();
+                    // Exclude any subject with "وحدات" or "units" in the name
+                    return !subjectName.includes("وحدات") && 
+                           !subjectName.includes("units") && 
+                           subjectName !== "عدد الوحدات" &&
+                           subjectName !== "units";
+                  });
+                  
+                  return actualSubjects.length > 0 ? (
+                    <div className="mb-4 md:mb-6">
+                      <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-3 md:mb-4">المواد الدراسية</h3>
+                      
+                      {/* Mobile: Subject Cards */}
+                      <div className="grid grid-cols-1 gap-3 md:hidden">
+                        {actualSubjects.map((subject: any, idx: number) => {
+                          // Always calculate grade from score (don't trust stored grade)
+                          const scoreNum = typeof subject.score === "number" 
+                            ? subject.score 
+                            : Number(subject.score) || 0;
+                          const calculatedGrade = calculateGrade(scoreNum);
+                          
+                          return (
+                            <div key={idx} className="rounded-2xl border border-neutral-200 shadow-sm bg-white p-3 flex items-center justify-between">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-[#31BD9C] text-white text-xs font-bold flex items-center justify-center">
+                                  {idx + 1}
                                 </span>
-                              )}
+                                <span className="text-sm leading-6 font-medium text-neutral-900 flex-1 line-clamp-2">{subject.name || "-"}</span>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {calculatedGrade && (
+                                  <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-medium">
+                                    {calculatedGrade}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Desktop: Table */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-neutral-50 border-b border-neutral-200">
+                              <th className="p-3 text-right text-sm font-bold text-neutral-700">#</th>
+                              <th className="p-3 text-right text-sm font-bold text-neutral-700">اسم المادة</th>
+                              <th className="p-3 text-right text-sm font-bold text-neutral-700">التقدير</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {actualSubjects.map((subject: any, idx: number) => {
+                              // Always calculate grade from score (don't trust stored grade)
+                              const scoreNum = typeof subject.score === "number" 
+                                ? subject.score 
+                                : Number(subject.score) || 0;
+                              const calculatedGrade = calculateGrade(scoreNum);
+                              
+                              return (
+                                <tr key={idx} className="border-b border-neutral-100">
+                                  <td className="p-3 text-sm text-neutral-700">{idx + 1}</td>
+                                  <td className="p-3 text-sm text-neutral-900">{subject.name || "-"}</td>
+                                  <td className="p-3 text-sm text-neutral-700">{calculatedGrade || "-"}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                    
-                    {/* Desktop: Table */}
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="bg-neutral-50 border-b border-neutral-200">
-                            <th className="p-3 text-right text-sm font-bold text-neutral-700">#</th>
-                            <th className="p-3 text-right text-sm font-bold text-neutral-700">اسم المادة</th>
-                            <th className="p-3 text-right text-sm font-bold text-neutral-700">التقدير</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {result.subjectsJson.map((subject: any, idx: number) => {
-                            // Always calculate grade from score (don't trust stored grade)
-                            const scoreNum = typeof subject.score === "number" 
-                              ? subject.score 
-                              : Number(subject.score) || 0;
-                            const calculatedGrade = calculateGrade(scoreNum);
-                            
-                            return (
-                              <tr key={idx} className="border-b border-neutral-100">
-                                <td className="p-3 text-sm text-neutral-700">{idx + 1}</td>
-                                <td className="p-3 text-sm text-neutral-900">{subject.name || "-"}</td>
-                                <td className="p-3 text-sm text-neutral-700">{calculatedGrade || "-"}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                  ) : null;
+                })()}
 
                     {/* Summary Footer - Only finalStatus and evaluation, NO total/avg */}
                     {(finalStatus || evaluation) && (

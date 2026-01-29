@@ -3,7 +3,7 @@ import Image from "next/image";
 import { getStudentSession } from "@/lib/studentSession";
 import { getStudentById } from "@/lib/studentsRepo";
 import { getStudentResultsSecure } from "@/lib/resultsRepo";
-import { calculateGrade } from "@/lib/grades";
+import { calculateGrade, getFinalEvaluationAndResult } from "@/lib/grades";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -68,12 +68,16 @@ export default async function OfficialResultPage({
     redirect("/ar/student/dashboard");
   }
 
-  // Extract summary values for type safety
+  // Extract summary values and calculate evaluation/result using ministerial logic
   const summary = result.summaryJson && typeof result.summaryJson === "object" 
     ? result.summaryJson as Record<string, unknown>
     : null;
-  const finalStatus = summary?.finalStatus ? String(summary.finalStatus) : null;
-  const evaluation = summary?.evaluation ? String(summary.evaluation) : null;
+  
+  // Calculate evaluation from average, finalStatus from MIN of subject scores
+  const { evaluation, finalStatus } = getFinalEvaluationAndResult(
+    summary,
+    result.subjectsJson as Array<{ score?: number | string | null }> | undefined
+  );
 
   return (
     <>

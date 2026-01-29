@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { getStudentSession } from "@/lib/studentSession";
 import { getStudentById } from "@/lib/studentsRepo";
 import { getStudentResultsSecure } from "@/lib/resultsRepo";
-import { calculateGrade } from "@/lib/grades";
+import { calculateGrade, getFinalEvaluationAndResult } from "@/lib/grades";
 
 async function makeQrDataUrl(text: string) {
   return await QRCode.toDataURL(text, { margin: 1, width: 160 });
@@ -41,6 +41,29 @@ function getDepartmentName(code: string): string {
 
 function getAttemptLabel(attemptNumber: number): string {
   return attemptNumber === 2 ? "الدور الثاني" : "الدور الأول";
+}
+
+/** Compute total (sum of score×units) and average from subjects when missing from summary */
+function computeTotalAndAvgFromSubjects(
+  subjects: Array<{ name?: string; score?: number | string | null; units?: number | string | null }> | undefined
+): { total: number | null; avg: number | null } {
+  if (!subjects || !Array.isArray(subjects) || subjects.length === 0) return { total: null, avg: null };
+  const actualSubjects = subjects.filter((s) => {
+    const name = String(s.name || "").trim().toLowerCase();
+    return !name.includes("وحدات") && !name.includes("units");
+  });
+  if (actualSubjects.length === 0) return { total: null, avg: null };
+  let sumScoreTimesUnits = 0;
+  let totalUnits = 0;
+  for (const sub of actualSubjects) {
+    const scoreNum = typeof sub.score === "number" ? sub.score : Number(sub.score) || 0;
+    const unitsNum = typeof sub.units === "number" ? sub.units : Number(sub.units) || 0;
+    sumScoreTimesUnits += scoreNum * unitsNum;
+    totalUnits += unitsNum;
+  }
+  const total = sumScoreTimesUnits;
+  const avg = totalUnits > 0 ? Math.round((sumScoreTimesUnits / totalUnits) * 100) / 100 : null;
+  return { total, avg };
 }
 
 export default async function PrintResultPage({
@@ -87,20 +110,93 @@ export default async function PrintResultPage({
     redirect("/ar/student/dashboard");
   }
 
-  // Extract summary values for type safety
+  // ============================================================
+  // 🔒 FINAL ACADEMIC LOCK - القفل النهائي للنظام
+  // ============================================================
+  // 
+  // هذا القسم يضمن أن PDF يعتمد فقط على القيم المحسوبة داخل النظام
+  // وليس على أي قيم من Excel. هذا هو القفل النهائي للنظام (Final Academic Lock)
+  //
+  // متطلبات PDF (إلزامي):
+  // 1. اسم الطالب ✓ (من قاعدة البيانات)
+  // 2. القسم ✓ (من قاعدة البيانات)
+  // 3. المرحلة ✓ (من قاعدة البيانات)
+  // 4. نوع الدراسة ✓ (من قاعدة البيانات)
+  // 5. جدول المواد (الدرجة + التقدير) ✓ (محسوب من النظام)
+  // 6. المجموع الكلي ✓ (محسوب من score × units)
+  // 7. المعدل ✓ (محسوب من total / totalUnits)
+  // 8. التقييم النهائي ✓ (محسوب من المعدل فقط)
+  // 9. النتيجة النهائية (ناجح/مكمل) ✓ (محسوبة من أدنى درجة مادة)
+  //
+  // ⚠️ يمنع إدخال أي من هذه القيم يدويًا في PDF
+  // ============================================================
+  
+  // Extract summary values and calculate evaluation/result using ministerial logic
+  // IMPORTANT: PDF must display ONLY calculated values from the system (not from Excel)
+  // All values are calculated using ministerial logic:
+  // - Total = sum(score × units) for each subject
+  // - Average = Total / totalUnits (rounded to 2 decimals)
+  // - Evaluation = calculated from average ONLY
+  // - FinalStatus = calculated from MIN of subject scores ONLY
   const summary = result.summaryJson && typeof result.summaryJson === "object" 
     ? result.summaryJson as Record<string, unknown>
     : null;
-  const finalStatus = summary?.finalStatus ? String(summary.finalStatus) : null;
-  const evaluation = summary?.evaluation ? String(summary.evaluation) : null;
+  
+  // Calculate evaluation from average, finalStatus from MIN of subject scores
+  // IMPORTANT: These are calculated values, NOT read from Excel
+  // This ensures the PDF always shows accurate, system-calculated values
+  const { evaluation, finalStatus, finalNumeric } = getFinalEvaluationAndResult(
+    summary,
+    result.subjectsJson as Array<{ score?: number | string | null }> | undefined
+  );
+  
+  // Extract calculated total and average from summary
+  // These are calculated from (score × units) during import
+  // If missing in summary (e.g. old data or different Excel columns), compute from subjectsJson
+  let total: number | string | null = summary?.total ?? null;
+  let avg: number | string | null = summary?.avg ?? summary?.average ?? null;
+  if (total === null || total === undefined || avg === null || avg === undefined) {
+    const subjects = result.subjectsJson as Array<{ name?: string; score?: number | string | null; units?: number | string | null }> | undefined;
+    const computed = computeTotalAndAvgFromSubjects(subjects);
+    if (total === null || total === undefined) total = computed.total;
+    if (avg === null || avg === undefined) avg = computed.avg;
+  }
 
-  // Generate QR Code for verification
+  // ============================================================
+  // 🔐 QR CODE VERIFICATION - رمز التحقق الرسمي
+  // ============================================================
+  // 
+  // QR Code مرتبط بسجل النتيجة مباشرة (result_id)
+  // أي تعديل على الدرجات يولد PDF جديد تلقائيًا
+  // 
+  // الهدف النهائي:
+  // - PDF = نتيجة صحيحة ✓
+  // - QR Code = تحقق رسمي ✓
+  // - لا يمكن تزوير أو التلاعب بالنتيجة ✓
+  // ============================================================
+  
+  // Generate QR Code for verification (Official Verification Link)
+  // IMPORTANT: QR Code contains a signed verification URL that links directly to result_id
+  // This ensures official verification and prevents tampering
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3020";
+  
+  // Use result.id as the primary identifier (official result record ID)
+  // This is the unique database ID for this result record
+  // Fallback to composite ID if result.id is not available (for backward compatibility)
   const resultId = String(result.id ?? `${session.studentId}-${result.academicYear}-${result.semester}-${result.attempt}`);
+  
+  // Sign the result for verification using HMAC-SHA256
+  // This creates a cryptographic signature that prevents tampering
   const sig = signResult(resultId, String(session.studentId));
+  
+  // Create verification URL: https://shau.edu.iq/ar/verify-result?rid={result_id}&sid={student_id}&sig={signature}
+  // This URL allows public verification of the result authenticity
+  // When scanned, it will verify the signature and display the official result data
   const verifyUrl = `${base}/ar/verify-result?rid=${encodeURIComponent(resultId)}&sid=${encodeURIComponent(
     String(session.studentId)
   )}&sig=${sig}`;
+  
+  // Generate QR Code image as data URL
   const qrDataUrl = await makeQrDataUrl(verifyUrl);
 
   return (
@@ -306,7 +402,7 @@ export default async function PrintResultPage({
           page-break-inside: avoid;
         }
         
-        /* Result Eval Box */
+        /* Result Eval Box - Supports 2 or 4 items (Total/Avg, Result/Evaluation) */
         .resultEvalBox {
           border: 2px solid #000;
           margin-top: 10px;
@@ -334,6 +430,12 @@ export default async function PrintResultPage({
         
         .resultEvalBox strong {
           font-weight: 700;
+        }
+        
+        /* If we have 4 items, use 2x2 grid */
+        .resultEvalBox:has(> div:nth-child(4)) {
+          grid-template-columns: 1fr 1fr;
+          grid-template-rows: 1fr 1fr;
         }
         
         /* QR Block */
@@ -464,42 +566,77 @@ export default async function PrintResultPage({
         </div>
 
         {/* SubjectsTable */}
-        {result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0 && (
-          <table className="printTable">
-            <thead>
-              <tr>
-                <th className="colNo">ت</th>
-                <th className="colName">اسم المادة</th>
-                <th className="colGrade">التقدير</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.subjectsJson.map((subject: any, idx: number) => {
-                const scoreNum = typeof subject.score === "number" 
-                  ? subject.score 
-                  : Number(subject.score) || 0;
-                const calculatedGrade = calculateGrade(scoreNum);
-                
-                return (
-                  <tr key={idx}>
-                    <td className="colNo">{idx + 1}</td>
-                    <td className="colName">{subject.name || "-"}</td>
-                    <td className="colGrade">{calculatedGrade}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+        {result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0 && (() => {
+          // Filter out "عدد الوحدات" (units) - it's NOT a subject, it's metadata
+          // عدد الوحدات لا يُعرض في PDF - هو خاصية للمادة وليس مادة دراسية
+          const actualSubjects = result.subjectsJson.filter((subject: any) => {
+            const subjectName = String(subject.name || "").trim().toLowerCase();
+            // Exclude any subject with "وحدات" or "units" in the name
+            return !subjectName.includes("وحدات") && 
+                   !subjectName.includes("units") && 
+                   subjectName !== "عدد الوحدات" &&
+                   subjectName !== "units";
+          });
+          
+          return actualSubjects.length > 0 ? (
+            <table className="printTable">
+              <thead>
+                <tr>
+                  <th className="colNo">ت</th>
+                  <th className="colName">اسم المادة</th>
+                  <th className="colGrade">التقدير</th>
+                </tr>
+              </thead>
+              <tbody>
+                {actualSubjects.map((subject: any, idx: number) => {
+                  const scoreNum = typeof subject.score === "number" 
+                    ? subject.score 
+                    : Number(subject.score) || 0;
+                  const calculatedGrade = calculateGrade(scoreNum);
+                  
+                  return (
+                    <tr key={idx}>
+                      <td className="colNo">{idx + 1}</td>
+                      <td className="colName">{subject.name || "-"}</td>
+                      <td className="colGrade">{calculatedGrade}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : null;
+        })()}
 
-        {/* ResultEvalBox */}
+        {/* ResultEvalBox - Display calculated values ONLY */}
+        {/* 
+          🔒 FINAL ACADEMIC LOCK - القفل النهائي للنظام
+          
+          هذا القسم يعرض فقط القيم المحسوبة داخل النظام:
+          - التقييم النهائي: محسوب من المعدل فقط (وليس من أقل درجة)
+          - النتيجة النهائية: محسوبة من أدنى درجة مادة (MIN) فقط (وليس من المعدل)
+          
+          ⚠️ ملاحظة: المجموع الكلي والمعدل لا يُعرضان للطالب (سياسة النظام)
+          ⚠️ يمنع إدخال أي من هذه القيم يدويًا - جميعها محسوبة تلقائيًا
+        */}
         {(finalStatus || evaluation) && (
           <div className="resultEvalBox box">
+            {/* Row 1: Final Status and Evaluation */}
+            {/* 
+              Display Final Status (calculated from MIN of subject scores)
+              منطق وزاري: النتيجة النهائية تعتمد فقط على أدنى درجة مادة
+              إذا كانت جميع درجات المواد ≥ 50 → "ناجح"
+              إذا وُجدت أي مادة درجتها < 50 → "مكمل"
+            */}
             {finalStatus && (
               <div className="right pad">
                 النتيجة: <strong>{finalStatus}</strong>
               </div>
             )}
+            {/* 
+              Display Evaluation (calculated from average)
+              منطق وزاري: التقييم النهائي يعتمد فقط على المعدل النهائي
+              نفس سلم التقدير ولكن على المعدل (امتياز/جيد جداً/جيد/متوسط/مقبول/راسب)
+            */}
             {evaluation && (
               <div className="left pad">
                 التقييم: <strong>{evaluation}</strong>
@@ -508,11 +645,24 @@ export default async function PrintResultPage({
           </div>
         )}
 
-        {/* QR Block */}
+        {/* QR Block - Official Verification Code */}
+        {/* 
+          🔐 QR CODE VERIFICATION - رمز التحقق الرسمي
+          
+          هذا الرمز يحتوي على رابط تحقق رسمي بصيغة:
+          https://shau.edu.iq/ar/verify-result?rid={result_id}&sid={student_id}&sig={signature}
+          
+          عند فتح رابط الـ QR Code:
+          - يتم التحقق من التوقيع الرقمي
+          - يتم عرض بيانات النتيجة الرسمية
+          - يتم التأكد من عدم التلاعب بالبيانات
+          
+          هذا الربط يُعتبر القفل النهائي للنظام (Final Academic Lock)
+        */}
         <div className="qrBlock no-break">
           <div className="qrBox">
             <div className="qrTitle">رمز التحقق (QR)</div>
-            <img src={qrDataUrl} alt="QR" className="qrImg" />
+            <img src={qrDataUrl} alt="QR Code للتحقق من صحة الوثيقة" className="qrImg" />
             <div className="qrHint">امسح الرمز للتحقق من صحة الوثيقة</div>
           </div>
         </div>

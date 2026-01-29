@@ -120,7 +120,18 @@ export function useRealtimeRefresh(options: UseRealtimeRefreshOptions = {}) {
             }
 
             console.log(`[useRealtimeRefresh] 🔄 Received event: ${data.type}, triggering router.refresh()...`);
+            
+            // Force refresh - use both router.refresh() and window.location.reload() for reliability
             router.refresh();
+            
+            // Also force a hard reload if it's a RESULTS_IMPORTED event (data was imported)
+            if (data.type === "RESULTS_IMPORTED") {
+              console.log(`[useRealtimeRefresh] 🔄 RESULTS_IMPORTED detected, forcing page reload...`);
+              setTimeout(() => {
+                window.location.reload();
+              }, 500);
+            }
+            
             console.log(`[useRealtimeRefresh] ✅ Router refresh triggered`);
           } catch (error) {
             console.error("[useRealtimeRefresh] ❌ Error parsing event:", error, "Raw data:", event.data);

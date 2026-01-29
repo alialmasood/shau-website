@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { getStudentById } from "@/lib/studentsRepo";
 import { query } from "@/lib/db";
+import { getFinalEvaluationAndResult } from "@/lib/grades";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -120,10 +121,15 @@ export default async function StudentResultsHistoryPage({
                 const summary = result.summaryJson && typeof result.summaryJson === "object"
                   ? result.summaryJson as Record<string, unknown>
                   : null;
-                const finalStatus = summary?.finalStatus ? String(summary.finalStatus) : null;
-                const evaluation = summary?.evaluation ? String(summary.evaluation) : null;
+                
+                // Calculate evaluation from average, finalStatus from MIN of subject scores (ministerial logic)
+                const { evaluation, finalStatus } = getFinalEvaluationAndResult(
+                  summary,
+                  result.subjectsJson as Array<{ score?: number | string | null }> | undefined
+                );
+                
                 const total = summary?.total ? Number(summary.total) : null;
-                const average = summary?.average ? Number(summary.average) : null;
+                const average = summary?.avg ?? summary?.average ? Number(summary.avg ?? summary.average) : null;
 
                 return (
                   <div
