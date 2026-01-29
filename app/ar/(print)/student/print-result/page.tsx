@@ -12,7 +12,14 @@ async function makeQrDataUrl(text: string) {
 }
 
 function signResult(resultId: string, studentId: string) {
-  const secret = process.env.RESULT_QR_SECRET!;
+  const secret = process.env.RESULT_QR_SECRET;
+  if (!secret || secret === "YOUR_STRONG_RANDOM_SECRET_HERE") {
+    // Fallback to a default secret if not configured (for development/testing only)
+    console.warn("RESULT_QR_SECRET not configured properly, using fallback");
+    const fallbackSecret = process.env.STUDENT_SESSION_SECRET || process.env.ADMIN_SESSION_SECRET || "fallback-secret";
+    const payload = `${resultId}:${studentId}`;
+    return crypto.createHmac("sha256", fallbackSecret).update(payload).digest("hex");
+  }
   const payload = `${resultId}:${studentId}`;
   return crypto.createHmac("sha256", secret).update(payload).digest("hex");
 }

@@ -71,11 +71,29 @@ export async function GET(request: NextRequest) {
     }
 
     // Get base URL for PDF generation
-    const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3020";
+    const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.BASE_URL ?? "http://localhost:3020";
+    
+    // Validate BASE_URL
+    if (!BASE_URL || BASE_URL.includes("localhost") && process.env.NODE_ENV === "production") {
+      console.error("Invalid BASE_URL in production:", BASE_URL);
+      return NextResponse.json(
+        { error: "خطأ في إعدادات السيرفر - BASE_URL غير صحيح" },
+        { status: 500 }
+      );
+    }
 
     // Extract domain from BASE_URL
-    const urlObj = new URL(BASE_URL);
-    const domain = urlObj.hostname;
+    let domain: string;
+    try {
+      const urlObj = new URL(BASE_URL);
+      domain = urlObj.hostname;
+    } catch (urlError) {
+      console.error("Invalid BASE_URL format:", BASE_URL, urlError);
+      return NextResponse.json(
+        { error: "خطأ في إعدادات السيرفر - BASE_URL غير صحيح" },
+        { status: 500 }
+      );
+    }
 
     // Read cookies from incoming request
     const cookieHeader = request.headers.get("cookie") || "";
@@ -95,6 +113,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!sessionCookieValue) {
+      console.error("Session cookie not found in request");
       return NextResponse.json(
         { error: "جلسة غير صالحة - يجب تسجيل الدخول" },
         { status: 401 }
@@ -102,54 +121,116 @@ export async function GET(request: NextRequest) {
     }
 
     // Import playwright dynamically (only when needed)
-    const { chromium } = await import("playwright");
+    let chromium: any;
+    try {
+      const playwright = await import("playwright");
+      chromium = playwright.chromium;
+    } catch (importError) {
+      console.error("Failed to import playwright:", importError);
+      return NextResponse.json(
+        { error: "خطأ في تحميل مكتبة PDF - تأكد من تثبيت Playwright" },
+        { status: 500 }
+      );
+    }
 
     // Launch browser
-    const browser = await chromium.launch({
-      headless: true,
-    });
+    let browser: any;
+    try {
+      browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'], // Important for production servers
+      });
+    } catch (launchError) {
+      console.error("Failed to launch browser:", launchError);
+      return NextResponse.json(
+        { error: "فشل تشغيل المتصفح - تأكد من تثبيت متصفحات Playwright (npx playwright install chromium)" },
+        { status: 500 }
+      );
+    }
 
     try {
       // Create browser context with cookies
       const context = await browser.newContext();
       
       // Add session cookie to browser context
-      await context.addCookies([
-        {
-          name: STUDENT_SESSION_COOKIE_NAME,
-          value: sessionCookieValue,
-          domain: domain,
-          path: "/",
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "Lax",
-        },
-      ]);
+      try {
+        await context.addCookies([
+          {
+            name: STUDENT_SESSION_COOKIE_NAME,
+            value: sessionCookieValue,
+            domain: domain,
+            path: "/",
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "Lax" as const,
+          },
+        ]);
+      } catch (cookieError) {
+        console.error("Failed to add cookies:", cookieError);
+        await browser.close();
+        return NextResponse.json(
+          { error: "فشل إضافة الكوكيز" },
+          { status: 500 }
+        );
+      }
 
       const page = await context.newPage();
 
       // Navigate to print result page (using print route group)
       const url = `${BASE_URL}/ar/student/print-result?attempt=${attemptNumber}`;
-      await page.goto(url, {
-        waitUntil: "networkidle",
-        timeout: 30000,
-      });
+      console.log("Navigating to:", url);
+      
+      try {
+        await page.goto(url, {
+          waitUntil: "networkidle",
+          timeout: 30000,
+        });
+      } catch (navigationError) {
+        console.error("Navigation error:", navigationError);
+        await browser.close();
+        return NextResponse.json(
+          { error: `فشل تحميل الصفحة: ${navigationError instanceof Error ? navigationError.message : "خطأ غير معروف"}` },
+          { status: 500 }
+        );
+      }
 
       // Wait for the result-print-root to ensure page is fully loaded
-      await page.waitForSelector("#result-print-root", { timeout: 15000 });
+      try {
+        await page.waitForSelector("#result-print-root", { timeout: 15000 });
+      } catch (selectorError) {
+        console.error("Selector not found:", selectorError);
+        // Try to get page content for debugging
+        const pageContent = await page.content();
+        console.error("Page content length:", pageContent.length);
+        await browser.close();
+        return NextResponse.json(
+          { error: "فشل تحميل محتوى الصفحة - العنصر المطلوب غير موجود" },
+          { status: 500 }
+        );
+      }
 
       // Generate PDF with CSS page size preference
-      const pdfBuffer = await page.pdf({
-        format: "A4",
-        printBackground: true,
-        preferCSSPageSize: true,
-        margin: {
-          top: "10mm",
-          right: "10mm",
-          bottom: "10mm",
-          left: "10mm",
-        },
-      });
+      let pdfBuffer: Buffer;
+      try {
+        pdfBuffer = await page.pdf({
+          format: "A4",
+          printBackground: true,
+          preferCSSPageSize: true,
+          margin: {
+            top: "10mm",
+            right: "10mm",
+            bottom: "10mm",
+            left: "10mm",
+          },
+        });
+      } catch (pdfError) {
+        console.error("PDF generation error:", pdfError);
+        await browser.close();
+        return NextResponse.json(
+          { error: `فشل توليد PDF: ${pdfError instanceof Error ? pdfError.message : "خطأ غير معروف"}` },
+          { status: 500 }
+        );
+      }
 
       await context.close();
       await browser.close();
@@ -169,17 +250,25 @@ export async function GET(request: NextRequest) {
         },
       });
     } catch (playwrightError) {
-      await browser.close();
+      if (browser) {
+        try {
+          await browser.close();
+        } catch (closeError) {
+          console.error("Error closing browser:", closeError);
+        }
+      }
       console.error("Playwright PDF generation error:", playwrightError);
+      const errorMessage = playwrightError instanceof Error ? playwrightError.message : "خطأ غير معروف";
       return NextResponse.json(
-        { error: "فشل توليد PDF" },
+        { error: `فشل توليد PDF: ${errorMessage}` },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error("PDF generation error:", error);
+    const errorMessage = error instanceof Error ? error.message : "خطأ غير معروف";
     return NextResponse.json(
-      { error: "حدث خطأ أثناء توليد PDF" },
+      { error: `حدث خطأ أثناء توليد PDF: ${errorMessage}` },
       { status: 500 }
     );
   }
