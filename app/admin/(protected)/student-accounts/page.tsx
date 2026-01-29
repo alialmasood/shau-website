@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
+import { canAdmin } from "@/lib/adminAuthz";
 import { getStudentAccountsStats } from "./actions";
 import { getAllStudentAccountsBatches } from "@/lib/studentAccountsBatchesRepo";
 import StudentAccountsTable from "./StudentAccountsTable";
@@ -29,7 +30,9 @@ export default async function StudentAccountsPage({
     redirect("/admin/login");
   }
 
-  if (user.role !== "ADMIN") {
+  const roleUpper = String(user.role || "").toUpperCase();
+  const hasAccess = roleUpper === "ADMIN" || (await canAdmin("student-accounts", "access"));
+  if (!hasAccess) {
     return (
       <div className="w-full bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">

@@ -161,6 +161,9 @@ function getPageNameAr(code, folderName) {
     "social": "السوشيال ميديا",
     "tuition": "الرسوم الدراسية",
     "tuition-pdf": "تحميل الرسوم PDF",
+    "results": "إدارة النتائج",
+    "accounts": "الحسابات",
+    "student-accounts": "حسابات الطلاب",
   };
   
   // إذا لم يكن في القائمة، استخدم اسم المجلد أو code
@@ -210,6 +213,9 @@ function getPageNameEn(code) {
     "social": "Social Media",
     "tuition": "Tuition Fees",
     "tuition-pdf": "Tuition PDF",
+    "results": "Results Management",
+    "accounts": "Accounts",
+    "student-accounts": "Student Accounts",
   };
   
   return nameMap[code] || code.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");

@@ -1,22 +1,39 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAdminSession } from "@/lib/adminSession";
-import { getAdminUserById } from "@/lib/adminUsersRepo";
+import { getCurrentAdminUser } from "@/lib/adminCurrent";
+import { canAdmin } from "@/lib/adminAuthz";
 
 export default async function AdminRegistrationAffairsPage() {
+  // التحقق من تسجيل الدخول
+  const user = await getCurrentAdminUser();
+  if (!user) {
+    redirect("/admin/login");
+  }
+
   // التحقق من أن المستخدم المحدود لا يمكنه الوصول إلى هذه الصفحة
-  const session = await getAdminSession();
-  if (session) {
-    const userData = await getAdminUserById(session.sub);
-    if (userData) {
-      const isLimitedUser = userData.custom_url && userData.custom_url !== "/admin" && userData.role !== "ADMIN";
-      if (isLimitedUser && userData.custom_url) {
-        // إذا كان custom_url هو required-documents فقط، إعادة توجيه
-        if (userData.custom_url === "/admin/registration-affairs/required-documents") {
-          redirect(userData.custom_url);
-        }
-      }
+  const isLimitedUser =
+    user.custom_url && user.custom_url !== "/admin" && String(user.role || "").toUpperCase() !== "ADMIN";
+  if (isLimitedUser && user.custom_url) {
+    // إذا كان custom_url هو required-documents فقط، إعادة توجيه
+    if (user.custom_url === "/admin/registration-affairs/required-documents") {
+      redirect(user.custom_url);
     }
+  }
+
+  // التحقق من الصلاحية على صفحة التسجيل
+  const roleUpper = String(user.role || "").toUpperCase();
+  const hasAccess = roleUpper === "ADMIN" || (await canAdmin("registration", "access"));
+  if (!hasAccess) {
+    return (
+      <div className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-bold text-xl">❌ غير مصرح - ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
+          <Link href="/admin" prefetch={false} className="mt-4 inline-block text-[#31BD9C] hover:underline">
+            العودة إلى لوحة التحكم
+          </Link>
+        </div>
+      </div>
+    );
   }
   return (
     <div className="w-full max-w-4xl mx-auto">

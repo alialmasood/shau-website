@@ -43,7 +43,7 @@ function PagePermissionSection({
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            checked={perm.can_access}
+            checked={perm.can_access === true || perm.can_access === false ? perm.can_access : false}
             onChange={(e) => onChange(page.code, "can_access", e.target.checked)}
             className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
           />
@@ -61,17 +61,21 @@ function PagePermissionSection({
             { key: "can_upload", label: "رفع" },
             { key: "can_export", label: "تصدير" },
             { key: "can_publish", label: "نشر" },
-          ].map((action) => (
-            <label key={action.key} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={perm[action.key as keyof typeof perm] as boolean}
-                onChange={(e) => onChange(page.code, action.key, e.target.checked)}
-                className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
-              />
-              <span className="text-sm text-neutral-700">{action.label}</span>
-            </label>
-          ))}
+          ].map((action) => {
+            const value = perm[action.key as keyof typeof perm];
+            const checked = value === true || value === false ? value : false;
+            return (
+              <label key={action.key} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => onChange(page.code, action.key, e.target.checked)}
+                  className="w-4 h-4 text-[#31BD9C] border-neutral-300 rounded focus:ring-[#31BD9C]"
+                />
+                <span className="text-sm text-neutral-700">{action.label}</span>
+              </label>
+            );
+          })}
         </div>
       )}
     </div>

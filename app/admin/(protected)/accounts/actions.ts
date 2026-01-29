@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { deleteBatch } from "@/lib/resultsRepo";
+import { canAdmin } from "@/lib/adminAuthz";
 import { updateStudentFinancialClearance } from "@/lib/studentsRepo";
 import { revalidatePath } from "next/cache";
 import { broadcast } from "@/lib/sseHub";
@@ -16,8 +17,13 @@ export async function toggleFinancialClearance(
     redirect("/admin/login");
   }
 
-  // Only ACCOUNTS or ADMIN can toggle financial clearance
-  if (user.role !== "ACCOUNTS" && user.role !== "ADMIN") {
+  // ACCOUNTS أو ADMIN أو صلاحية تعديل صفحة الحسابات
+  const roleUpper = String(user.role || "").toUpperCase();
+  if (
+    roleUpper !== "ACCOUNTS" &&
+    roleUpper !== "ADMIN" &&
+    !(await canAdmin("accounts", "edit"))
+  ) {
     return { success: false, error: "ليس لديك صلاحية لتعديل الحالة المالية" };
   }
 
@@ -65,8 +71,9 @@ export async function deleteBatchAction(batchId: string): Promise<{ success: boo
     redirect("/admin/login");
   }
 
-  // Only ADMIN can delete batches
-  if (user.role !== "ADMIN") {
+  // ADMIN أو صلاحية حذف على صفحة الحسابات
+  const roleUpper = String(user.role || "").toUpperCase();
+  if (roleUpper !== "ADMIN" && !(await canAdmin("accounts", "delete"))) {
     return { success: false, error: "ليس لديك صلاحية لحذف الاستيرادات" };
   }
 

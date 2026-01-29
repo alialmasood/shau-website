@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
+import { canAdmin } from "@/lib/adminAuthz";
 import { getAllStudents } from "@/lib/studentsRepo";
 import { getAllBatches } from "@/lib/resultsRepo";
 import AccountsTable from "./AccountsTable";
@@ -38,8 +39,14 @@ export default async function AdminAccountsPage({
     redirect("/admin/login");
   }
 
-  // التحقق من الصلاحية - فقط ACCOUNTS أو ADMIN
-  if (user.role !== "ACCOUNTS" && user.role !== "ADMIN") {
+  // التحقق من الصلاحية - ACCOUNTS أو ADMIN أو صلاحية صفحة الحسابات
+  const roleUpper = String(user.role || "").toUpperCase();
+  const hasAccess =
+    roleUpper === "ADMIN" ||
+    roleUpper === "ACCOUNTS" ||
+    (await canAdmin("accounts", "access"));
+
+  if (!hasAccess) {
     return (
       <div className="w-full bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">

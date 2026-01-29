@@ -25,6 +25,8 @@
     "db:migrate-study-type": "node scripts/run-study-type-migration.js",
     "db:migrate-batch-stats": "node scripts/run-batch-stats-migration.js",
     "db:migrate-student-user-fields": "node scripts/run-student-user-fields-migration.js",
+    "db:migrate-parent-code": "node scripts/run-parent-code-migration.js",
+    "db:add-missing-pages": "node scripts/add-missing-admin-pages.js",
     "db:seed": "node prisma/seed.js",
     "db:seed-rbac": "node scripts/seed-rbac.js",
     "db:check-rbac": "node scripts/check-rbac-status.js",
@@ -32,6 +34,8 @@
     "admin:reset-password": "node scripts/reset-admin-password.js",
     "admin:create-default": "node scripts/create-default-admin.js",
     "admin:check-users": "node scripts/check-admin-users.js",
+    "admin:fix-results-user": "node scripts/fix-results-user.js",
+    "admin:fix-accounts-user": "node scripts/fix-accounts-user.js",
     "logs:view": "node scripts/view-logs.js",
     "admin:discover-pages": "node scripts/discover-admin-pages.js",
     "data:clear-students": "node scripts/clear-student-data.js"

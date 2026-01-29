@@ -11,9 +11,31 @@ import bcrypt from "bcryptjs";
 import { createHash } from "crypto";
 import { revalidatePath } from "next/cache";
 import { broadcast } from "@/lib/sseHub";
+import { canAdmin } from "@/lib/adminAuthz";
 
 const ACADEMIC_YEAR = "2025-2026";
 const SEMESTER = "الفصل الأول";
+
+async function ensureStudentAccountsAccess(
+  action: "access" | "create" | "edit" | "delete" | "upload"
+) {
+  const currentUser = await getCurrentAdminUser();
+  if (!currentUser) {
+    redirect("/admin/login");
+  }
+
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper === "ADMIN") {
+    return currentUser;
+  }
+
+  const allowed = await canAdmin("student-accounts", action);
+  if (!allowed) {
+    throw new Error("ليس لديك صلاحية للوصول إلى حسابات الطلاب");
+  }
+
+  return currentUser;
+}
 
 function generateRandomPassword(length: number = 10): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -47,14 +69,7 @@ export async function importStudentAccounts(
   departmentCode: string,
   forceReimport: boolean = false
 ): Promise<ImportResult> {
-  const currentUser = await getCurrentAdminUser();
-  if (!currentUser) {
-    redirect("/admin/login");
-  }
-
-  if (currentUser.role !== "ADMIN") {
-    throw new Error("ليس لديك صلاحية لاستيراد حسابات الطلاب");
-  }
+  const currentUser = await ensureStudentAccountsAccess("upload");
 
   try {
     const fileBuffer = Buffer.from(fileBase64, "base64");
@@ -335,14 +350,7 @@ export async function importStudentAccounts(
 }
 
 export async function getStudentAccounts(batchId?: string) {
-  const currentUser = await getCurrentAdminUser();
-  if (!currentUser) {
-    redirect("/admin/login");
-  }
-
-  if (currentUser.role !== "ADMIN") {
-    throw new Error("ليس لديك صلاحية لعرض حسابات الطلاب");
-  }
+  await ensureStudentAccountsAccess("access");
 
   const users = await getAllStudentUsers({ batchId });
   console.log(`[getStudentAccounts] Retrieved ${users.length} users from getAllStudentUsers()${batchId ? ` (filtered by batch: ${batchId})` : ""}`);
@@ -366,14 +374,7 @@ export async function getStudentAccounts(batchId?: string) {
 }
 
 export async function getStudentAccountsStats() {
-  const currentUser = await getCurrentAdminUser();
-  if (!currentUser) {
-    redirect("/admin/login");
-  }
-
-  if (currentUser.role !== "ADMIN") {
-    throw new Error("ليس لديك صلاحية لعرض الإحصائيات");
-  }
+  await ensureStudentAccountsAccess("access");
 
   const { getStudentUsersCount } = await import("@/lib/studentUsersRepo");
   
@@ -389,13 +390,10 @@ export async function getStudentAccountsStats() {
 }
 
 export async function resetPasswordAction(username: string): Promise<{ success: boolean; password?: string; error?: string }> {
-  const currentUser = await getCurrentAdminUser();
-  if (!currentUser) {
-    redirect("/admin/login");
-  }
-
-  if (currentUser.role !== "ADMIN") {
-    return { success: false, error: "ليس لديك صلاحية لإعادة تعيين كلمة المرور" };
+  try {
+    await ensureStudentAccountsAccess("edit");
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "ليس لديك صلاحية لإعادة تعيين كلمة المرور" };
   }
 
   try {
@@ -419,13 +417,10 @@ export async function resetPasswordAction(username: string): Promise<{ success: 
 }
 
 export async function toggleActiveAction(username: string): Promise<{ success: boolean; isActive?: boolean; error?: string }> {
-  const currentUser = await getCurrentAdminUser();
-  if (!currentUser) {
-    redirect("/admin/login");
-  }
-
-  if (currentUser.role !== "ADMIN") {
-    return { success: false, error: "ليس لديك صلاحية لتغيير حالة الحساب" };
+  try {
+    await ensureStudentAccountsAccess("edit");
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "ليس لديك صلاحية لتغيير حالة الحساب" };
   }
 
   try {
@@ -448,13 +443,10 @@ export async function toggleActiveAction(username: string): Promise<{ success: b
 }
 
 export async function deleteStudentAccountsBatchAction(batchId: string): Promise<{ success: boolean; error?: string }> {
-  const currentUser = await getCurrentAdminUser();
-  if (!currentUser) {
-    redirect("/admin/login");
-  }
-
-  if (currentUser.role !== "ADMIN") {
-    return { success: false, error: "ليس لديك صلاحية لحذف الاستيرادات" };
+  try {
+    await ensureStudentAccountsAccess("delete");
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "ليس لديك صلاحية لحذف الاستيرادات" };
   }
 
   const result = await deleteStudentAccountsBatch(batchId);
@@ -477,13 +469,10 @@ export async function bulkResetPasswords(): Promise<{
   error?: string; 
   credentials?: Array<{ studentId: string; fullName: string; username: string; tempPassword: string }> 
 }> {
-  const currentUser = await getCurrentAdminUser();
-  if (!currentUser) {
-    redirect("/admin/login");
-  }
-
-  if (currentUser.role !== "ADMIN") {
-    return { success: false, error: "ليس لديك صلاحية لإعادة تعيين كلمات المرور" };
+  try {
+    await ensureStudentAccountsAccess("edit");
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "ليس لديك صلاحية لإعادة تعيين كلمات المرور" };
   }
 
   try {

@@ -8,6 +8,7 @@ import { query } from "@/lib/db";
 import * as XLSX from "xlsx";
 import { createHash } from "crypto";
 import { calculateGrade, calculateFinalEvaluation, calculateFinalResult, calculateFinalNumeric } from "@/lib/grades";
+import { canAdmin } from "@/lib/adminAuthz";
 import { revalidatePath } from "next/cache";
 import { broadcast } from "@/lib/sseHub";
 
@@ -848,8 +849,12 @@ export async function previewExcel(
     redirect("/admin/login");
   }
 
-  if (currentUser.role !== "EXAM_COMMITTEE" && currentUser.role !== "ADMIN") {
-    throw new Error("ليس لديك صلاحية لاستيراد النتائج");
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper !== "EXAM_COMMITTEE" && roleUpper !== "ADMIN") {
+    const allowed = await canAdmin("results", "upload");
+    if (!allowed) {
+      throw new Error("ليس لديك صلاحية لاستيراد النتائج");
+    }
   }
 
   // Use shared parsing function
@@ -979,8 +984,12 @@ export async function getImportStats() {
     redirect("/admin/login");
   }
 
-  if (currentUser.role !== "EXAM_COMMITTEE" && currentUser.role !== "ADMIN") {
-    throw new Error("ليس لديك صلاحية لعرض الإحصائيات");
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper !== "EXAM_COMMITTEE" && roleUpper !== "ADMIN") {
+    const allowed = await canAdmin("results", "access");
+    if (!allowed) {
+      throw new Error("ليس لديك صلاحية لعرض الإحصائيات");
+    }
   }
 
   return await getResultsStats();
@@ -992,8 +1001,12 @@ export async function getImportHistory() {
     redirect("/admin/login");
   }
 
-  if (currentUser.role !== "EXAM_COMMITTEE" && currentUser.role !== "ADMIN") {
-    throw new Error("ليس لديك صلاحية لعرض سجل الاستيراد");
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper !== "EXAM_COMMITTEE" && roleUpper !== "ADMIN") {
+    const allowed = await canAdmin("results", "access");
+    if (!allowed) {
+      throw new Error("ليس لديك صلاحية لعرض سجل الاستيراد");
+    }
   }
 
   const batches = await getAllBatches();
@@ -1024,8 +1037,12 @@ export async function getBatchDetails(batchId: string) {
     redirect("/admin/login");
   }
 
-  if (currentUser.role !== "EXAM_COMMITTEE" && currentUser.role !== "ADMIN") {
-    throw new Error("ليس لديك صلاحية لعرض تفاصيل الدفعة");
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper !== "EXAM_COMMITTEE" && roleUpper !== "ADMIN") {
+    const allowed = await canAdmin("results", "access");
+    if (!allowed) {
+      throw new Error("ليس لديك صلاحية لعرض تفاصيل الدفعة");
+    }
   }
 
   const batch = await getBatchById(batchId);
@@ -1055,9 +1072,13 @@ export async function importExcel(
 
   console.log(`✅ [importExcel] Current user: ${currentUser.email}, role: ${currentUser.role}`);
 
-  if (currentUser.role !== "EXAM_COMMITTEE" && currentUser.role !== "ADMIN") {
-    console.error(`❌ [importExcel] Unauthorized: role=${currentUser.role}`);
-    throw new Error("ليس لديك صلاحية لاستيراد النتائج");
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper !== "EXAM_COMMITTEE" && roleUpper !== "ADMIN") {
+    const allowed = await canAdmin("results", "upload");
+    if (!allowed) {
+      console.error(`❌ [importExcel] Unauthorized: role=${currentUser.role}`);
+      throw new Error("ليس لديك صلاحية لاستيراد النتائج");
+    }
   }
 
   try {

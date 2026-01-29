@@ -50,13 +50,17 @@ const CHILD_TO_PARENT: Record<string, string> = {
 
 export async function getAllAdminPages(): Promise<AdminPageRow[]> {
   const res = await query(
-    `SELECT id, code, name_ar, name_en, created_at, updated_at
+    `SELECT id, code, name_ar, name_en, parent_code, created_at, updated_at
      FROM admin_pages
-     ORDER BY code`
+     ORDER BY 
+       CASE WHEN parent_code IS NULL THEN 0 ELSE 1 END,
+       COALESCE(parent_code, code),
+       name_ar`
   );
   const pages = res.rows.map((r) => {
-    // تحديد parentCode بناءً على code
-    const parentCode = CHILD_TO_PARENT[r.code] || null;
+    // قراءة parentCode من قاعدة البيانات (ديناميكي)
+    // Fallback إلى CHILD_TO_PARENT للتوافق مع البيانات القديمة
+    const parentCode = r.parent_code ? String(r.parent_code) : (CHILD_TO_PARENT[r.code] || null);
     
     return {
       id: String(r.id),
@@ -69,39 +73,51 @@ export async function getAllAdminPages(): Promise<AdminPageRow[]> {
     };
   });
   
-  // ترتيب الصفحات: الأساسية أولاً (حسب PAGE_ORDER)، ثم الفرعية
+  // ترتيب الصفحات: الأساسية أولاً (حسب PAGE_ORDER إن وجد، وإلا حسب الاسم)، ثم الفرعية
+  // النظام الآن ديناميكي: الصفحات الجديدة تظهر تلقائياً حتى لو لم تكن في PAGE_ORDER
   const sortedPages = pages.sort((a, b) => {
     // إذا كانت الصفحة فرعية، نضعها بعد الصفحة الأساسية
     if (a.parentCode && !b.parentCode) {
       // a فرعية، b أساسية
-      const parentOrder = PAGE_ORDER[a.parentCode] || 999;
-      const bOrder = PAGE_ORDER[b.code] || 999;
+      const parentOrder = PAGE_ORDER[a.parentCode] ?? 999;
+      const bOrder = PAGE_ORDER[b.code] ?? 999;
       if (parentOrder === bOrder) return 1; // الفرعية بعد الأساسية
-      return parentOrder - bOrder;
+      if (parentOrder !== 999 && bOrder !== 999) return parentOrder - bOrder;
+      if (parentOrder !== 999) return -1; // الصفحة الأساسية لها ترتيب محدد
+      if (bOrder !== 999) return 1; // الصفحة الأساسية لها ترتيب محدد
+      // كلاهما بدون ترتيب محدد، نرتب حسب الاسم
+      return a.nameAr.localeCompare(b.nameAr, "ar");
     }
     if (!a.parentCode && b.parentCode) {
       // a أساسية، b فرعية
-      const aOrder = PAGE_ORDER[a.code] || 999;
-      const parentOrder = PAGE_ORDER[b.parentCode] || 999;
+      const aOrder = PAGE_ORDER[a.code] ?? 999;
+      const parentOrder = PAGE_ORDER[b.parentCode] ?? 999;
       if (aOrder === parentOrder) return -1; // الأساسية قبل الفرعية
-      return aOrder - parentOrder;
+      if (aOrder !== 999 && parentOrder !== 999) return aOrder - parentOrder;
+      if (aOrder !== 999) return -1;
+      if (parentOrder !== 999) return 1;
+      return a.nameAr.localeCompare(b.nameAr, "ar");
     }
     if (a.parentCode && b.parentCode) {
       // كلاهما فرعية
-      const aParentOrder = PAGE_ORDER[a.parentCode] || 999;
-      const bParentOrder = PAGE_ORDER[b.parentCode] || 999;
-      if (aParentOrder !== bParentOrder) {
+      const aParentOrder = PAGE_ORDER[a.parentCode] ?? 999;
+      const bParentOrder = PAGE_ORDER[b.parentCode] ?? 999;
+      if (aParentOrder !== bParentOrder && aParentOrder !== 999 && bParentOrder !== 999) {
         return aParentOrder - bParentOrder;
       }
-      // نفس الصفحة الأساسية، نرتب حسب الاسم
-      return a.nameAr.localeCompare(b.nameAr, "ar");
+      // نفس الصفحة الأساسية أو كلاهما بدون ترتيب محدد، نرتب حسب الاسم
+      if (a.parentCode === b.parentCode) {
+        return a.nameAr.localeCompare(b.nameAr, "ar");
+      }
+      return a.parentCode.localeCompare(b.parentCode);
     }
     // كلاهما أساسية
-    const aOrder = PAGE_ORDER[a.code] || 999;
-    const bOrder = PAGE_ORDER[b.code] || 999;
-    if (aOrder !== bOrder) {
+    const aOrder = PAGE_ORDER[a.code] ?? 999;
+    const bOrder = PAGE_ORDER[b.code] ?? 999;
+    if (aOrder !== bOrder && aOrder !== 999 && bOrder !== 999) {
       return aOrder - bOrder;
     }
+    // كلاهما بدون ترتيب محدد أو نفس الترتيب، نرتب حسب الاسم
     return a.nameAr.localeCompare(b.nameAr, "ar");
   });
   
@@ -119,7 +135,7 @@ export async function getAllAdminPages(): Promise<AdminPageRow[]> {
 
 export async function getAdminPageByCode(code: string): Promise<AdminPageRow | null> {
   const res = await query(
-    `SELECT id, code, name_ar, name_en, created_at, updated_at
+    `SELECT id, code, name_ar, name_en, parent_code, created_at, updated_at
      FROM admin_pages
      WHERE code = $1
      LIMIT 1`,
@@ -128,8 +144,9 @@ export async function getAdminPageByCode(code: string): Promise<AdminPageRow | n
   if (res.rows.length === 0) return null;
   const r = res.rows[0];
   
-  // تحديد parentCode بناءً على code
-  const parentCode = CHILD_TO_PARENT[r.code] || null;
+  // قراءة parentCode من قاعدة البيانات (ديناميكي)
+  // Fallback إلى CHILD_TO_PARENT للتوافق مع البيانات القديمة
+  const parentCode = r.parent_code ? String(r.parent_code) : (CHILD_TO_PARENT[r.code] || null);
   
   return {
     id: String(r.id),
