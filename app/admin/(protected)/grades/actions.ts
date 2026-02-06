@@ -72,7 +72,7 @@ function recalcSummary(subjects: SubjectRow[], existingSummary: Record<string, u
   const finalNumeric = scores.length > 0 ? calculateFinalNumeric(scores) : null;
   const finalStatus = finalNumeric !== null ? calculateFinalResult(finalNumeric) : null;
   const evaluation =
-    avg !== null && avg !== undefined && avg !== ""
+    avg !== null && avg !== undefined
       ? calculateFinalEvaluation(avg)
       : null;
 
