@@ -43,12 +43,17 @@ type CreateNewsBody = {
   coverImageId?: string | null;
   secondaryImageId?: string | null;
   secondaryImage2Id?: string | null;
+  videoUrl?: string | null;
 };
 
 function isUuid(id: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     id
   );
+}
+
+function isYouTubeUrl(url: string) {
+  return /(^https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(url);
 }
 
 export async function POST(request: Request) {
@@ -70,6 +75,7 @@ export async function POST(request: Request) {
   const coverImageId = body?.coverImageId ? String(body.coverImageId) : null;
   const secondaryImageId = body?.secondaryImageId ? String(body.secondaryImageId) : null;
   const secondaryImage2Id = body?.secondaryImage2Id ? String(body.secondaryImage2Id) : null;
+  const videoUrl = body?.videoUrl ? String(body.videoUrl).trim() || null : null;
 
   if (!title || !content) {
     return NextResponse.json(
@@ -100,6 +106,9 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+  if (videoUrl && !isYouTubeUrl(videoUrl)) {
+    return NextResponse.json({ error: "Invalid videoUrl" }, { status: 400 });
+  }
 
   const base = slugify(title);
   const slug = await ensureUniqueSlug(base);
@@ -113,9 +122,9 @@ export async function POST(request: Request) {
 
   const res = await query(
     `INSERT INTO news
-      (title, title_en, slug, excerpt, excerpt_en, content, content_en, category, is_published, publish_date, featured, cover_image_id, secondary_image_id, secondary_image2_id, updated_at)
+      (title, title_en, slug, excerpt, excerpt_en, content, content_en, category, is_published, publish_date, featured, cover_image_id, secondary_image_id, secondary_image2_id, video_url, updated_at)
      VALUES
-      ($1, $2, $3, $4, $5, $6, $7, $8::"NewsCategory", $9, $10, $11, $12, $13, $14, NOW())
+      ($1, $2, $3, $4, $5, $6, $7, $8::"NewsCategory", $9, $10, $11, $12, $13, $14, $15, NOW())
      RETURNING id`,
     [
       title,
@@ -132,6 +141,7 @@ export async function POST(request: Request) {
       coverImageId,
       secondaryImageId,
       secondaryImage2Id,
+      videoUrl,
     ]
   );
 

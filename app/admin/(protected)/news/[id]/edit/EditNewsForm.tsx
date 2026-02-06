@@ -31,6 +31,7 @@ type Props = {
     coverImageId: string | null;
     secondaryImageId: string | null;
     secondaryImage2Id: string | null;
+    videoUrl: string | null;
   };
 };
 
@@ -42,6 +43,7 @@ export default function EditNewsForm({ id, initial }: Props) {
   const [excerptEn, setExcerptEn] = useState(initial.excerptEn ?? "");
   const [content, setContent] = useState(initial.content);
   const [contentEn, setContentEn] = useState(initial.contentEn ?? "");
+  const [videoUrl, setVideoUrl] = useState(initial.videoUrl ?? "");
   const [category, setCategory] = useState<CategoryCode>(
     initial.categoryCode ?? "SCIENTIFIC"
   );
@@ -137,6 +139,7 @@ export default function EditNewsForm({ id, initial }: Props) {
           excerptEn: excerptEn.trim() || null,
           content,
           contentEn: contentEn.trim() || null,
+          videoUrl: videoUrl.trim() || null,
           category,
           published,
           featured,
@@ -226,6 +229,21 @@ export default function EditNewsForm({ id, initial }: Props) {
           placeholder={"اكتب المحتوى...\nيمكنك استخدام:\n## عنوان فرعي\n### عنوان فرعي أصغر\nوفصل الفقرات بسطر فارغ."}
           required
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-neutral-700 mb-2">
+          رابط فيديو يوتيوب (اختياري)
+        </label>
+        <input
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+          className="w-full px-4 py-3 rounded-xl bg-white border border-neutral-200 focus:outline-none focus:border-[#31BD9C] focus:ring-2 focus:ring-[#31BD9C]/20 transition-all"
+          placeholder="https://www.youtube.com/watch?v=XXXXXXXXXXX"
+        />
+        <p className="mt-2 text-xs text-neutral-500">
+          إذا وضعت رابط يوتيوب، سيُعرض الفيديو داخل صفحة الخبر تلقائياً.
+        </p>
       </div>
 
       {/* الترجمة الإنجليزية (اختياري) */}

@@ -21,6 +21,10 @@ function slugify(input: string) {
   return s || "news";
 }
 
+function isYouTubeUrl(url: string) {
+  return /(^https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(url);
+}
+
 async function ensureUniqueSlugExcept(base: string, excludeId: string) {
   let slug = base;
   for (let i = 0; i < 50; i++) {
@@ -49,6 +53,7 @@ type UpdateNewsBody = {
   coverImageId?: string | null;
   secondaryImageId?: string | null;
   secondaryImage2Id?: string | null;
+  videoUrl?: string | null;
 };
 
 export async function PATCH(
@@ -83,6 +88,7 @@ export async function PATCH(
   const contentEn = body.contentEn !== undefined ? (body.contentEn ? String(body.contentEn).trim() : null) : undefined;
   const excerpt = body.excerpt !== undefined ? (body.excerpt ? String(body.excerpt).trim() : null) : undefined;
   const excerptEn = body.excerptEn !== undefined ? (body.excerptEn ? String(body.excerptEn).trim() : null) : undefined;
+  const videoUrl = body.videoUrl !== undefined ? (body.videoUrl ? String(body.videoUrl).trim() : null) : undefined;
   const category = body.category !== undefined ? body.category : undefined;
   const featured = body.featured !== undefined ? Boolean(body.featured) : undefined;
   const coverImageId = body.coverImageId !== undefined ? (body.coverImageId ? String(body.coverImageId) : null) : undefined;
@@ -136,6 +142,9 @@ export async function PATCH(
       { status: 400 }
     );
   }
+  if (videoUrl !== undefined && videoUrl !== null && !isYouTubeUrl(videoUrl)) {
+    return NextResponse.json({ error: "Invalid videoUrl" }, { status: 400 });
+  }
 
   // slug: if provided empty/null => auto from title; else keep current if not provided
   let slug: string | null;
@@ -182,6 +191,7 @@ export async function PATCH(
   if (coverImageId !== undefined) { sets.push(`cover_image_id=$${i++}`); values.push(coverImageId); }
   if (secondaryImageId !== undefined) { sets.push(`secondary_image_id=$${i++}`); values.push(secondaryImageId); }
   if (secondaryImage2Id !== undefined) { sets.push(`secondary_image2_id=$${i++}`); values.push(secondaryImage2Id); }
+  if (videoUrl !== undefined) { sets.push(`video_url=$${i++}`); values.push(videoUrl); }
 
   values.push(id);
 

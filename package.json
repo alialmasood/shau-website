@@ -26,6 +26,7 @@
     "db:migrate-batch-stats": "node scripts/run-batch-stats-migration.js",
     "db:migrate-student-user-fields": "node scripts/run-student-user-fields-migration.js",
     "db:migrate-parent-code": "node scripts/run-parent-code-migration.js",
+    "db:migrate-news-video": "node scripts/run-news-video-migration.js",
     "db:add-missing-pages": "node scripts/add-missing-admin-pages.js",
     "db:seed": "node prisma/seed.js",
     "db:seed-rbac": "node scripts/seed-rbac.js",

@@ -165,6 +165,7 @@ model News {
   secondaryImage    Media?        @relation("NewsSecondaryImage", fields: [secondaryImageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   secondaryImage2Id String?       @map("secondary_image2_id") @db.Uuid
   secondaryImage2   Media?        @relation("NewsSecondaryImage2", fields: [secondaryImage2Id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  videoUrl          String?       @map("video_url") @db.VarChar(500)
 
   // الحفاظ على العمود الموجود حالياً (اختياري)
   createdById String? @map("created_by") @db.Uuid

@@ -22,6 +22,7 @@ export type PublicNewsDetails = {
   coverImageId: string | null;
   secondaryImageId: string | null;
   secondaryImage2Id: string | null;
+  videoUrl: string | null;
 };
 
 function isUuid(id: string) {
@@ -155,7 +156,7 @@ export async function getLatestPublishedNews(limit: number, locale: "ar" | "en" 
 export async function getPublishedNewsById(id: string, locale: "ar" | "en" = "ar") {
   if (!isUuid(id)) return null;
   const res = await query(
-    `SELECT id, title, title_en, excerpt, excerpt_en, content, content_en, category, publish_date, cover_image_id, secondary_image_id, secondary_image2_id
+    `SELECT id, title, title_en, excerpt, excerpt_en, content, content_en, category, publish_date, cover_image_id, secondary_image_id, secondary_image2_id, video_url
      FROM news
      WHERE id = $1 AND is_published = true
      LIMIT 1`,
@@ -179,6 +180,7 @@ export async function getPublishedNewsById(id: string, locale: "ar" | "en" = "ar
     coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
     secondaryImageId: r.secondary_image_id ? String(r.secondary_image_id) : null,
     secondaryImage2Id: r.secondary_image2_id ? String(r.secondary_image2_id) : null,
+    videoUrl: r.video_url ? String(r.video_url) : null,
   } satisfies PublicNewsDetails;
 }
 

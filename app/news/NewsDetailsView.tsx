@@ -13,6 +13,43 @@ const getCachedNews = cache((id: string, locale: "ar" | "en") =>
   getPublishedNewsById(id, locale)
 );
 
+function normalizeYouTubeId(rawUrl: string | null) {
+  if (!rawUrl) return null;
+  const trimmed = String(rawUrl).trim();
+  if (!trimmed) return null;
+
+  let urlToParse = trimmed;
+  if (!/^https?:\/\//i.test(urlToParse)) {
+    urlToParse = `https://${urlToParse}`;
+  }
+
+  try {
+    const u = new URL(urlToParse);
+    const host = u.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const id = u.pathname.replace(/^\//, "").split("/")[0];
+      return id || null;
+    }
+
+    if (host.endsWith("youtube.com")) {
+      if (u.pathname === "/watch") {
+        return u.searchParams.get("v");
+      }
+      if (u.pathname.startsWith("/embed/")) {
+        return u.pathname.replace("/embed/", "").split("/")[0] || null;
+      }
+      if (u.pathname.startsWith("/shorts/")) {
+        return u.pathname.replace("/shorts/", "").split("/")[0] || null;
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 function CalendarIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -90,6 +127,11 @@ export default async function NewsDetailsView({
       }).format(new Date(news.publishedAt))
     : "";
 
+  const youtubeId = normalizeYouTubeId(news.videoUrl ?? null);
+  const youtubeEmbed = youtubeId
+    ? `https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=1&mute=1&playsinline=1`
+    : null;
+
   const blocks = news.content
     .split(/\n\s*\n/g)
     .map((s) => s.trim())
@@ -138,19 +180,33 @@ export default async function NewsDetailsView({
           </div>
         </header>
 
-        <div className="relative w-full rounded-2xl overflow-hidden border border-neutral-100 shadow-sm">
-          <div className="relative w-full aspect-[16/9]">
-            <Image
-              src={coverSrc}
-              alt={news.title}
-              fill
-              className="object-cover"
-              priority
-              unoptimized
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+        {youtubeEmbed ? (
+          <div className="relative w-full rounded-2xl overflow-hidden border border-neutral-100 shadow-sm">
+            <div className="relative w-full aspect-[16/9]">
+              <iframe
+                src={youtubeEmbed}
+                title={news.title}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="relative w-full rounded-2xl overflow-hidden border border-neutral-100 shadow-sm">
+            <div className="relative w-full aspect-[16/9]">
+              <Image
+                src={coverSrc}
+                alt={news.title}
+                fill
+                className="object-cover"
+                priority
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+            </div>
+          </div>
+        )}
 
         <article className="mt-7 sm:mt-10 bg-white rounded-2xl border border-neutral-100 shadow-sm p-5 sm:p-7">
           {secondarySrc ? (
