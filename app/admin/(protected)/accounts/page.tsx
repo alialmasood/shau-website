@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
-import { getAllStudents } from "@/lib/studentsRepo";
+import { getAllStudents, getStudentsStats } from "@/lib/studentsRepo";
 import { getAllBatches } from "@/lib/resultsRepo";
 import AccountsTable from "./AccountsTable";
 import BatchCard from "./BatchCard";
@@ -89,6 +89,8 @@ export default async function AdminAccountsPage({
   }, {} as Record<string, typeof batches>);
 
   const { students, total } = await getAllStudents(filters);
+  const selectedStats = await getStudentsStats(filters);
+  const overallStats = await getStudentsStats(filters, { ignoreDepartment: true });
   
   // Debug logging
   console.log(`[AdminAccountsPage] 📊 Data loaded: students=${students.length}, total=${total}`);
@@ -115,23 +117,91 @@ export default async function AdminAccountsPage({
           </p>
         </div>
 
+        {/* Quick Stats */}
+        <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-lg font-bold text-neutral-900">إحصائيات الحسابات</h2>
+            <Link
+              href="/admin/accounts/daily-report"
+              prefetch={false}
+              className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-800 transition-colors"
+            >
+              تصدير تقرير يومي
+            </Link>
+          </div>
+
+          <div className="text-sm text-neutral-700 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="font-semibold">إجمالي نتائج القسم:</span>
+            <span>{selectedStats.total}</span>
+            <span className="text-neutral-300">•</span>
+            <span>الدافعين: {selectedStats.paid}</span>
+            <span className="text-neutral-300">•</span>
+            <span>غير الدافعين: {selectedStats.unpaid}</span>
+            {filters.departmentCode ? (
+              <>
+                <span className="text-neutral-300">•</span>
+                <span className="text-neutral-500">
+                  القسم: {DEPARTMENTS.find(d => d.code === filters.departmentCode)?.name || filters.departmentCode}
+                </span>
+              </>
+            ) : null}
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-neutral-200 p-4">
+              <p className="text-xs text-neutral-500">عدد الطلبة الكلي</p>
+              <p className="text-2xl font-bold text-neutral-900">{overallStats.total}</p>
+            </div>
+            <div className="rounded-xl border border-neutral-200 p-4">
+              <p className="text-xs text-neutral-500">عدد الطلبة الدافعين الكلي</p>
+              <p className="text-2xl font-bold text-emerald-700">{overallStats.paid}</p>
+            </div>
+            <div className="rounded-xl border border-neutral-200 p-4">
+              <p className="text-xs text-neutral-500">عدد الطلبة غير الدافعين الكلي</p>
+              <p className="text-2xl font-bold text-amber-700">{overallStats.unpaid}</p>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <h3 className="text-sm font-bold text-neutral-800 mb-3">إحصائية الأقسام المستوردة</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Object.entries(overallStats.byDepartment).map(([deptCode, stats]) => (
+                <div key={deptCode} className="rounded-xl border border-neutral-200 p-4">
+                  <p className="text-sm font-bold text-neutral-800 mb-2">
+                    {DEPARTMENTS.find(d => d.code === deptCode)?.name || deptCode}
+                  </p>
+                  <div className="text-xs text-neutral-600 space-y-1">
+                    <div>العدد الكلي: {stats.total}</div>
+                    <div>الدافعين: {stats.paid}</div>
+                    <div>غير الدافعين: {stats.unpaid}</div>
+                  </div>
+                </div>
+              ))}
+              {Object.keys(overallStats.byDepartment).length === 0 && (
+                <p className="text-sm text-neutral-500">لا توجد بيانات بعد.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Import History Section */}
         {batches.length > 0 && (
           <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold text-neutral-900 mb-4">سجل الاستيرادات</h2>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {Object.entries(batchesByDepartment).map(([deptCode, deptBatches]) => {
                 const deptName = DEPARTMENTS.find(d => d.code === deptCode)?.name || deptCode;
                 return (
-                  <div key={deptCode} className="border border-neutral-200 rounded-lg p-4">
-                    <h3 className="text-sm font-bold text-neutral-700 mb-3">{deptName}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div key={deptCode} className="space-y-3">
+                    <h3 className="text-sm font-bold text-neutral-700">{deptName}</h3>
+                    <div className="flex flex-wrap gap-4">
                       {deptBatches.map((batch) => (
                         <BatchCard
                           key={batch.id}
                           batch={batch}
                           isSelected={params.batchId === batch.id}
                           userRole={user.role}
+                          departmentName={deptName}
                         />
                       ))}
                     </div>

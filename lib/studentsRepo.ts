@@ -35,6 +35,20 @@ export type UpdateStudentInput = {
   clearanceUpdatedBy?: string;
 };
 
+export type StudentsStats = {
+  total: number;
+  paid: number;
+  unpaid: number;
+  byDepartment: Record<
+    string,
+    {
+      total: number;
+      paid: number;
+      unpaid: number;
+    }
+  >;
+};
+
 function mapRow(r: { [k: string]: unknown }): StudentRow {
   return {
     id: String(r.id),
@@ -234,4 +248,110 @@ export async function getAllStudents(filters?: {
     students: res.rows.map(mapRow),
     total,
   };
+}
+
+function buildStudentsWhere(
+  filters?: {
+    departmentCode?: string;
+    stage?: string;
+    studyType?: string;
+    financialClearance?: boolean;
+    search?: string;
+    batchId?: string;
+  },
+  options?: { ignoreDepartment?: boolean }
+) {
+  let whereSql = `WHERE r.student_id = s.student_id`;
+  const params: unknown[] = [];
+  let paramIndex = 1;
+
+  if (filters?.batchId) {
+    whereSql += ` AND r.uploaded_batch_id = $${paramIndex++}`;
+    params.push(filters.batchId);
+  }
+
+  if (!options?.ignoreDepartment && filters?.departmentCode) {
+    whereSql += ` AND r.department_code = $${paramIndex++}`;
+    params.push(filters.departmentCode);
+  }
+  if (filters?.stage) {
+    whereSql += ` AND r.stage = $${paramIndex++}`;
+    params.push(filters.stage);
+  }
+  if (filters?.studyType) {
+    whereSql += ` AND r.study_type = $${paramIndex++}`;
+    params.push(filters.studyType);
+  }
+
+  if (filters?.financialClearance !== undefined) {
+    whereSql += ` AND s.financial_clearance = $${paramIndex++}`;
+    params.push(filters.financialClearance);
+  }
+  if (filters?.search) {
+    whereSql += ` AND (s.full_name ILIKE $${paramIndex} OR s.student_id ILIKE $${paramIndex})`;
+    params.push(`%${filters.search}%`);
+    paramIndex++;
+  }
+
+  return { whereSql, params };
+}
+
+export async function getStudentsStats(
+  filters?: {
+    departmentCode?: string;
+    stage?: string;
+    studyType?: string;
+    financialClearance?: boolean;
+    search?: string;
+    batchId?: string;
+  },
+  options?: { ignoreDepartment?: boolean }
+): Promise<StudentsStats> {
+  const { whereSql, params } = buildStudentsWhere(filters, options);
+
+  const totalRes = await query(
+    `
+    SELECT
+      COUNT(DISTINCT r.student_id || '|' || r.department_code) as total,
+      COUNT(DISTINCT CASE WHEN s.financial_clearance = true THEN r.student_id || '|' || r.department_code END) as paid,
+      COUNT(DISTINCT CASE WHEN s.financial_clearance = false THEN r.student_id || '|' || r.department_code END) as unpaid
+    FROM results r
+    INNER JOIN students s ON r.student_id = s.student_id
+    ${whereSql}
+  `,
+    params
+  );
+
+  const totals = totalRes.rows[0] || {};
+  const total = Number(totals.total || 0);
+  const paid = Number(totals.paid || 0);
+  const unpaid = Number(totals.unpaid || 0);
+
+  const deptRes = await query(
+    `
+    SELECT
+      r.department_code,
+      COUNT(DISTINCT r.student_id || '|' || r.department_code) as total,
+      COUNT(DISTINCT CASE WHEN s.financial_clearance = true THEN r.student_id || '|' || r.department_code END) as paid,
+      COUNT(DISTINCT CASE WHEN s.financial_clearance = false THEN r.student_id || '|' || r.department_code END) as unpaid
+    FROM results r
+    INNER JOIN students s ON r.student_id = s.student_id
+    ${whereSql}
+    GROUP BY r.department_code
+    ORDER BY r.department_code ASC
+  `,
+    params
+  );
+
+  const byDepartment: StudentsStats["byDepartment"] = {};
+  for (const row of deptRes.rows) {
+    const code = String(row.department_code);
+    byDepartment[code] = {
+      total: Number(row.total || 0),
+      paid: Number(row.paid || 0),
+      unpaid: Number(row.unpaid || 0),
+    };
+  }
+
+  return { total, paid, unpaid, byDepartment };
 }
