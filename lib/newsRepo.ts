@@ -196,7 +196,7 @@ export async function getRelatedPublishedNews(params: {
 }) {
   const locale = params.locale ?? "ar";
   const res = await query(
-    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured
+    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured, video_url
      FROM news
      WHERE is_published = true
        AND id <> $1
@@ -218,6 +218,7 @@ export async function getRelatedPublishedNews(params: {
       publishedAt,
       coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
       featured: Boolean(r.featured),
+      videoUrl: r.video_url ? String(r.video_url) : null,
     } satisfies PublicNewsListItem;
   });
 }
