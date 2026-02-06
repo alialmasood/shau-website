@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
-import AdminNavConditional from "./AdminNavConditional";
-import AdminNavLimited from "./AdminNavLimited";
 import AdminBreadcrumb from "./AdminBreadcrumb";
 
 // منع cache هذه الصفحة
@@ -57,14 +55,7 @@ export default async function AdminProtectedLayout({
               تسجيل خروج
             </Link>
           </div>
-          {/* التبويبات: المحتوى + الإدارة */}
-          <div className="py-4">
-            {isLimitedUser ? (
-              <AdminNavLimited customUrl={userData?.custom_url || null} />
-            ) : (
-              <AdminNavConditional />
-            )}
-          </div>
+          {/* أزرار الإدارة تُعرض فقط داخل لوحة التحكم (صفحة /admin) */}
         </div>
       </header>
 

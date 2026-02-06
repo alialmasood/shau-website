@@ -82,6 +82,14 @@ export default async function AdminDashboardPage() {
       ),
     },
     {
+      title: "إدارة الدرجات",
+      value: "فتح",
+      href: "/admin/grades",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H7l-4 4V7a2 2 0 012-2z" /></svg>
+      ),
+    },
+    {
       title: "آخر تحديث",
       value: formatLastUpdated(stats.lastUpdated),
       href: null,
@@ -114,9 +122,9 @@ export default async function AdminDashboardPage() {
             إدارة المستخدمين
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex flex-nowrap gap-4 overflow-x-auto pb-1">
           {cards.map((c) => {
-            const cn = "rounded-xl border border-neutral-200 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4 group";
+            const cn = "min-w-[220px] rounded-xl border border-neutral-200 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4 group";
             const inner = (
               <>
                 <div className="flex items-center justify-between">

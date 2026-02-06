@@ -164,6 +164,7 @@ function getPageNameAr(code, folderName) {
     "results": "إدارة النتائج",
     "accounts": "الحسابات",
     "student-accounts": "حسابات الطلاب",
+    "grades": "إدارة الدرجات",
   };
   
   // إذا لم يكن في القائمة، استخدم اسم المجلد أو code
@@ -216,6 +217,7 @@ function getPageNameEn(code) {
     "results": "Results Management",
     "accounts": "Accounts",
     "student-accounts": "Student Accounts",
+    "grades": "Grades Management",
   };
   
   return nameMap[code] || code.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");

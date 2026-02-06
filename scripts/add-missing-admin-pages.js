@@ -31,6 +31,12 @@ const pagesToAdd = [
     parentCode: null,
   },
   {
+    code: "grades",
+    nameAr: "إدارة الدرجات",
+    nameEn: "Grades Management",
+    parentCode: null,
+  },
+  {
     code: "accounts",
     nameAr: "الحسابات",
     nameEn: "Accounts",

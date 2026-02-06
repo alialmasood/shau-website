@@ -17,6 +17,10 @@ export type ResultRow = {
   uploadedBy: string | null;
 };
 
+export type ResultAdminRow = ResultRow & {
+  studentName: string | null;
+};
+
 export type ResultsBatchRow = {
   id: string;
   departmentCode: string;
@@ -230,6 +234,95 @@ export async function getResultById(resultId: string): Promise<ResultRow | null>
   );
   if (res.rows.length === 0) return null;
   return mapResultRow(res.rows[0]);
+}
+
+export async function getResultWithStudentById(resultId: string): Promise<ResultAdminRow | null> {
+  const res = await query(
+    `SELECT r.id, r.student_id, r.department_code, r.academic_year, r.semester, r.stage, r.study_type, r.attempt,
+            r.summary_json, r.subjects_json, r.raw_row_json, r.payload_json, r.uploaded_batch_id, r.uploaded_at, r.uploaded_by,
+            s.full_name
+     FROM results r
+     LEFT JOIN students s ON s.student_id = r.student_id
+     WHERE r.id = $1
+     LIMIT 1`,
+    [resultId]
+  );
+  if (res.rows.length === 0) return null;
+  return {
+    ...mapResultRow(res.rows[0]),
+    studentName: res.rows[0].full_name ? String(res.rows[0].full_name) : null,
+  };
+}
+
+export async function getResultsAdminList(input: {
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ results: ResultAdminRow[]; total: number }> {
+  const page = Math.max(1, Number(input.page || 1));
+  const pageSize = Math.max(1, Math.min(100, Number(input.pageSize || 25)));
+  const offset = (page - 1) * pageSize;
+  const search = (input.search || "").trim();
+
+  const params: unknown[] = [];
+  let whereClause = "";
+  if (search) {
+    params.push(`%${search}%`);
+    params.push(`%${search}%`);
+    whereClause = `WHERE r.student_id ILIKE $1 OR s.full_name ILIKE $2`;
+  }
+
+  const countRes = await query(
+    `SELECT COUNT(*)::int AS total
+     FROM results r
+     LEFT JOIN students s ON s.student_id = r.student_id
+     ${whereClause}`,
+    params
+  );
+  const total = Number(countRes.rows[0]?.total || 0);
+
+  const listParams = [...params, pageSize, offset];
+  const res = await query(
+    `SELECT r.id, r.student_id, r.department_code, r.academic_year, r.semester, r.stage, r.study_type, r.attempt,
+            r.summary_json, r.subjects_json, r.raw_row_json, r.payload_json, r.uploaded_batch_id, r.uploaded_at, r.uploaded_by,
+            s.full_name
+     FROM results r
+     LEFT JOIN students s ON s.student_id = r.student_id
+     ${whereClause}
+     ORDER BY r.uploaded_at DESC
+     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    listParams
+  );
+
+  return {
+    total,
+    results: res.rows.map((r) => ({
+      ...mapResultRow(r),
+      studentName: r.full_name ? String(r.full_name) : null,
+    })),
+  };
+}
+
+export async function updateResultSubjectsAndSummary(input: {
+  resultId: string;
+  subjectsJson: Array<Record<string, unknown>>;
+  summaryJson: Record<string, unknown>;
+  updatedBy?: string | null;
+}): Promise<void> {
+  await query(
+    `UPDATE results
+     SET subjects_json = $2::jsonb,
+         summary_json = $3::jsonb,
+         uploaded_by = COALESCE($4, uploaded_by),
+         uploaded_at = NOW()
+     WHERE id = $1`,
+    [
+      input.resultId,
+      JSON.stringify(input.subjectsJson),
+      JSON.stringify(input.summaryJson),
+      input.updatedBy || null,
+    ]
+  );
 }
 
 /**

@@ -124,6 +124,18 @@ const allNavItems = [
     ),
   },
   {
+    href: "/admin/grades",
+    label: "إدارة الدرجات",
+    pageCode: "grades",
+    variant: "secondary" as const,
+    title: "إدارة درجات الطلاب",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H7l-4 4V7a2 2 0 012-2z" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/accounts",
     label: "الحسابات",
     pageCode: "accounts",
