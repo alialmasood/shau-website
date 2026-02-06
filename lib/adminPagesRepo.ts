@@ -48,16 +48,92 @@ const CHILD_TO_PARENT: Record<string, string> = {
   // يمكن إضافة صفحات فرعية أخرى هنا
 };
 
-export async function getAllAdminPages(): Promise<AdminPageRow[]> {
-  const res = await query(
-    `SELECT id, code, name_ar, name_en, parent_code, created_at, updated_at
-     FROM admin_pages
-     ORDER BY 
-       CASE WHEN parent_code IS NULL THEN 0 ELSE 1 END,
-       COALESCE(parent_code, code),
-       name_ar`
+const REQUIRED_PAGES: Array<{
+  code: string;
+  nameAr: string;
+  nameEn?: string | null;
+  parentCode?: string | null;
+}> = [
+  { code: "admin", nameAr: "لوحة التحكم", nameEn: "Admin", parentCode: null },
+  { code: "news", nameAr: "الأخبار", nameEn: "News", parentCode: null },
+  { code: "programs", nameAr: "برامج الكلية", nameEn: "Programs", parentCode: null },
+  { code: "ticker", nameAr: "الشريط الإخباري", nameEn: "Ticker", parentCode: null },
+  { code: "social", nameAr: "السوشيال ميديا", nameEn: "Social", parentCode: null },
+  { code: "tuition", nameAr: "إدارة الرسوم", nameEn: "Tuition", parentCode: null },
+  { code: "tuition-pdf", nameAr: "تحميل الرسوم PDF", nameEn: "Tuition PDF", parentCode: null },
+  { code: "applications", nameAr: "طلبات التقديم", nameEn: "Applications", parentCode: null },
+  { code: "registration", nameAr: "شؤون التسجيل", nameEn: "Registration", parentCode: null },
+  { code: "required-documents", nameAr: "الوثائق المطلوبة", nameEn: "Required Documents", parentCode: "registration" },
+  { code: "users", nameAr: "إدارة المستخدمين", nameEn: "Users", parentCode: null },
+  { code: "results", nameAr: "إدارة النتائج", nameEn: "Results", parentCode: null },
+  { code: "grades", nameAr: "إدارة الدرجات", nameEn: "Grades", parentCode: null },
+  { code: "accounts", nameAr: "الحسابات", nameEn: "Accounts", parentCode: null },
+  { code: "student-accounts", nameAr: "حسابات الطلاب", nameEn: "Student Accounts", parentCode: null },
+];
+
+async function hasParentCodeColumn(): Promise<boolean> {
+  const colRes = await query(
+    `SELECT 1
+     FROM information_schema.columns
+     WHERE table_name = 'admin_pages' AND column_name = 'parent_code'
+     LIMIT 1`
   );
-  const pages = res.rows.map((r) => {
+  return colRes.rows.length > 0;
+}
+
+async function ensureRequiredAdminPages(existingCodes: Set<string>) {
+  const missing = REQUIRED_PAGES.filter((p) => !existingCodes.has(p.code));
+  if (missing.length === 0) return;
+
+  const hasParentCode = await hasParentCodeColumn();
+
+  for (const page of missing) {
+    if (hasParentCode) {
+      await query(
+        `INSERT INTO admin_pages (code, name_ar, name_en, parent_code)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (code) DO NOTHING`,
+        [page.code, page.nameAr, page.nameEn ?? null, page.parentCode ?? null]
+      );
+    } else {
+      await query(
+        `INSERT INTO admin_pages (code, name_ar, name_en)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (code) DO NOTHING`,
+        [page.code, page.nameAr, page.nameEn ?? null]
+      );
+    }
+  }
+}
+
+async function fetchAdminPages() {
+  const hasParentCode = await hasParentCodeColumn();
+  if (hasParentCode) {
+    const res = await query(
+      `SELECT id, code, name_ar, name_en, parent_code, created_at, updated_at
+       FROM admin_pages
+       ORDER BY 
+         CASE WHEN parent_code IS NULL THEN 0 ELSE 1 END,
+         COALESCE(parent_code, code),
+         name_ar`
+    );
+    return res.rows;
+  }
+  const res = await query(
+    `SELECT id, code, name_ar, name_en, created_at, updated_at
+     FROM admin_pages
+     ORDER BY name_ar`
+  );
+  return res.rows.map((r) => ({ ...r, parent_code: null }));
+}
+
+export async function getAllAdminPages(): Promise<AdminPageRow[]> {
+  let rows = await fetchAdminPages();
+  const existingCodes = new Set(rows.map((r) => String(r.code)));
+  await ensureRequiredAdminPages(existingCodes);
+  rows = await fetchAdminPages();
+
+  const pages = rows.map((r) => {
     // قراءة parentCode من قاعدة البيانات (ديناميكي)
     // Fallback إلى CHILD_TO_PARENT للتوافق مع البيانات القديمة
     const parentCode = r.parent_code ? String(r.parent_code) : (CHILD_TO_PARENT[r.code] || null);
@@ -134,11 +210,17 @@ export async function getAllAdminPages(): Promise<AdminPageRow[]> {
 }
 
 export async function getAdminPageByCode(code: string): Promise<AdminPageRow | null> {
+  const hasParentCode = await hasParentCodeColumn();
   const res = await query(
-    `SELECT id, code, name_ar, name_en, parent_code, created_at, updated_at
-     FROM admin_pages
-     WHERE code = $1
-     LIMIT 1`,
+    hasParentCode
+      ? `SELECT id, code, name_ar, name_en, parent_code, created_at, updated_at
+         FROM admin_pages
+         WHERE code = $1
+         LIMIT 1`
+      : `SELECT id, code, name_ar, name_en, created_at, updated_at
+         FROM admin_pages
+         WHERE code = $1
+         LIMIT 1`,
     [code]
   );
   if (res.rows.length === 0) return null;

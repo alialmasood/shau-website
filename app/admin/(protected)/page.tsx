@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
-import { canAdmin } from "@/lib/adminAuthz";
+import { canAdmin, getAccessiblePages } from "@/lib/adminAuthz";
 import { getDashboardStats } from "@/lib/dashboardStats";
-import AdminNav from "./AdminNav";
+import AdminNavConditional from "./AdminNavConditional";
 
 function formatLastUpdated(iso: string | null): string {
   if (!iso) return "—";
@@ -34,9 +34,29 @@ export default async function AdminDashboardPage() {
     }
   }
 
-  // التحقق من الصلاحية على صفحة admin
+  const accessiblePages = await getAccessiblePages();
   const hasAccess = await canAdmin("admin", "access");
   if (!hasAccess) {
+    if (accessiblePages.length > 0) {
+      const pageToPath: Record<string, string> = {
+        admin: "/admin",
+        news: "/admin/news",
+        ticker: "/admin/ticker",
+        programs: "/admin/programs",
+        social: "/admin/social-media",
+        tuition: "/admin/tuition-fees",
+        applications: "/admin/applications",
+        registration: "/admin/registration-affairs",
+        "required-documents": "/admin/registration-affairs/required-documents",
+        users: "/admin/users",
+        results: "/admin/results",
+        grades: "/admin/grades",
+        accounts: "/admin/accounts",
+        "student-accounts": "/admin/student-accounts",
+      };
+      const target = pageToPath[accessiblePages[0]] || "/admin";
+      redirect(target);
+    }
     return (
       <div className="w-full bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -155,7 +175,7 @@ export default async function AdminDashboardPage() {
       {/* القوائم السريعة */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-neutral-900">القوائم السريعة</h2>
-        <AdminNav />
+        <AdminNavConditional />
       </div>
     </div>
   );
