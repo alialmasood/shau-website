@@ -61,6 +61,43 @@ function SearchIcon({ className }: { className?: string }) {
   );
 }
 
+function normalizeYouTubeId(rawUrl: string | null) {
+  if (!rawUrl) return null;
+  const trimmed = String(rawUrl).trim();
+  if (!trimmed) return null;
+
+  let urlToParse = trimmed;
+  if (!/^https?:\/\//i.test(urlToParse)) {
+    urlToParse = `https://${urlToParse}`;
+  }
+
+  try {
+    const u = new URL(urlToParse);
+    const host = u.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const id = u.pathname.replace(/^\//, "").split("/")[0];
+      return id || null;
+    }
+
+    if (host.endsWith("youtube.com")) {
+      if (u.pathname === "/watch") {
+        return u.searchParams.get("v");
+      }
+      if (u.pathname.startsWith("/embed/")) {
+        return u.pathname.replace("/embed/", "").split("/")[0] || null;
+      }
+      if (u.pathname.startsWith("/shorts/")) {
+        return u.pathname.replace("/shorts/", "").split("/")[0] || null;
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 export type NewsListItemUI = {
   id: string;
   title: string;
@@ -69,6 +106,7 @@ export type NewsListItemUI = {
   dateLabel: string;
   coverImageId: string | null;
   featured?: boolean;
+  videoUrl?: string | null;
 };
 
 function getImageSrc(coverImageId: string | null) {
@@ -86,6 +124,10 @@ function NewsCard({
   basePath: "/ar" | "/en";
   readNews: string;
 }) {
+  const youtubeId = normalizeYouTubeId(news.videoUrl ?? null);
+  const youtubeEmbed = youtubeId
+    ? `https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=1&mute=1&playsinline=1`
+    : null;
   return (
     <Link
       href={`${basePath}/${news.id}`}
@@ -98,13 +140,23 @@ function NewsCard({
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#31BD9C] via-[#2aa88a] to-[#31BD9C] z-10" />
 
       <div className="relative w-full overflow-hidden aspect-video">
-        <Image
-          src={getImageSrc(news.coverImageId)}
-          alt={news.title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
-          unoptimized
-        />
+        {youtubeEmbed ? (
+          <iframe
+            src={youtubeEmbed}
+            title={news.title}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <Image
+            src={getImageSrc(news.coverImageId)}
+            alt={news.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            unoptimized
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <div className="absolute top-3 right-3 z-20">
           <span className="px-3 py-1 bg-[#31BD9C] text-white text-xs font-semibold rounded-full backdrop-blur-sm">
@@ -161,6 +213,10 @@ function FeaturedNewsCard({
   basePath: "/ar" | "/en";
   readNews: string;
 }) {
+  const youtubeId = normalizeYouTubeId(news.videoUrl ?? null);
+  const youtubeEmbed = youtubeId
+    ? `https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=1&mute=1&playsinline=1`
+    : null;
   return (
     <Link
       href={`${basePath}/${news.id}`}
@@ -173,13 +229,23 @@ function FeaturedNewsCard({
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#31BD9C] via-[#2aa88a] to-[#31BD9C] z-10" />
 
       <div className="relative w-full overflow-hidden aspect-video lg:aspect-[16/10]">
-        <Image
-          src={getImageSrc(news.coverImageId)}
-          alt={news.title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
-          unoptimized
-        />
+        {youtubeEmbed ? (
+          <iframe
+            src={youtubeEmbed}
+            title={news.title}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <Image
+            src={getImageSrc(news.coverImageId)}
+            alt={news.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            unoptimized
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <div className="absolute top-3 right-3 z-20">
           <span className="px-3 py-1 bg-[#31BD9C] text-white text-xs font-semibold rounded-full backdrop-blur-sm">

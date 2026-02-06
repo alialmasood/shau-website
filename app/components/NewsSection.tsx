@@ -16,6 +16,43 @@ function formatDate(iso: string | null, locale: Locale) {
   }
 }
 
+function normalizeYouTubeId(rawUrl: string | null) {
+  if (!rawUrl) return null;
+  const trimmed = String(rawUrl).trim();
+  if (!trimmed) return null;
+
+  let urlToParse = trimmed;
+  if (!/^https?:\/\//i.test(urlToParse)) {
+    urlToParse = `https://${urlToParse}`;
+  }
+
+  try {
+    const u = new URL(urlToParse);
+    const host = u.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const id = u.pathname.replace(/^\//, "").split("/")[0];
+      return id || null;
+    }
+
+    if (host.endsWith("youtube.com")) {
+      if (u.pathname === "/watch") {
+        return u.searchParams.get("v");
+      }
+      if (u.pathname.startsWith("/embed/")) {
+        return u.pathname.replace("/embed/", "").split("/")[0] || null;
+      }
+      if (u.pathname.startsWith("/shorts/")) {
+        return u.pathname.replace("/shorts/", "").split("/")[0] || null;
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 export default async function NewsSection({ locale }: { locale: Locale }) {
   const t = getTranslations(locale);
   const items = await getLatestPublishedNews(4, locale);
@@ -32,7 +69,12 @@ export default async function NewsSection({ locale }: { locale: Locale }) {
 
         {/* بطاقات الأخبار: موبايل = flex أفقي سحب، ديسكتوب = grid */}
         <div className="flex overflow-x-auto gap-4 md:grid md:grid-cols-4 md:gap-6 lg:gap-8 snap-x snap-mandatory md:overflow-visible md:snap-none scrollbar-hide pb-2 md:pb-0">
-          {items.map((news) => (
+          {items.map((news) => {
+            const youtubeId = normalizeYouTubeId(news.videoUrl ?? null);
+            const youtubeEmbed = youtubeId
+              ? `https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=1&mute=1&playsinline=1`
+              : null;
+            return (
             <Link
               key={news.id}
               href={`/${locale}/${news.id}`}
@@ -41,15 +83,25 @@ export default async function NewsSection({ locale }: { locale: Locale }) {
               {/* الشريط الملون من الأعلى */}
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#31BD9C] via-[#2aa88a] to-[#31BD9C] z-10"></div>
 
-              {/* الصورة */}
+              {/* الصورة / الفيديو */}
               <div className="relative w-full h-48 sm:h-56 md:h-64 overflow-hidden">
-                <Image
-                  src={news.coverImageId ? `/api/media/${news.coverImageId}` : "/hero-image-1.jpg"}
-                  alt={news.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  unoptimized
-                />
+                {youtubeEmbed ? (
+                  <iframe
+                    src={youtubeEmbed}
+                    title={news.title}
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <Image
+                    src={news.coverImageId ? `/api/media/${news.coverImageId}` : "/hero-image-1.jpg"}
+                    alt={news.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    unoptimized
+                  />
+                )}
                 {/* Overlay متدرج */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
@@ -98,7 +150,8 @@ export default async function NewsSection({ locale }: { locale: Locale }) {
               {/* تأثير إضاءة عند hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#31BD9C]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             </Link>
-          ))}
+            );
+          })}
         </div>
 
         {/* زر عرض المزيد */}

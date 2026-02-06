@@ -49,6 +49,7 @@ export async function GET(request: Request) {
       dateLabel: formatDate(n.publishedAt, locale),
       coverImageId: n.coverImageId,
       featured: n.featured,
+      videoUrl: n.videoUrl,
     })),
   });
 }

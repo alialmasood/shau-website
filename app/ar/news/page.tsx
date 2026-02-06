@@ -34,6 +34,7 @@ export default async function ArNewsPage() {
           dateLabel: formatDate(n.publishedAt, "ar"),
           coverImageId: n.coverImageId,
           featured: n.featured,
+          videoUrl: n.videoUrl,
         })),
       }}
       locale="ar"

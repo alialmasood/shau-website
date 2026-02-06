@@ -34,6 +34,7 @@ export default async function EnNewsPage() {
           dateLabel: formatDate(n.publishedAt, "en"),
           coverImageId: n.coverImageId,
           featured: n.featured,
+          videoUrl: n.videoUrl,
         })),
       }}
       locale="en"

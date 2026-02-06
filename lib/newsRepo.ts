@@ -9,6 +9,7 @@ export type PublicNewsListItem = {
   publishedAt: string | null; // ISO
   coverImageId: string | null;
   featured: boolean;
+  videoUrl: string | null;
 };
 
 export type PublicNewsDetails = {
@@ -76,7 +77,7 @@ export async function getPublishedNewsPage(params: {
   const total = Number(totalRes.rows[0]?.total ?? 0);
 
   const listRes = await query(
-    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured
+    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured, video_url
      FROM news
      ${whereSql}
      ORDER BY featured DESC, publish_date DESC NULLS LAST, created_at DESC
@@ -96,6 +97,7 @@ export async function getPublishedNewsPage(params: {
       publishedAt,
       coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
       featured: Boolean(r.featured),
+      videoUrl: r.video_url ? String(r.video_url) : null,
     } satisfies PublicNewsListItem;
   });
 
@@ -104,7 +106,7 @@ export async function getPublishedNewsPage(params: {
 
 export async function getPublishedNewsList(locale: "ar" | "en" = "ar") {
   const res = await query(
-    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured
+    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured, video_url
      FROM news
      WHERE is_published = true
      ORDER BY featured DESC, publish_date DESC NULLS LAST, created_at DESC
@@ -123,13 +125,14 @@ export async function getPublishedNewsList(locale: "ar" | "en" = "ar") {
       publishedAt,
       coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
       featured: Boolean(r.featured),
+      videoUrl: r.video_url ? String(r.video_url) : null,
     } satisfies PublicNewsListItem;
   });
 }
 
 export async function getLatestPublishedNews(limit: number, locale: "ar" | "en" = "ar") {
   const res = await query(
-    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured
+    `SELECT id, title, title_en, excerpt, excerpt_en, category, publish_date, cover_image_id, featured, video_url
      FROM news
      WHERE is_published = true
      ORDER BY featured DESC, publish_date DESC NULLS LAST, created_at DESC
@@ -149,6 +152,7 @@ export async function getLatestPublishedNews(limit: number, locale: "ar" | "en" 
       publishedAt,
       coverImageId: r.cover_image_id ? String(r.cover_image_id) : null,
       featured: Boolean(r.featured),
+      videoUrl: r.video_url ? String(r.video_url) : null,
     } satisfies PublicNewsListItem;
   });
 }
