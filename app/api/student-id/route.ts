@@ -66,13 +66,41 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const dob = new Date(dobRaw);
-  const expiryDate = expiryRaw ? new Date(expiryRaw) : new Date();
-  if (Number.isNaN(dob.getTime()) || Number.isNaN(expiryDate.getTime())) {
+  function toDateOnlyString(date: Date): string {
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function normalizeDateOnly(value: string): string | null {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    const parts = raw.split(/[\/\-]/).map((p) => p.trim());
+    if (parts.length === 3) {
+      const [d, m, y] = parts.map((p) => Number(p));
+      if (!Number.isNaN(d) && !Number.isNaN(m) && !Number.isNaN(y)) {
+        const mm = String(m).padStart(2, "0");
+        const dd = String(d).padStart(2, "0");
+        return `${y}-${mm}-${dd}`;
+      }
+    }
+    const fallback = new Date(raw);
+    if (Number.isNaN(fallback.getTime())) return null;
+    return toDateOnlyString(fallback);
+  }
+
+  const dob = normalizeDateOnly(dobRaw);
+  if (!dob) {
     return NextResponse.json({ error: "Invalid dates" }, { status: 400 });
   }
-  if (!expiryRaw) {
-    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+
+  let expiryDate = normalizeDateOnly(expiryRaw || "");
+  if (!expiryDate) {
+    const next = new Date();
+    next.setFullYear(next.getFullYear() + 1);
+    expiryDate = toDateOnlyString(next);
   }
 
   const saved = await upsertStudentIdCard({

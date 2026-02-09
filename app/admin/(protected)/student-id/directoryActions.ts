@@ -22,13 +22,23 @@ function normalizeHeader(text: string): string {
     .replace(/[^\w_]/g, "");
 }
 
-function parseDob(value: unknown): Date | null {
+function toDateOnlyString(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function parseDob(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return toDateOnlyString(value);
   if (typeof value === "number") {
     const parsed = XLSX.SSF.parse_date_code(value);
     if (!parsed) return null;
-    return new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d));
+    const y = parsed.y;
+    const m = String(parsed.m).padStart(2, "0");
+    const d = String(parsed.d).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   }
   const raw = String(value).trim();
   if (!raw) return null;
@@ -37,11 +47,13 @@ function parseDob(value: unknown): Date | null {
   if (parts.length === 3) {
     const [d, m, y] = parts.map((p) => Number(p));
     if (!Number.isNaN(d) && !Number.isNaN(m) && !Number.isNaN(y)) {
-      return new Date(Date.UTC(y, m - 1, d));
+      const mm = String(m).padStart(2, "0");
+      const dd = String(d).padStart(2, "0");
+      return `${y}-${mm}-${dd}`;
     }
   }
   const fallback = new Date(raw);
-  return Number.isNaN(fallback.getTime()) ? null : fallback;
+  return Number.isNaN(fallback.getTime()) ? null : toDateOnlyString(fallback);
 }
 
 export async function importStudentDirectory(fileBase64: string): Promise<ImportDirectoryResult> {

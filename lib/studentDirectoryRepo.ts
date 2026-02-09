@@ -16,7 +16,7 @@ export type StudentDirectoryRow = {
 type UpsertStudentDirectoryInput = {
   nameAr: string;
   nameEn: string;
-  dob: Date;
+  dob: string;
   address: string;
   bloodType: string;
   department: string;
@@ -28,7 +28,7 @@ function mapRow(r: { [k: string]: unknown }): StudentDirectoryRow {
     id: String(r.id),
     nameAr: String(r.name_ar),
     nameEn: String(r.name_en),
-    dob: r.dob ? new Date(r.dob as string).toISOString() : "",
+    dob: r.dob ? String(r.dob) : "",
     address: String(r.address),
     bloodType: String(r.blood_type),
     department: String(r.department),

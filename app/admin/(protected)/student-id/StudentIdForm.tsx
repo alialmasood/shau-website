@@ -433,18 +433,23 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
   function formatDobForInput(iso: string): string {
     if (!iso) return "";
     const str = String(iso).trim();
-    if (str.length >= 10) {
-      return str.slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    if (/^\d{4}-\d{2}-\d{2}T/.test(str)) return str.slice(0, 10);
+    const parts = str.split(/[\/\-]/).map((p) => p.trim());
+    if (parts.length === 3) {
+      const [d, m, y] = parts.map((p) => Number(p));
+      if (!Number.isNaN(d) && !Number.isNaN(m) && !Number.isNaN(y)) {
+        const mm = String(m).padStart(2, "0");
+        const dd = String(d).padStart(2, "0");
+        return `${y}-${mm}-${dd}`;
+      }
     }
-    try {
-      const d = new Date(str);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    } catch {
-      return str;
-    }
+    const d = new Date(str);
+    if (Number.isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 
   async function applySuggestion(s: DirectorySuggestion) {

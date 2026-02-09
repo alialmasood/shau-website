@@ -22,7 +22,7 @@ type UpsertStudentIdCardInput = {
   serial: string;
   nameAr: string;
   nameEn: string;
-  dob: Date;
+  dob: string;
   address: string;
   addressEn: string;
   bloodType: string;
@@ -30,7 +30,7 @@ type UpsertStudentIdCardInput = {
   departmentEn: string;
   stage: string;
   stageEn: string;
-  expiryDate: Date;
+  expiryDate: string;
   photoMediaId?: string | null;
 };
 
@@ -39,7 +39,7 @@ function mapRow(r: { [k: string]: unknown }): StudentIdCardRow {
     serial: String(r.serial),
     nameAr: String(r.name_ar),
     nameEn: String(r.name_en),
-    dob: r.dob ? new Date(r.dob as string).toISOString() : "",
+    dob: r.dob ? String(r.dob) : "",
     address: String(r.address),
     addressEn: String(r.address_en ?? ""),
     bloodType: String(r.blood_type),
@@ -47,7 +47,7 @@ function mapRow(r: { [k: string]: unknown }): StudentIdCardRow {
     departmentEn: String(r.department_en ?? ""),
     stage: String(r.stage),
     stageEn: String(r.stage_en ?? ""),
-    expiryDate: r.expiry_date ? new Date(r.expiry_date as string).toISOString() : "",
+    expiryDate: r.expiry_date ? String(r.expiry_date) : "",
     photoMediaId: r.photo_media_id ? String(r.photo_media_id) : null,
     createdAt: r.created_at ? new Date(r.created_at as string).toISOString() : "",
     updatedAt: r.updated_at ? new Date(r.updated_at as string).toISOString() : "",
