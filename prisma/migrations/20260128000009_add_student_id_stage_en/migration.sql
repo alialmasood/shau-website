@@ -1,0 +1,2 @@
+ALTER TABLE student_id_cards
+ADD COLUMN IF NOT EXISTS stage_en VARCHAR(50) NOT NULL DEFAULT '';

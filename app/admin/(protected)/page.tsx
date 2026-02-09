@@ -110,6 +110,14 @@ export default async function AdminDashboardPage() {
       ),
     },
     {
+      title: "هويات الطلبة",
+      value: "فتح",
+      href: "/admin/student-id",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10m-9 4h8m-9 4h6M5 7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7z" /></svg>
+      ),
+    },
+    {
       title: "آخر تحديث",
       value: formatLastUpdated(stats.lastUpdated),
       href: null,
@@ -144,22 +152,22 @@ export default async function AdminDashboardPage() {
         </div>
         <div className="flex flex-nowrap gap-4 overflow-x-auto pb-1">
           {cards.map((c) => {
-            const cn = "min-w-[220px] rounded-xl border border-neutral-200 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4 group";
+            const cn = "min-w-[170px] rounded-xl border border-neutral-200 bg-white p-3 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-2 group";
             const inner = (
               <>
                 <div className="flex items-center justify-between">
-                  <div className={`p-3 rounded-lg ${c.title === "آخر تحديث" ? "bg-neutral-100" : "bg-[#31BD9C]/10"} group-hover:scale-110 transition-transform`}>
+                  <div className={`p-1.5 rounded-lg ${c.title === "آخر تحديث" ? "bg-neutral-100" : "bg-[#31BD9C]/10"} group-hover:scale-110 transition-transform`}>
                     <span className={`${c.title === "آخر تحديث" ? "text-neutral-600" : "text-[#31BD9C]"}`}>{c.icon}</span>
                   </div>
                   {c.href && (
-                    <svg className="w-5 h-5 text-neutral-400 group-hover:text-[#31BD9C] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#31BD9C] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   )}
                 </div>
                 <div>
-                  <p className={`font-extrabold text-neutral-900 mb-1 ${c.title === "آخر تحديث" ? "text-xl" : "text-3xl"}`}>{c.value}</p>
-                  <p className="text-sm font-medium text-neutral-500">{c.title}</p>
+                  <p className={`font-extrabold text-neutral-900 mb-1 ${c.title === "آخر تحديث" ? "text-base" : "text-xl"}`}>{c.value}</p>
+                  <p className="text-[11px] font-medium text-neutral-500">{c.title}</p>
                 </div>
               </>
             );

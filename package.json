@@ -27,6 +27,7 @@
     "db:migrate-student-user-fields": "node scripts/run-student-user-fields-migration.js",
     "db:migrate-parent-code": "node scripts/run-parent-code-migration.js",
     "db:migrate-news-video": "node scripts/run-news-video-migration.js",
+    "db:migrate-student-id-cards": "node scripts/run-student-id-cards-migration.js",
     "db:add-missing-pages": "node scripts/add-missing-admin-pages.js",
     "db:seed": "node prisma/seed.js",
     "db:seed-rbac": "node scripts/seed-rbac.js",
@@ -45,9 +46,11 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
     "@prisma/client": "^7.2.0",
     "archiver": "^7.0.1",
     "bcryptjs": "^3.0.3",
+    "bwip-js": "^4.8.0",
     "dotenv": "^17.2.3",
     "next": "^16.1.1",
     "next-intl": "^4.7.0",
@@ -61,6 +64,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@types/archiver": "^6.0.4",
+    "@types/bwip-js": "^3.2.3",
     "@types/node": "^20",
     "@types/pg": "^8.10.9",
     "@types/qrcode": "^1.5.6",

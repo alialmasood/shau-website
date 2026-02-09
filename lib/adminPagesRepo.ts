@@ -69,6 +69,7 @@ const REQUIRED_PAGES: Array<{
   { code: "grades", nameAr: "إدارة الدرجات", nameEn: "Grades", parentCode: null },
   { code: "accounts", nameAr: "الحسابات", nameEn: "Accounts", parentCode: null },
   { code: "student-accounts", nameAr: "حسابات الطلاب", nameEn: "Student Accounts", parentCode: null },
+  { code: "student-id", nameAr: "هويات الطلبة", nameEn: "Student ID", parentCode: null },
 ];
 
 async function hasParentCodeColumn(): Promise<boolean> {

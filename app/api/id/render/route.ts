@@ -1,0 +1,64 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const serial = String(url.searchParams.get("serial") ?? "").trim();
+  const side = String(url.searchParams.get("side") ?? "").trim();
+
+  if (!serial || (side !== "ar" && side !== "en")) {
+    return NextResponse.json({ error: "Invalid params" }, { status: 400 });
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3020";
+  if (!baseUrl) {
+    return NextResponse.json({ error: "Missing base URL" }, { status: 500 });
+  }
+
+  let chromium: any;
+  try {
+    const playwright = await import("playwright");
+    chromium = playwright.chromium;
+  } catch (err) {
+    return NextResponse.json({ error: "Playwright not available" }, { status: 500 });
+  }
+
+  let browser: any;
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+      ],
+    });
+  } catch (err) {
+    return NextResponse.json({ error: "Failed to launch browser" }, { status: 500 });
+  }
+
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 1016, height: 638 },
+      deviceScaleFactor: 3,
+    });
+    const page = await context.newPage();
+    const target = `${baseUrl}/id-template/${encodeURIComponent(serial)}/${side}`;
+    await page.goto(target, { waitUntil: "networkidle" });
+    const buffer = await page.screenshot({ type: "png" });
+
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/png",
+        "Content-Disposition": `attachment; filename="id-${serial}-${side}.png"`,
+      },
+    });
+  } finally {
+    await browser.close();
+  }
+}

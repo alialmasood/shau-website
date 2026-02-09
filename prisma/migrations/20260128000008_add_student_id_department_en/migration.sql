@@ -1,0 +1,2 @@
+ALTER TABLE student_id_cards
+ADD COLUMN IF NOT EXISTS department_en VARCHAR(200) NOT NULL DEFAULT '';

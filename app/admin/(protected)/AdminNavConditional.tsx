@@ -159,6 +159,18 @@ const allNavItems = [
       </svg>
     ),
   },
+  {
+    href: "/admin/student-id",
+    label: "هويات الطلبة",
+    pageCode: "student-id",
+    variant: "secondary" as const,
+    title: "إدارة هويات الطلبة",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10m-9 4h8m-9 4h6M5 7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7z" />
+      </svg>
+    ),
+  },
 ];
 
 export default async function AdminNavConditional() {

@@ -89,7 +89,7 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
     ["news", "ticker", "programs", "social"].includes(item.pageCode)
   );
   const managementItems = filteredItems.filter((item) =>
-    ["tuition", "applications", "registration", "users", "results", "grades", "accounts", "student-accounts"].includes(item.pageCode)
+    ["tuition", "applications", "registration", "users", "results", "grades", "accounts", "student-accounts", "student-id"].includes(item.pageCode)
   );
 
   return (
@@ -156,10 +156,10 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
         )}
       </div>
 
-      {/* Desktop: المجموعات كبطاقات */}
-      <div className="hidden md:flex flex-wrap items-start gap-4">
+      {/* Desktop: المجموعات بدون بوكس */}
+      <div className="hidden md:flex flex-col gap-6 w-full">
         {contentItems.length > 0 && (
-          <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm flex-1 min-w-[280px] max-w-[500px]">
+          <div>
             <p className="text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3 px-1">المحتوى</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {contentItems.map((item) => (
@@ -178,9 +178,9 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
           </div>
         )}
         {managementItems.length > 0 && (
-          <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm flex-1 min-w-[280px] max-w-[500px]">
+          <div>
             <p className="text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3 px-1">الإدارة</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-rows-2 grid-flow-col auto-cols-max gap-2 overflow-x-auto pb-1">
               {managementItems.map((item) => (
                 <NavLink
                   key={item.href}

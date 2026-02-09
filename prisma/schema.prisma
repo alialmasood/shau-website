@@ -142,6 +142,7 @@ model Media {
   highSchoolCertificateFor RegistrationDocument[] @relation("HighSchoolCertificate")
   highSchoolCertificateBackFor RegistrationDocument[] @relation("HighSchoolCertificateBack")
   barcodeDocumentFor RegistrationDocument[] @relation("BarcodeDocument")
+  studentIdCardPhotos StudentIdCard[] @relation("StudentIdCardPhoto")
 
   @@map("media")
 }
@@ -177,6 +178,49 @@ model News {
   @@index([published, publishedAt])
   @@index([category])
   @@map("news")
+}
+
+model StudentIdCard {
+  serial       String   @id @db.VarChar(50)
+  nameAr       String   @map("name_ar") @db.VarChar(200)
+  nameEn       String   @map("name_en") @db.VarChar(200)
+  dob          DateTime @map("dob") @db.Date
+  address      String   @db.VarChar(300)
+  addressEn    String   @map("address_en") @db.VarChar(300)
+  bloodType    String   @map("blood_type") @db.VarChar(10)
+  department   String   @db.VarChar(200)
+  departmentEn String   @map("department_en") @db.VarChar(200)
+  stage        String   @db.VarChar(50)
+  stageEn      String   @map("stage_en") @db.VarChar(50)
+  expiryDate   DateTime @map("expiry_date") @db.Date
+  photoMediaId String?  @map("photo_media_id") @db.Uuid
+  photoMedia   Media?   @relation("StudentIdCardPhoto", fields: [photoMediaId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([department])
+  @@index([stage])
+  @@map("student_id_cards")
+}
+
+model StudentDirectory {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nameAr     String   @map("name_ar") @db.VarChar(200)
+  nameEn     String   @map("name_en") @db.VarChar(200)
+  dob        DateTime @map("dob") @db.Date
+  address    String   @db.VarChar(300)
+  bloodType  String   @map("blood_type") @db.VarChar(10)
+  department String   @db.VarChar(200)
+  stage      String   @db.VarChar(50)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([nameAr])
+  @@index([department])
+  @@index([stage])
+  @@unique([nameAr, dob, department])
+  @@map("student_directory")
 }
 
 model sessions {
