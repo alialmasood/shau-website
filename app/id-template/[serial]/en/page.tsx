@@ -39,7 +39,7 @@ export default async function IdTemplateEnPage({
   const photoUrl = card.photoMediaId ? `/api/media/${card.photoMediaId}` : null;
 
   return (
-    <div className="w-[1016px] h-[638px] bg-white">
+    <div className="w-[1024px] h-[640px] bg-white">
       <style>{`body{margin:0;}`}</style>
       <IdCardTemplate
         side="en"

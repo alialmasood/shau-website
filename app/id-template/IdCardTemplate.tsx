@@ -34,14 +34,15 @@ export default function IdCardTemplate({
 
   return (
     <div
-      className="relative w-[1016px] h-[638px] text-[#145f42]"
-      style={{
-        backgroundImage: `url(${bgUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      id="id-card-root"
+      className="relative w-[1024px] h-[640px] text-[#145f42] overflow-hidden"
     >
+      <img
+        src={bgUrl}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 w-full h-full object-fill"
+      />
       {isAr ? (
         <>
           <div className="absolute right-[300px] top-[208px] w-[240px] text-[32px] leading-[44px] font-black text-right whitespace-nowrap" dir="rtl">

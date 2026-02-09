@@ -84,7 +84,7 @@ export default async function StudentIdPreviewPage({
           <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm overflow-hidden">
             <div className="flex items-center justify-center">
               <div className="bg-white border border-neutral-200" style={{ width: "86mm", height: "54mm" }}>
-                <div className="origin-top-left" style={{ transform: "scale(0.32)" }}>
+                <div className="origin-top-left" style={{ transform: "scale(0.318)" }}>
               <IdCardTemplate
                 side="ar"
                 data={{
@@ -113,7 +113,7 @@ export default async function StudentIdPreviewPage({
           <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm overflow-hidden">
             <div className="flex items-center justify-center">
               <div className="bg-white border border-neutral-200" style={{ width: "86mm", height: "54mm" }}>
-                <div className="origin-top-left" style={{ transform: "scale(0.32)" }}>
+                <div className="origin-top-left" style={{ transform: "scale(0.318)" }}>
               <IdCardTemplate
                 side="en"
                 data={{

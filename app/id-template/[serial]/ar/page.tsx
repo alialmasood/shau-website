@@ -41,7 +41,7 @@ export default async function IdTemplateArPage({
   const dobNumeric = dobISO;
 
   return (
-    <div className="w-[1016px] h-[638px] bg-white">
+    <div className="w-[1024px] h-[640px] bg-white">
       <style>{`body{margin:0;}`}</style>
       <IdCardTemplate
         side="ar"

@@ -43,13 +43,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const context = await browser.newContext({
-      viewport: { width: 1016, height: 638 },
+      viewport: { width: 1024, height: 640 },
       deviceScaleFactor: 3,
     });
     const page = await context.newPage();
     const target = `${baseUrl}/id-template/${encodeURIComponent(serial)}/${side}`;
     await page.goto(target, { waitUntil: "networkidle" });
-    const buffer = await page.screenshot({ type: "png" });
+    await page.waitForTimeout(500);
+    const card = page.locator("#id-card-root");
+    await card.waitFor({ state: "visible" });
+    const buffer = await card.screenshot({ type: "png" });
 
     return new NextResponse(buffer, {
       status: 200,
