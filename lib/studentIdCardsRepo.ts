@@ -221,6 +221,30 @@ export async function getStudentIdCardsList({
   return res.rows.map(mapRow);
 }
 
+/** جلب كل البطاقات المطابقة للفلاتر (للتصدير، حد أقصى 10000) */
+export async function getStudentIdCardsForExport({
+  search,
+  department,
+  stage,
+}: {
+  search?: string;
+  department?: string;
+  stage?: string;
+} = {}): Promise<StudentIdCardRow[]> {
+  const maxExport = 10000;
+  const { where, params } = buildListConditions(search, department, stage);
+  params.push(maxExport);
+  const res = await query(
+    `SELECT serial, name_ar, name_en, dob, address, address_en, blood_type, department, department_en, stage, stage_en, expiry_date, photo_media_id, created_at, updated_at
+     FROM student_id_cards
+     ${where}
+     ORDER BY created_at DESC
+     LIMIT $${params.length}`,
+    params
+  );
+  return res.rows.map(mapRow);
+}
+
 export async function getStudentIdDepartmentsStats(): Promise<{ department: string; total: number }[]> {
   const res = await query(
     `SELECT department, COUNT(*)::int AS total

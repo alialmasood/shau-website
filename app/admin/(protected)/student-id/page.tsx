@@ -119,7 +119,24 @@ export default async function AdminStudentIdPage({
         <PreviewActions />
         <StudentDirectoryImport />
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-neutral-900 mb-4">قائمة الأسماء</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 className="text-lg font-bold text-neutral-900">قائمة الأسماء</h2>
+            {(() => {
+              const sp = new URLSearchParams();
+              if (searchQuery) sp.set("q", searchQuery);
+              if (departmentFilter) sp.set("department", departmentFilter);
+              if (stageFilter) sp.set("stage", stageFilter);
+              const exportHref = `/api/student-id/export-excel${sp.toString() ? `?${sp.toString()}` : ""}`;
+              return (
+                <a
+                  href={exportHref}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#31BD9C] text-white text-sm font-bold hover:bg-[#2aa88a] transition-colors"
+                >
+                  تصدير Excel {searchQuery || departmentFilter || stageFilter ? "(حسب الفلتر)" : "(الكل)"}
+                </a>
+              );
+            })()}
+          </div>
           <form className="mb-4" method="get">
             <input type="hidden" name="page" value="1" />
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
