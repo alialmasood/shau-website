@@ -401,7 +401,7 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            students: list.map((s) => ({
+            students: list.map((s: DirectorySuggestion) => ({
               nameAr: s.nameAr,
               dob: formatDobForInput(s.dob),
               department: mapDepartmentToOption(s.department),
