@@ -8,6 +8,7 @@ import StudentIdRowActions from "./StudentIdRowActions";
 import StudentDirectoryImport from "./StudentDirectoryImport";
 import {
   getStudentIdCardsCount,
+  getStudentIdCardsCountFiltered,
   getStudentIdCardsList,
   getStudentIdDepartmentsStats,
   getStudentIdStagesList,
@@ -17,7 +18,7 @@ import { getStudentDirectoryStats } from "@/lib/studentDirectoryRepo";
 export default async function AdminStudentIdPage({
   searchParams,
 }: {
-  searchParams: Promise<{ serial?: string; q?: string; department?: string; stage?: string }>;
+  searchParams: Promise<{ serial?: string; q?: string; department?: string; stage?: string; page?: string }>;
 }) {
   const user = await getCurrentAdminUser();
   if (!user) {
@@ -46,10 +47,20 @@ export default async function AdminStudentIdPage({
   const searchQuery = isEditing ? "" : String(params.q ?? "").trim();
   const departmentFilter = isEditing ? "" : String(params.department ?? "").trim();
   const stageFilter = isEditing ? "" : String(params.stage ?? "").trim();
+  const pageNum = Math.max(1, parseInt(String(params.page ?? "1"), 10) || 1);
+  const perPage = 10;
 
   const totalCards = await getStudentIdCardsCount();
+  const filteredTotal = await getStudentIdCardsCountFiltered({
+    search: searchQuery,
+    department: departmentFilter,
+    stage: stageFilter,
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / perPage));
+  const currentPage = Math.min(pageNum, totalPages);
   const latestCards = await getStudentIdCardsList({
-    limit: 50,
+    limit: perPage,
+    offset: (currentPage - 1) * perPage,
     search: searchQuery,
     department: departmentFilter,
     stage: stageFilter,
@@ -110,6 +121,7 @@ export default async function AdminStudentIdPage({
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-neutral-900 mb-4">قائمة الأسماء</h2>
           <form className="mb-4" method="get">
+            <input type="hidden" name="page" value="1" />
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
               <input
                 name="q"
@@ -158,9 +170,11 @@ export default async function AdminStudentIdPage({
                 )}
               </div>
             </div>
-            {(searchQuery || departmentFilter || stageFilter) && (
-              <p className="text-xs text-neutral-500 mt-2">عدد النتائج: {latestCards.length}</p>
-            )}
+            <p className="text-xs text-neutral-500 mt-2">
+              {filteredTotal > 0
+                ? `عرض ${latestCards.length} من ${filteredTotal} — الصفحة ${currentPage} من ${totalPages}`
+                : "لا توجد نتائج"}
+            </p>
           </form>
           {latestCards.length === 0 ? (
             <p className="text-sm text-neutral-500">لا توجد هويات بعد.</p>
@@ -212,6 +226,72 @@ export default async function AdminStudentIdPage({
               </table>
             </div>
           )}
+          {totalPages > 1 && (() => {
+            const base = "/admin/student-id";
+            const sp = new URLSearchParams();
+            if (params.serial) sp.set("serial", params.serial);
+            if (searchQuery) sp.set("q", searchQuery);
+            if (departmentFilter) sp.set("department", departmentFilter);
+            if (stageFilter) sp.set("stage", stageFilter);
+            const q = (p: number) => {
+              const s = new URLSearchParams(sp);
+              s.set("page", String(p));
+              return `${base}?${s.toString()}`;
+            };
+            return (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                {currentPage > 1 && (
+                  <Link
+                    href={q(currentPage - 1)}
+                    className="px-4 py-2 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                  >
+                    ← السابق
+                  </Link>
+                )}
+                <div className="flex items-center gap-1 flex-wrap justify-center">
+                  {(() => {
+                    const pages: (number | "ellipsis")[] = [];
+                    if (totalPages <= 7) {
+                      for (let i = 1; i <= totalPages; i++) pages.push(i);
+                    } else {
+                      pages.push(1);
+                      if (currentPage > 3) pages.push("ellipsis");
+                      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                        if (!pages.includes(i)) pages.push(i);
+                      }
+                      if (currentPage < totalPages - 2) pages.push("ellipsis");
+                      if (totalPages > 1) pages.push(totalPages);
+                    }
+                    return pages.map((p, i) =>
+                      p === "ellipsis" ? (
+                        <span key={`e-${i}`} className="px-1 text-neutral-400">…</span>
+                      ) : (
+                        <Link
+                          key={p}
+                          href={q(p)}
+                          className={`min-w-[2.25rem] px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                            p === currentPage
+                              ? "bg-[#31BD9C] text-white"
+                              : "border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                          }`}
+                        >
+                          {p}
+                        </Link>
+                      )
+                    );
+                  })()}
+                </div>
+                {currentPage < totalPages && (
+                  <Link
+                    href={q(currentPage + 1)}
+                    className="px-4 py-2 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                  >
+                    التالي →
+                  </Link>
+                )}
+              </div>
+            );
+          })()}
         </div>
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
           <StudentIdForm initialSerial={params.serial} />

@@ -145,25 +145,16 @@ export async function getStudentIdCardsCount(): Promise<number> {
   return Number(res.rows[0]?.total ?? 0);
 }
 
-export async function getStudentIdCardsList({
-  limit = 50,
-  search,
-  department,
-  stage,
-}: {
-  limit?: number;
-  search?: string;
-  department?: string;
-  stage?: string;
-} = {}): Promise<StudentIdCardRow[]> {
-  const safeLimit = Math.max(1, Math.min(200, Number(limit) || 50));
+function buildListConditions(
+  search?: string,
+  department?: string,
+  stage?: string
+): { where: string; params: Array<string | number> } {
   const q = String(search || "").trim();
   const dept = String(department || "").trim();
   const stg = String(stage || "").trim();
-
   const conditions: string[] = [];
   const params: Array<string | number> = [];
-
   if (q) {
     params.push(`%${q}%`);
     const idx = params.length;
@@ -177,17 +168,54 @@ export async function getStudentIdCardsList({
     params.push(stg);
     conditions.push(`stage = $${params.length}`);
   }
-
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  return { where, params };
+}
+
+/** عدد البطاقات بعد تطبيق نفس فلاتر القائمة (بحث، قسم، مرحلة) */
+export async function getStudentIdCardsCountFiltered({
+  search,
+  department,
+  stage,
+}: {
+  search?: string;
+  department?: string;
+  stage?: string;
+} = {}): Promise<number> {
+  const { where, params } = buildListConditions(search, department, stage);
+  const res = await query(
+    `SELECT COUNT(*)::int AS total FROM student_id_cards ${where}`,
+    params
+  );
+  return Number(res.rows[0]?.total ?? 0);
+}
+
+export async function getStudentIdCardsList({
+  limit = 50,
+  offset = 0,
+  search,
+  department,
+  stage,
+}: {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  department?: string;
+  stage?: string;
+} = {}): Promise<StudentIdCardRow[]> {
+  const safeLimit = Math.max(1, Math.min(200, Number(limit) || 50));
+  const safeOffset = Math.max(0, Number(offset) || 0);
+  const { where, params } = buildListConditions(search, department, stage);
   params.push(safeLimit);
   const limitIdx = params.length;
-
+  params.push(safeOffset);
+  const offsetIdx = params.length;
   const res = await query(
     `SELECT serial, name_ar, name_en, dob, address, address_en, blood_type, department, department_en, stage, stage_en, expiry_date, photo_media_id, created_at, updated_at
      FROM student_id_cards
      ${where}
      ORDER BY created_at DESC
-     LIMIT $${limitIdx}`,
+     LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
     params
   );
   return res.rows.map(mapRow);
