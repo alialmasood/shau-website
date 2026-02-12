@@ -34,12 +34,24 @@ type UpsertStudentIdCardInput = {
   photoMediaId?: string | null;
 };
 
+function toDateOnly(v: unknown): string {
+  if (v == null || v === "") return "";
+  const s = String(v).trim();
+  if (/^\d{4}-\d{2}-\d{2}(?:T|$)/.test(s)) return s.slice(0, 10);
+  const d = v instanceof Date ? v : new Date(s);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function mapRow(r: { [k: string]: unknown }): StudentIdCardRow {
   return {
     serial: String(r.serial),
     nameAr: String(r.name_ar),
     nameEn: String(r.name_en),
-    dob: r.dob ? String(r.dob) : "",
+    dob: toDateOnly(r.dob),
     address: String(r.address),
     addressEn: String(r.address_en ?? ""),
     bloodType: String(r.blood_type),
@@ -47,7 +59,7 @@ function mapRow(r: { [k: string]: unknown }): StudentIdCardRow {
     departmentEn: String(r.department_en ?? ""),
     stage: String(r.stage),
     stageEn: String(r.stage_en ?? ""),
-    expiryDate: r.expiry_date ? String(r.expiry_date) : "",
+    expiryDate: toDateOnly(r.expiry_date),
     photoMediaId: r.photo_media_id ? String(r.photo_media_id) : null,
     createdAt: r.created_at ? new Date(r.created_at as string).toISOString() : "",
     updatedAt: r.updated_at ? new Date(r.updated_at as string).toISOString() : "",
@@ -102,6 +114,27 @@ export async function getStudentIdCardBySerial(serial: string): Promise<StudentI
      WHERE serial = $1
      LIMIT 1`,
     [s]
+  );
+  if (res.rows.length === 0) return null;
+  return mapRow(res.rows[0]);
+}
+
+/** يتحقق إن كان طالب (نفس الاسم + تاريخ الميلاد + القسم) لديه هوية مصدرة، ويرجع البطاقة إن وُجدت */
+export async function getStudentIdCardByStudent(
+  nameAr: string,
+  dob: string,
+  department: string
+): Promise<StudentIdCardRow | null> {
+  const name = String(nameAr ?? "").trim();
+  const dept = String(department ?? "").trim();
+  const dateOnly = toDateOnly(dob);
+  if (!name || !dateOnly || !dept) return null;
+  const res = await query(
+    `SELECT serial, name_ar, name_en, dob, address, address_en, blood_type, department, department_en, stage, stage_en, expiry_date, photo_media_id, created_at, updated_at
+     FROM student_id_cards
+     WHERE TRIM(name_ar) = $1 AND department = $2 AND (dob::text LIKE $3 OR dob = $4::date)
+     LIMIT 1`,
+    [name, dept, `${dateOnly}%`, dateOnly]
   );
   if (res.rows.length === 0) return null;
   return mapRow(res.rows[0]);

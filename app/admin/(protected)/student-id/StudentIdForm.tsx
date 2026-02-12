@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -61,6 +62,7 @@ type DirectorySuggestion = {
 };
 
 export default function StudentIdForm({ initialSerial }: { initialSerial?: string }) {
+  const router = useRouter();
   const [form, setForm] = useState({
     nameAr: "",
     nameEn: "",
@@ -78,6 +80,7 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [nameSuggestions, setNameSuggestions] = useState<DirectorySuggestion[]>([]);
+  const [suggestionIssuedSerials, setSuggestionIssuedSerials] = useState<(string | null)[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [autoRemoveBg, setAutoRemoveBg] = useState(true);
   const [removingBg, setRemovingBg] = useState(false);
@@ -141,6 +144,15 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
     setSuccess(null);
     setLoading(true);
     try {
+      if (!initialSerial) {
+        const checkRes = await fetch(
+          `/api/student-id/check-issued?nameAr=${encodeURIComponent(form.nameAr.trim())}&dob=${encodeURIComponent(form.dob)}&department=${encodeURIComponent(form.department.trim())}`
+        );
+        const checkJson = await checkRes.json().catch(() => ({}));
+        if (checkJson.hasIssued) {
+          throw new Error("هذا الطالب لديه هوية مصدرة مسبقاً. احذفها من قائمة الأسماء أولاً ثم أعد المحاولة.");
+        }
+      }
       let photoMediaId: string | null = existingPhotoId;
       if (photoFile) {
         const fd = new FormData();
@@ -166,6 +178,7 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
         throw new Error(json?.error || "فشل حفظ بيانات الهوية");
       }
       setSuccess("تم حفظ بيانات الهوية بنجاح.");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
     } finally {
@@ -183,13 +196,16 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
       const res = await fetch(`/api/student-id/${encodeURIComponent(s)}`);
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(json?.error || "فشل تحميل بيانات الهوية");
+        const msg = res.status === 404
+          ? "البطاقة غير موجودة أو تم حذفها."
+          : (json?.error || "فشل تحميل بيانات الهوية");
+        throw new Error(msg);
       }
       const card = json.card;
       setForm({
         nameAr: String(card.nameAr || ""),
         nameEn: String(card.nameEn || ""),
-        dob: String(card.dob || "").slice(0, 10),
+        dob: formatDobForInput(card.dob ?? ""),
         address: String(card.address || ""),
         addressEn: String(card.addressEn || ""),
         bloodType: String(card.bloodType || ""),
@@ -368,15 +384,35 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
     const q = form.nameAr.trim();
     if (q.length < 2) {
       setNameSuggestions([]);
+      setSuggestionIssuedSerials([]);
       return;
     }
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/student-directory/search?q=${encodeURIComponent(q)}`);
         const json = await res.json().catch(() => ({}));
-        setNameSuggestions(Array.isArray(json.results) ? json.results : []);
+        const list = Array.isArray(json.results) ? json.results : [];
+        setNameSuggestions(list);
+        if (list.length === 0) {
+          setSuggestionIssuedSerials([]);
+          return;
+        }
+        const batchRes = await fetch("/api/student-id/check-issued-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            students: list.map((s) => ({
+              nameAr: s.nameAr,
+              dob: formatDobForInput(s.dob),
+              department: mapDepartmentToOption(s.department),
+            })),
+          }),
+        });
+        const batchJson = await batchRes.json().catch(() => ({}));
+        setSuggestionIssuedSerials(Array.isArray(batchJson.serials) ? batchJson.serials : []);
       } catch {
         setNameSuggestions([]);
+        setSuggestionIssuedSerials([]);
       }
     }, 300);
     return () => clearTimeout(t);
@@ -452,7 +488,13 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
     return `${year}-${month}-${day}`;
   }
 
-  async function applySuggestion(s: DirectorySuggestion) {
+  async function applySuggestion(s: DirectorySuggestion, index: number) {
+    const issuedSerial = suggestionIssuedSerials[index] ?? null;
+    if (issuedSerial) {
+      setError("هذا الطالب لديه هوية مصدرة مسبقاً. احذفها من قائمة الأسماء أولاً ثم أعد المحاولة.");
+      setShowSuggestions(false);
+      return;
+    }
     const mappedDepartment = mapDepartmentToOption(s.department);
     const mappedStage = mapStageToOption(s.stage);
     const mappedBloodType = normalizeBloodType(s.bloodType);
@@ -530,18 +572,28 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
           />
           {showSuggestions && nameSuggestions.length > 0 && (
             <div className="absolute z-20 mt-2 w-full rounded-xl border border-neutral-200 bg-white shadow-lg max-h-56 overflow-y-auto">
-              {nameSuggestions.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => applySuggestion(s)}
-                  className="w-full text-start px-4 py-2 hover:bg-neutral-50"
-                >
-                  <div className="text-sm font-semibold text-neutral-900">{s.nameAr}</div>
-                  <div className="text-xs text-neutral-500">{s.department} • {s.stage}</div>
-                </button>
-              ))}
+              {nameSuggestions.map((s, index) => {
+                const issuedSerial = suggestionIssuedSerials[index] ?? null;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applySuggestion(s, index)}
+                    className={`w-full text-start px-4 py-2 hover:bg-neutral-50 border-b border-neutral-100 last:border-b-0 ${issuedSerial ? "bg-emerald-50/80" : ""}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-semibold text-neutral-900">{s.nameAr}</div>
+                      {issuedSerial && (
+                        <span className="shrink-0 text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                          تم الإصدار
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-neutral-500 mt-0.5">{s.department} • {s.stage}</div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

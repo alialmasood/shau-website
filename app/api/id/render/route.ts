@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getStudentIdCardBySerial } from "@/lib/studentIdCardsRepo";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
+
+function safeFileName(name: string): string {
+  return name
+    .replace(/[/\\:*?"<>|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim() || "هوية";
+}
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -12,6 +20,11 @@ export async function GET(request: NextRequest) {
   if (!serial || (side !== "ar" && side !== "en")) {
     return NextResponse.json({ error: "Invalid params" }, { status: 400 });
   }
+
+  const card = await getStudentIdCardBySerial(serial);
+  const baseName = card ? safeFileName(card.nameAr) : serial;
+  const sideLabel = side === "ar" ? "وجه عربي" : "وجه انكليزي";
+  const downloadName = `${baseName} - ${sideLabel}.png`;
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3020";
   if (!baseUrl) {
@@ -58,7 +71,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "image/png",
-        "Content-Disposition": `attachment; filename="id-${serial}-${side}.png"`,
+        "Content-Disposition": `attachment; filename="${serial}-${side}.png"; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
       },
     });
   } finally {
