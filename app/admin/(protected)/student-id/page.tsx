@@ -5,6 +5,7 @@ import { canAdmin } from "@/lib/adminAuthz";
 import StudentIdForm from "./StudentIdForm";
 import PreviewActions from "./PreviewActions";
 import StudentIdRowActions from "./StudentIdRowActions";
+import DownloadBothFacesButton from "./DownloadBothFacesButton";
 import StudentDirectoryImport from "./StudentDirectoryImport";
 import {
   getStudentIdCardsCount,
@@ -234,6 +235,7 @@ export default async function AdminStudentIdPage({
                           >
                             PNG EN
                           </a>
+                          <DownloadBothFacesButton serial={card.serial} />
                           <StudentIdRowActions serial={card.serial} />
                         </div>
                       </td>
