@@ -31,9 +31,11 @@ export async function GET(request: NextRequest) {
     data: {
       serial: card.serial,
       name: card.nameAr,
+      nameEn: card.nameEn,
       department: card.department,
       stage: card.stage,
       expiryDate: card.expiryDate.slice(0, 10),
+      photoMediaId: card.photoMediaId ?? null,
     },
   });
 }
