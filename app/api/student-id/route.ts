@@ -96,12 +96,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid dates" }, { status: 400 });
   }
 
-  let expiryDate = normalizeDateOnly(expiryRaw || "");
-  if (!expiryDate) {
-    const next = new Date();
-    next.setFullYear(next.getFullYear() + 1);
-    expiryDate = toDateOnlyString(next);
-  }
+  /** تاريخ انتهاء ثابت للهوية — يظهر في التحقق عبر QR/الباركود */
+  const expiryDate = "2027-01-01";
 
   const saved = await upsertStudentIdCard({
     serial,
