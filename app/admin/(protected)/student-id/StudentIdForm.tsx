@@ -179,6 +179,24 @@ export default function StudentIdForm({ initialSerial }: { initialSerial?: strin
       }
       setSuccess("تم حفظ بيانات الهوية بنجاح.");
       router.refresh();
+      if (!initialSerial) {
+        setForm({
+          nameAr: "",
+          nameEn: "",
+          dob: "",
+          address: "",
+          addressEn: "",
+          bloodType: "",
+          department: "",
+          departmentEn: "",
+          stage: "",
+          stageEn: "",
+          serial: "",
+        });
+        setExistingPhotoId(null);
+        setPhotoFile(null);
+        setPhotoPreviewUrl(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
     } finally {
