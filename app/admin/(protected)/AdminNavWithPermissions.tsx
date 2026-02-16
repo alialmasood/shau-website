@@ -118,7 +118,7 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
                   <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wide px-3 py-1.5">المحتوى</p>
                   {contentItems.map((item) => (
                     <NavLink
-                      key={item.href}
+                      key={item.label}
                       href={item.href}
                       variant={item.variant}
                       active={isActive(pathname, item.href)}
@@ -137,7 +137,7 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
                   <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wide px-3 py-1.5 border-t border-neutral-100 mt-1">الإدارة</p>
                   {managementItems.map((item) => (
                     <NavLink
-                      key={item.href}
+                      key={item.label}
                       href={item.href}
                       variant={item.variant}
                       active={isActive(pathname, item.href)}
@@ -164,7 +164,7 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {contentItems.map((item) => (
                 <NavLink
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
                   variant={item.variant}
                   active={isActive(pathname, item.href)}
@@ -183,7 +183,7 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
             <div className="grid grid-rows-2 grid-flow-col auto-cols-max gap-2 overflow-x-auto pb-1">
               {managementItems.map((item) => (
                 <NavLink
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
                   variant={item.variant}
                   active={isActive(pathname, item.href)}
