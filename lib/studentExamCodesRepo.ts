@@ -79,6 +79,33 @@ export async function getStudentExamCodeByCode(code: string): Promise<StudentExa
   return mapRow(res.rows[0]);
 }
 
+/** جلب كود الامتحان التجريبي للطالب بالاسم (وع optional القسم) — لعرضه في لوحة الطالب */
+export async function getExamCodeByStudentName(
+  nameAr: string,
+  departmentArabic?: string
+): Promise<StudentExamCodeRow | null> {
+  const name = String(nameAr ?? "").trim();
+  if (!name) return null;
+  const dept = departmentArabic ? String(departmentArabic).trim() : "";
+  if (dept) {
+    const res = await query(
+      `SELECT id, code, name_ar, department, stage, study_type, created_at, updated_at
+       FROM student_exam_codes
+       WHERE TRIM(name_ar) = $1 AND (department = $2 OR TRIM(department) = $2)
+       LIMIT 1`,
+      [name, dept]
+    );
+    if (res.rows.length > 0) return mapRow(res.rows[0]);
+  }
+  const res = await query(
+    `SELECT id, code, name_ar, department, stage, study_type, created_at, updated_at
+     FROM student_exam_codes WHERE TRIM(name_ar) = $1 LIMIT 1`,
+    [name]
+  );
+  if (res.rows.length === 0) return null;
+  return mapRow(res.rows[0]);
+}
+
 export async function updateStudentExamCode(
   id: string,
   data: { nameAr?: string; department?: string; stage?: string; studyType?: string }

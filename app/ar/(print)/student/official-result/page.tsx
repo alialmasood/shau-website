@@ -254,7 +254,7 @@ export default async function OfficialResultPage({
         {/* Header Grid */}
         <div className="print-header">
           <div className="header-box right">
-            <div>كلية التقنيات الصحية والطبية</div>
+            <div>كلية الشرق التقنية التخصصية</div>
             <div>قسم {getDepartmentName(student.departmentCode)}</div>
           </div>
 

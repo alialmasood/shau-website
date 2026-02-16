@@ -1,7 +1,15 @@
 import { redirect } from "next/navigation";
 import { getStudentSession } from "@/lib/studentSession";
 import { getStudentById } from "@/lib/studentsRepo";
+import { getExamCodeByStudentName } from "@/lib/studentExamCodesRepo";
 import StudentDashboardContent from "./StudentDashboardContent";
+
+/** تطابق أسماء الأقسام كما في جدول كودات الامتحان (admin/student-code) */
+const EXAM_CODE_DEPARTMENT_BY_CODE: Record<string, string> = {
+  DENTAL_TECH: "تقنيات صناعة الاسنان",
+  ANESTHESIA_TECH: "تقنيات التخدير",
+  RADIOLOGY_TECH: "تقنيات الاشعة",
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -24,6 +32,10 @@ export default async function StudentDashboardPage({
   if (!student) {
     redirect("/ar/student-portal/login");
   }
+
+  const departmentArabic = EXAM_CODE_DEPARTMENT_BY_CODE[student.departmentCode];
+  const examCodeRow = await getExamCodeByStudentName(student.fullName, departmentArabic);
+  const examCode = examCodeRow?.code ?? null;
 
   // Get results securely - validates session and financial clearance
   const { getStudentResultsSecure } = await import("@/lib/resultsRepo");
@@ -57,6 +69,11 @@ export default async function StudentDashboardPage({
           <p className="mt-1 text-sm text-gray-500 truncate">
             مرحباً {student.fullName} - {student.studentId}
           </p>
+          {examCode && (
+            <p className="mt-0.5 text-sm text-neutral-600">
+              كودك للامتحان التجريبي هو: <strong className="font-mono text-neutral-900">{examCode}</strong>
+            </p>
+          )}
         </div>
         <a
           href="/ar/student-portal/logout"

@@ -203,7 +203,7 @@ export default function StudentDashboardContent({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                         <div>
                           <span className="text-xs text-gray-500">الكلية:</span>
-                          <p className="text-sm font-medium text-neutral-900">كلية التقنيات الصحية والطبية</p>
+                          <p className="text-sm font-medium text-neutral-900">كلية الشرق التقنية التخصصية</p>
                         </div>
                         <div>
                           <span className="text-xs text-gray-500">القسم:</span>
