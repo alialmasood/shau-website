@@ -51,7 +51,7 @@ export default function IdCardTemplate({
             <div className="absolute right-0 top-[88px]">{data.address}</div>
             <div className="absolute right-0 top-[136px]">{data.bloodType}</div>
             <div className="absolute right-0 top-[178px]">{data.department}</div>
-            <div className="absolute right-0 top-[235px]">{data.stage}</div>
+            <div className="absolute right-0 top-[275px]">{data.stage}</div>
           </div>
 
           <div className="absolute left-[20px] top-[190px] w-[210px] h-[260px] overflow-hidden">
@@ -86,7 +86,7 @@ export default function IdCardTemplate({
             <div>{addressEn}</div>
             <div className="relative top-[4px]">{data.bloodType}</div>
             <div className="relative top-[6px]">{departmentEn}</div>
-            <div className="relative top-[8px]">{stageEn}</div>
+            <div className="relative top-[48px]">{stageEn}</div>
           </div>
 
           <div className="absolute right-[30px] top-[210px] w-[240px] h-[300px] overflow-hidden opacity-15">
