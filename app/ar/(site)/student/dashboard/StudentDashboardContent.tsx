@@ -5,6 +5,7 @@ import type { StudentRow } from "@/lib/studentsRepo";
 import type { ResultRow } from "@/lib/resultsRepo";
 import { calculateGrade, getFinalEvaluationAndResult } from "@/lib/grades";
 import { useRealtimeRefresh } from "@/lib/hooks/useRealtimeRefresh";
+import { getDepartmentDisplayName } from "@/lib/departmentNames";
 
 export default function StudentDashboardContent({
   student,
@@ -24,17 +25,10 @@ export default function StudentDashboardContent({
 
   const ATTEMPTS = ["الدور الأول", "الدور الثاني"];
 
-  // Filter results by selected attempt
-  const filteredResults = results.filter((result) => result.attempt === selectedAttempt);
-
-  const getDepartmentName = (code: string) => {
-    const depts: Record<string, string> = {
-      DENTAL_TECH: "تقنيات صناعة الأسنان",
-      ANESTHESIA_TECH: "تقنيات التخدير",
-      RADIOLOGY_TECH: "تقنيات الأشعة",
-    };
-    return depts[code] || code;
-  };
+  // لكل طالب نتيجة واحدة فقط لكل دور — نفلتر حسب الدور المعيّن
+  const filteredByAttempt = results.filter((result) => result.attempt === selectedAttempt);
+  const displayResults = filteredByAttempt.length === 0 ? [] : [filteredByAttempt[0]];
+  const departmentForInfo = displayResults.length > 0 ? displayResults[0].departmentCode : student.departmentCode;
 
   return (
     <div className="space-y-3 md:space-y-6">
@@ -117,7 +111,7 @@ export default function StudentDashboardContent({
           ) : (
             <div className="space-y-3 md:space-y-6">
               {/* Actions Card - Sticky on mobile */}
-              {filteredResults.length > 0 && (
+              {displayResults.length > 0 && (
                 <div className="sticky top-2 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-2xl p-3 shadow-sm md:static md:bg-transparent md:backdrop-blur-0 md:border-0 md:shadow-none md:p-0 md:rounded-none">
                   <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-3">
                     <div className="flex-1">
@@ -157,7 +151,7 @@ export default function StudentDashboardContent({
                             `نتيجتي الدراسية - ${selectedAttempt}\n\n` +
                             `الاسم: ${student.fullName}\n` +
                             `الرقم الجامعي: ${student.studentId}\n` +
-                            `القسم: ${getDepartmentName(student.departmentCode)}\n` +
+                            `القسم: ${getDepartmentDisplayName(departmentForInfo)}\n` +
                             `المرحلة: ${student.stage}\n` +
                             `نوع الدراسة: ${student.studyType}\n\n` +
                             `رابط تحميل النتيجة:\n${pdfUrl}`
@@ -179,12 +173,12 @@ export default function StudentDashboardContent({
               )}
 
               {/* Results for selected attempt */}
-              {filteredResults.length === 0 ? (
+              {displayResults.length === 0 ? (
                 <div className="rounded-2xl shadow-sm border border-neutral-200 bg-white p-6 md:p-8 text-center">
                   <p className="text-sm md:text-base text-neutral-500">لا توجد نتيجة لهذا الدور بعد</p>
                 </div>
               ) : (
-                filteredResults.map((result) => {
+                displayResults.map((result) => {
                   // Extract summary values and calculate evaluation/result using ministerial logic
                   const summary = result.summaryJson && typeof result.summaryJson === "object" 
                     ? result.summaryJson as Record<string, unknown>
@@ -197,132 +191,155 @@ export default function StudentDashboardContent({
                   );
 
                   return (
-                  <div key={result.id} className="rounded-2xl shadow-sm border border-neutral-200 bg-white p-4 md:p-6">
-                    {/* Header */}
-                    <div className="mb-3 md:mb-6 pb-3 md:pb-4 border-b border-neutral-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-                        <div>
-                          <span className="text-xs text-gray-500">الكلية:</span>
-                          <p className="text-sm font-medium text-neutral-900">كلية الشرق التقنية التخصصية</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">القسم:</span>
-                          <p className="text-sm font-medium text-neutral-900">{getDepartmentName(student.departmentCode)}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">السنة الأكاديمية:</span>
-                          <p className="text-sm font-medium text-neutral-900">{result.academicYear}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">الفصل والمرحلة:</span>
-                          <p className="text-sm font-medium text-neutral-900">{result.semester} - {result.stage}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">نوع الدراسة والدور:</span>
-                          <p className="text-sm font-medium text-neutral-900">{result.studyType} - {result.attempt}</p>
+                    <div key={result.id} className="rounded-2xl shadow-sm border border-neutral-200 bg-white p-4 md:p-6">
+                      {/* Header */}
+                      <div className="mb-3 md:mb-6 pb-3 md:pb-4 border-b border-neutral-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
+                          <div>
+                            <span className="text-xs text-gray-500">الكلية:</span>
+                            <p className="text-sm font-medium text-neutral-900">كلية الشرق التقنية التخصصية</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">القسم:</span>
+                            <p className="text-sm font-medium text-neutral-900">{getDepartmentDisplayName(result.departmentCode)}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">السنة الأكاديمية:</span>
+                            <p className="text-sm font-medium text-neutral-900">{result.academicYear}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">الفصل والمرحلة:</span>
+                            <p className="text-sm font-medium text-neutral-900">{result.semester} - {result.stage}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">نوع الدراسة والدور:</span>
+                            <p className="text-sm font-medium text-neutral-900">{result.studyType} - {result.attempt}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                {/* Subjects - Mobile: Cards, Desktop: Table */}
-                {result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0 && (() => {
-                  // Filter out "عدد الوحدات" (units) - it's NOT a subject, it's metadata
-                  // عدد الوحدات لا يُعرض للطالب - هو خاصية للمادة وليس مادة دراسية
-                  const actualSubjects = result.subjectsJson.filter((subject: any) => {
-                    const subjectName = String(subject.name || "").trim().toLowerCase();
-                    // Exclude any subject with "وحدات" or "units" in the name
-                    return !subjectName.includes("وحدات") && 
-                           !subjectName.includes("units") && 
-                           subjectName !== "عدد الوحدات" &&
-                           subjectName !== "units";
-                  });
-                  
-                  return actualSubjects.length > 0 ? (
-                    <div className="mb-4 md:mb-6">
-                      <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-3 md:mb-4">المواد الدراسية</h3>
-                      
-                      {/* Mobile: Subject Cards */}
-                      <div className="grid grid-cols-1 gap-3 md:hidden">
-                        {actualSubjects.map((subject: any, idx: number) => {
-                          // Always calculate grade from score (don't trust stored grade)
-                          const scoreNum = typeof subject.score === "number" 
-                            ? subject.score 
-                            : Number(subject.score) || 0;
-                          const calculatedGrade = calculateGrade(scoreNum);
-                          
-                          return (
-                            <div key={idx} className="rounded-2xl border border-neutral-200 shadow-sm bg-white p-3 flex items-center justify-between">
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-[#31BD9C] text-white text-xs font-bold flex items-center justify-center">
-                                  {idx + 1}
-                                </span>
-                                <span className="text-sm leading-6 font-medium text-neutral-900 flex-1 line-clamp-2">{subject.name || "-"}</span>
-                              </div>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {calculatedGrade && (
-                                  <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-medium">
-                                    {calculatedGrade}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      
-                      {/* Desktop: Table */}
-                      <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-neutral-50 border-b border-neutral-200">
-                              <th className="p-3 text-right text-sm font-bold text-neutral-700">#</th>
-                              <th className="p-3 text-right text-sm font-bold text-neutral-700">اسم المادة</th>
-                              <th className="p-3 text-right text-sm font-bold text-neutral-700">التقدير</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {actualSubjects.map((subject: any, idx: number) => {
-                              // Always calculate grade from score (don't trust stored grade)
-                              const scoreNum = typeof subject.score === "number" 
-                                ? subject.score 
-                                : Number(subject.score) || 0;
-                              const calculatedGrade = calculateGrade(scoreNum);
-                              
-                              return (
-                                <tr key={idx} className="border-b border-neutral-100">
-                                  <td className="p-3 text-sm text-neutral-700">{idx + 1}</td>
-                                  <td className="p-3 text-sm text-neutral-900">{subject.name || "-"}</td>
-                                  <td className="p-3 text-sm text-neutral-700">{calculatedGrade || "-"}</td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
+                      {/* Subjects - Mobile: Cards, Desktop: Table */}
+                      {(() => {
+                        const rawData = result.rawRowJson && typeof result.rawRowJson === "object" ? result.rawRowJson : null;
+                        const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, "_").replace(/[^\w\u0600-\u06FF_]/g, "");
+                        const FIXED = new Set([
+                          "student_id", "full_name", "study_type", "stage",
+                          norm("المجموع"), norm("المعدل"), norm("التقييم"), norm("النتيجة النهائية"), norm("التقدير"),
+                          norm("وحدات"), "units", norm("رقم الطالب"), norm("الاسم الكامل")
+                        ]);
 
-                    {/* Summary Footer - Only finalStatus and evaluation, NO total/avg */}
-                    {(finalStatus || evaluation) && (
-                      <div className="pt-3 md:pt-4 border-t border-neutral-200">
-                        <div className="grid grid-cols-2 gap-2 md:gap-4">
-                          {finalStatus && (
-                            <div className="rounded-2xl border border-neutral-200 bg-gradient-to-br from-[#31BD9C]/10 to-white p-3">
-                              <span className="text-xs text-gray-500">النتيجة النهائية:</span>
-                              <p className="text-base font-bold text-[#31BD9C] mt-1">{finalStatus}</p>
+                        let fromJson: Array<{ name: string; score?: number | string }> = [];
+                        if (result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0) {
+                          fromJson = result.subjectsJson.filter((s: any) => {
+                            const n = String(s.name || "").trim().toLowerCase();
+                            return !n.includes("وحدات") && !n.includes("units") && n !== "عدد الوحدات" && n !== "units";
+                          }) as Array<{ name: string; score?: number | string }>;
+                        }
+
+                        let fromRaw: Array<{ name: string; score?: number | string }> = [];
+                        if (rawData) {
+                          fromRaw = Object.entries(rawData)
+                            .filter(([key, value]) => {
+                              const k = String(key).trim();
+                              if (!k || /^\d+$/.test(k)) return false;
+                              const n = norm(k);
+                              if (FIXED.has(n) || FIXED.has(k)) return false;
+                              if (n.includes("وحدات") || n.includes("units")) return false;
+                              if (value === null || value === undefined || value === "") return false;
+                              const num = Number(value);
+                              return !isNaN(num) && num >= 0 && num <= 150;
+                            })
+                            .map(([name, value]) => ({ name: String(name).trim(), score: Number(value) }))
+                            .sort((a, b) => a.name.localeCompare(b.name));
+                        }
+
+                        const actualSubjects = fromRaw.length >= fromJson.length ? fromRaw : fromJson;
+                        return actualSubjects.length > 0 ? (
+                          <div className="mb-4 md:mb-6">
+                            <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-3 md:mb-4">المواد الدراسية</h3>
+                            
+                            {/* Mobile: Subject Cards */}
+                            <div className="grid grid-cols-1 gap-3 md:hidden">
+                              {actualSubjects.map((subject: any, idx: number) => {
+                                // Always calculate grade from score (don't trust stored grade)
+                                const scoreNum = typeof subject.score === "number" 
+                                  ? subject.score 
+                                  : Number(subject.score) || 0;
+                                const calculatedGrade = calculateGrade(scoreNum);
+                                
+                                return (
+                                  <div key={idx} className="rounded-2xl border border-neutral-200 shadow-sm bg-white p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      <span className="flex-shrink-0 w-7 h-7 rounded-full bg-[#31BD9C] text-white text-xs font-bold flex items-center justify-center">
+                                        {idx + 1}
+                                      </span>
+                                      <span className="text-sm leading-6 font-medium text-neutral-900 flex-1 line-clamp-2">{subject.name || "-"}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      {calculatedGrade && (
+                                        <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-medium">
+                                          {calculatedGrade}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          )}
-                          {evaluation && (
-                            <div className="rounded-2xl border border-neutral-200 bg-gradient-to-br from-blue-50 to-white p-3">
-                              <span className="text-xs text-gray-500">التقييم:</span>
-                              <p className="text-base font-bold text-neutral-900 mt-1">{evaluation}</p>
+                            
+                            {/* Desktop: Table */}
+                            <div className="hidden md:block overflow-x-auto">
+                              <table className="w-full border-collapse">
+                                <thead>
+                                  <tr className="bg-neutral-50 border-b border-neutral-200">
+                                    <th className="p-3 text-right text-sm font-bold text-neutral-700">#</th>
+                                    <th className="p-3 text-right text-sm font-bold text-neutral-700">اسم المادة</th>
+                                    <th className="p-3 text-right text-sm font-bold text-neutral-700">التقدير</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {actualSubjects.map((subject: any, idx: number) => {
+                                    // Always calculate grade from score (don't trust stored grade)
+                                    const scoreNum = typeof subject.score === "number" 
+                                      ? subject.score 
+                                      : Number(subject.score) || 0;
+                                    const calculatedGrade = calculateGrade(scoreNum);
+                                    
+                                    return (
+                                      <tr key={idx} className="border-b border-neutral-100">
+                                        <td className="p-3 text-sm text-neutral-700">{idx + 1}</td>
+                                        <td className="p-3 text-sm text-neutral-900">{subject.name || "-"}</td>
+                                        <td className="p-3 text-sm text-neutral-700">{calculatedGrade || "-"}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
                             </div>
-                          )}
+                          </div>
+                        ) : null;
+                      })()}
+
+                      {/* Summary Footer - Only finalStatus and evaluation, NO total/avg */}
+                      {(finalStatus || evaluation) && (
+                        <div className="pt-3 md:pt-4 border-t border-neutral-200">
+                          <div className="grid grid-cols-2 gap-2 md:gap-4">
+                            {finalStatus && (
+                              <div className="rounded-2xl border border-neutral-200 bg-gradient-to-br from-[#31BD9C]/10 to-white p-3">
+                                <span className="text-xs text-gray-500">النتيجة النهائية:</span>
+                                <p className="text-base font-bold text-[#31BD9C] mt-1">{finalStatus}</p>
+                              </div>
+                            )}
+                            {evaluation && (
+                              <div className="rounded-2xl border border-neutral-200 bg-gradient-to-br from-blue-50 to-white p-3">
+                                <span className="text-xs text-gray-500">التقييم:</span>
+                                <p className="text-base font-bold text-neutral-900 mt-1">{evaluation}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
                   );
                 })
               )}
@@ -345,7 +362,7 @@ export default function StudentDashboardContent({
             </div>
             <div>
               <span className="text-xs text-gray-500">القسم:</span>
-              <p className="text-sm md:text-base font-medium text-neutral-900 mt-1">{getDepartmentName(student.departmentCode)}</p>
+              <p className="text-sm md:text-base font-medium text-neutral-900 mt-1">{getDepartmentDisplayName(departmentForInfo)}</p>
             </div>
             <div>
               <span className="text-xs text-gray-500">المرحلة:</span>
@@ -375,3 +392,4 @@ export default function StudentDashboardContent({
     </div>
   );
 }
+

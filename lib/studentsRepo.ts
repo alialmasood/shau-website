@@ -162,6 +162,9 @@ export async function getAllStudents(filters?: {
   if (filters?.batchId) {
     whereSql += ` AND r.uploaded_batch_id = $${paramIndex++}`;
     params.push(filters.batchId);
+  } else {
+    // Only show students from existing imports (exclude results from deleted batches)
+    whereSql += ` AND r.uploaded_batch_id IS NOT NULL AND r.uploaded_batch_id IN (SELECT id FROM results_batches)`;
   }
 
   if (filters?.departmentCode) {
@@ -268,6 +271,9 @@ function buildStudentsWhere(
   if (filters?.batchId) {
     whereSql += ` AND r.uploaded_batch_id = $${paramIndex++}`;
     params.push(filters.batchId);
+  } else {
+    // Only show students from existing imports (exclude results from deleted batches)
+    whereSql += ` AND r.uploaded_batch_id IS NOT NULL AND r.uploaded_batch_id IN (SELECT id FROM results_batches)`;
   }
 
   if (!options?.ignoreDepartment && filters?.departmentCode) {

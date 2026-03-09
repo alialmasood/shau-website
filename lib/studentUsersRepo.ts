@@ -134,6 +134,9 @@ export async function getAllStudentUsers(filters?: {
   if (filters?.batchId) {
     whereSql += ` AND uploaded_batch_id = $${paramIndex++}`;
     params.push(filters.batchId);
+  } else {
+    // Show only accounts that belong to existing imports (exclude orphaned accounts)
+    whereSql += ` AND uploaded_batch_id IS NOT NULL AND uploaded_batch_id IN (SELECT id FROM student_accounts_batches)`;
   }
 
   const res = await query(

@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
 import ResultsImportForm from "./ResultsImportForm";
-import { getImportStats, getImportHistory } from "./actions";
+import { getImportStats, getImportHistory, getOrphanedResultsCountAction, deleteOrphanedResultsAction } from "./actions";
 import ResultsStatsCards from "./ResultsStatsCards";
 import ImportHistoryTable from "./ImportHistoryTable";
 import RealtimeWrapper from "./RealtimeWrapper";
 import RealtimeStatus from "./RealtimeStatus";
+import DeleteOrphanedButton from "../DeleteOrphanedButton";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -56,11 +57,12 @@ export default async function AdminResultsPage() {
 
   let stats;
   let history;
+  let orphanedResultsCount = 0;
   let statsError: string | null = null;
   let historyError: string | null = null;
 
   try {
-    [stats, history] = await Promise.all([
+    [stats, history, orphanedResultsCount] = await Promise.all([
       getImportStats().catch((err) => {
         console.error("[AdminResultsPage] Error fetching stats:", err);
         statsError = err instanceof Error ? err.message : "خطأ في جلب الإحصائيات";
@@ -76,6 +78,7 @@ export default async function AdminResultsPage() {
         historyError = err instanceof Error ? err.message : "خطأ في جلب سجل الاستيراد";
         return [];
       }),
+      getOrphanedResultsCountAction().catch(() => 0),
     ]);
   } catch (error) {
     console.error("[AdminResultsPage] Fatal error:", error);
@@ -98,13 +101,21 @@ export default async function AdminResultsPage() {
       <RealtimeStatus />
       <div className="w-full bg-white min-h-screen">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
-              إدارة النتائج
-            </h1>
-            <p className="mt-2 text-sm text-neutral-600">
-              استيراد نتائج الطلاب من ملف Excel (نوع الدراسة والمرحلة سيتم قراءتهما من الملف)
-            </p>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
+                إدارة النتائج
+              </h1>
+              <p className="mt-2 text-sm text-neutral-600">
+                استيراد نتائج الطلاب من ملف Excel (نوع الدراسة والمرحلة سيتم قراءتهما من الملف)
+              </p>
+            </div>
+            <DeleteOrphanedButton
+              label="حذف نتائج يتيمة"
+              count={orphanedResultsCount}
+              onDelete={deleteOrphanedResultsAction}
+              confirmMessage="هل أنت متأكد من حذف سجلات النتائج اليتيمة (غير المرتبطة بأي دفعة استيراد)؟"
+            />
           </div>
 
           {/* Error Messages */}
@@ -130,7 +141,13 @@ export default async function AdminResultsPage() {
           {/* Import History */}
           <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-bold text-neutral-900 mb-4">سجل الاستيراد</h2>
-            {history && <ImportHistoryTable history={history} departments={DEPARTMENTS} />}
+            {history && (
+              <ImportHistoryTable
+                history={history}
+                departments={DEPARTMENTS}
+                canDelete={userRoleUpper === "ADMIN" || userRoleUpper === "EXAM_COMMITTEE" || (await canAdmin("results", "delete"))}
+              />
+            )}
           </div>
         </div>
       </div>

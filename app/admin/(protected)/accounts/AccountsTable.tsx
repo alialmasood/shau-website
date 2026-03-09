@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toggleFinancialClearance } from "./actions";
+import { getDepartmentDisplayName } from "@/lib/departmentNames";
 import type { StudentRow } from "@/lib/studentsRepo";
 
 type Department = { code: string; name: string };
@@ -210,7 +211,7 @@ export default function AccountsTable({
                   <td className="px-4 py-3 text-sm text-neutral-900">{student.studentId}</td>
                   <td className="px-4 py-3 text-sm text-neutral-900">{student.fullName}</td>
                   <td className="px-4 py-3 text-sm text-neutral-900">
-                    {departments.find((d) => d.code === student.departmentCode)?.name || student.departmentCode}
+                    {getDepartmentDisplayName(student.departmentCode)}
                   </td>
                   <td className="px-4 py-3 text-sm text-neutral-900">{student.stage}</td>
                   <td className="px-4 py-3 text-sm text-neutral-900">{student.studyType || "—"}</td>

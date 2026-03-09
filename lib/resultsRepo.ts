@@ -84,7 +84,7 @@ function mapResultRow(r: { [k: string]: unknown }): ResultRow {
     attempt: String(r.attempt),
     summaryJson: (r.summary_json as Record<string, unknown>) || (r.payload_json as Record<string, unknown>) || {},
     subjectsJson: (r.subjects_json as Array<Record<string, unknown>>) || [],
-    rawRowJson: (r.raw_row_json as Record<string, unknown>) || null,
+    rawRowJson: (r.raw_row_json as Record<string, unknown>) || (r.payload_json as Record<string, unknown>) || null,
     uploadedBatchId: r.uploaded_batch_id ? String(r.uploaded_batch_id) : null,
     uploadedAt: r.uploaded_at ? new Date(r.uploaded_at as string).toISOString() : "",
     uploadedBy: r.uploaded_by ? String(r.uploaded_by) : null,
@@ -429,14 +429,14 @@ export async function findBatchByHash(
 }
 
 /**
- * Delete a batch and optionally remove uploaded_batch_id from related results
- * Note: This does NOT delete the results themselves, only removes the batch reference
+ * Delete a batch and ALL related results
+ * عند حذف الاستيراد يتم حذف سجلات النتائج المستوردة لتجنب التراكم والتداخل
  */
 export async function deleteBatch(batchId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    // First, remove batch reference from results (set uploaded_batch_id to NULL)
+    // First, delete all results that were imported in this batch
     await query(
-      `UPDATE results SET uploaded_batch_id = NULL WHERE uploaded_batch_id = $1`,
+      `DELETE FROM results WHERE uploaded_batch_id = $1`,
       [batchId]
     );
 
@@ -458,6 +458,32 @@ export async function deleteBatch(batchId: string): Promise<{ success: boolean; 
       error: error instanceof Error ? error.message : "حدث خطأ أثناء حذف الاستيراد" 
     };
   }
+}
+
+/**
+ * حذف سجلات النتائج اليتيمة (التي لا ترتبط بأي دفعة استيراد)
+ */
+export async function deleteOrphanedResults(): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+  try {
+    const res = await query(
+      `DELETE FROM results WHERE uploaded_batch_id IS NULL RETURNING id`
+    );
+    return { success: true, deletedCount: res.rowCount ?? 0 };
+  } catch (error) {
+    console.error("Error deleting orphaned results:", error);
+    return {
+      success: false,
+      deletedCount: 0,
+      error: error instanceof Error ? error.message : "حدث خطأ أثناء حذف السجلات",
+    };
+  }
+}
+
+export async function getOrphanedResultsCount(): Promise<number> {
+  const res = await query(
+    `SELECT COUNT(*) AS cnt FROM results WHERE uploaded_batch_id IS NULL`
+  );
+  return parseInt(res.rows[0]?.cnt ?? "0", 10);
 }
 
 export type ResultsStats = {

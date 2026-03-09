@@ -41,7 +41,8 @@
     "admin:fix-accounts-user": "node scripts/fix-accounts-user.js",
     "logs:view": "node scripts/view-logs.js",
     "admin:discover-pages": "node scripts/discover-admin-pages.js",
-    "data:clear-students": "node scripts/clear-student-data.js"
+    "data:clear-students": "node scripts/clear-student-data.js",
+    "db:backfill-results-subjects": "node scripts/backfill-results-subjects.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

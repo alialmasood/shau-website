@@ -4,7 +4,9 @@ import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
 import { getAllStudents, getStudentsStats } from "@/lib/studentsRepo";
 import { getAllBatches } from "@/lib/resultsRepo";
+import { getOrphanedResultsCountAction, deleteOrphanedResultsAction } from "./actions";
 import AccountsTable from "./AccountsTable";
+import DeleteOrphanedButton from "../DeleteOrphanedButton";
 import BatchCard from "./BatchCard";
 import RealtimeWrapper from "./RealtimeWrapper";
 
@@ -96,9 +98,13 @@ export default async function AdminAccountsPage({
     return acc;
   }, {} as Record<string, typeof batches>);
 
-  const { students, total } = await getAllStudents(filters);
-  const selectedStats = await getStudentsStats(filters);
-  const overallStats = await getStudentsStats(filters, { ignoreDepartment: true });
+  const [studentsResult, selectedStats, overallStats, orphanedResultsCount] = await Promise.all([
+    getAllStudents(filters),
+    getStudentsStats(filters),
+    getStudentsStats(filters, { ignoreDepartment: true }),
+    getOrphanedResultsCountAction().catch(() => 0),
+  ]);
+  const { students, total } = studentsResult;
   
   // Debug logging
   console.log(`[AdminAccountsPage] 📊 Data loaded: students=${students.length}, total=${total}`);
@@ -116,13 +122,21 @@ export default async function AdminAccountsPage({
       <RealtimeWrapper />
       <div className="w-full bg-white min-h-screen">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
-            الحسابات المالية
-          </h1>
-          <p className="mt-2 text-sm text-neutral-600">
-            إدارة الحسابات المالية للطلاب
-          </p>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
+              الحسابات المالية
+            </h1>
+            <p className="mt-2 text-sm text-neutral-600">
+              إدارة الحسابات المالية للطلاب
+            </p>
+          </div>
+          <DeleteOrphanedButton
+            label="حذف نتائج يتيمة"
+            count={orphanedResultsCount}
+            onDelete={deleteOrphanedResultsAction}
+            confirmMessage="هل أنت متأكد من حذف سجلات النتائج اليتيمة (غير المرتبطة بأي دفعة استيراد)؟"
+          />
         </div>
 
         {/* Quick Stats */}
@@ -157,16 +171,22 @@ export default async function AdminAccountsPage({
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div className="rounded-xl border border-neutral-200 p-4">
-              <p className="text-xs text-neutral-500">عدد الطلبة الكلي</p>
-              <p className="text-2xl font-bold text-neutral-900">{overallStats.total}</p>
+              <p className="text-xs text-neutral-500">
+                {filters.departmentCode || filters.batchId ? "عدد الطلبة (حسب الفلتر)" : "عدد الطلبة الكلي"}
+              </p>
+              <p className="text-2xl font-bold text-neutral-900">{selectedStats.total}</p>
             </div>
             <div className="rounded-xl border border-neutral-200 p-4">
-              <p className="text-xs text-neutral-500">عدد الطلبة الدافعين الكلي</p>
-              <p className="text-2xl font-bold text-emerald-700">{overallStats.paid}</p>
+              <p className="text-xs text-neutral-500">
+                {filters.departmentCode || filters.batchId ? "الدافعين (حسب الفلتر)" : "عدد الطلبة الدافعين الكلي"}
+              </p>
+              <p className="text-2xl font-bold text-emerald-700">{selectedStats.paid}</p>
             </div>
             <div className="rounded-xl border border-neutral-200 p-4">
-              <p className="text-xs text-neutral-500">عدد الطلبة غير الدافعين الكلي</p>
-              <p className="text-2xl font-bold text-amber-700">{overallStats.unpaid}</p>
+              <p className="text-xs text-neutral-500">
+                {filters.departmentCode || filters.batchId ? "غير الدافعين (حسب الفلتر)" : "عدد الطلبة غير الدافعين الكلي"}
+              </p>
+              <p className="text-2xl font-bold text-amber-700">{selectedStats.unpaid}</p>
             </div>
           </div>
 

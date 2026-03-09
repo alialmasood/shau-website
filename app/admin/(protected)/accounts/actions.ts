@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
-import { deleteBatch } from "@/lib/resultsRepo";
+import { deleteBatch, deleteOrphanedResults, getOrphanedResultsCount } from "@/lib/resultsRepo";
 import { canAdmin } from "@/lib/adminAuthz";
 import { updateStudentFinancialClearance } from "@/lib/studentsRepo";
 import { revalidatePath } from "next/cache";
@@ -91,4 +91,35 @@ export async function deleteBatchAction(batchId: string): Promise<{ success: boo
   }
 
   return result;
+}
+
+export async function deleteOrphanedResultsAction(): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+  const user = await getCurrentAdminUser();
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const roleUpper = String(user.role || "").toUpperCase();
+  if (roleUpper !== "ADMIN" && !(await canAdmin("accounts", "delete"))) {
+    return { success: false, deletedCount: 0, error: "ليس لديك صلاحية حذف السجلات" };
+  }
+
+  const result = await deleteOrphanedResults();
+  if (result.success) {
+    revalidatePath("/admin/accounts");
+    revalidatePath("/admin/results");
+    broadcast({ type: "RESULTS_IMPORTED", payload: {} });
+  }
+  return result;
+}
+
+export async function getOrphanedResultsCountAction(): Promise<number> {
+  const user = await getCurrentAdminUser();
+  if (!user) return 0;
+
+  const roleUpper = String(user.role || "").toUpperCase();
+  if (roleUpper !== "ADMIN" && !(await canAdmin("accounts", "access"))) {
+    return 0;
+  }
+  return getOrphanedResultsCount();
 }

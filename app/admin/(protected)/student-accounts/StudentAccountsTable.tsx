@@ -14,7 +14,13 @@ type StudentAccount = {
   fullName: string;
 };
 
-export default function StudentAccountsTable({ selectedBatchId }: { selectedBatchId?: string }) {
+export default function StudentAccountsTable({
+  selectedBatchId,
+  selectedBatchDepartmentName,
+}: {
+  selectedBatchId?: string;
+  selectedBatchDepartmentName?: string | null;
+}) {
   const [accounts, setAccounts] = useState<StudentAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,6 +169,9 @@ export default function StudentAccountsTable({ selectedBatchId }: { selectedBatc
         <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
           <p className="text-xs text-orange-600">
             ⚠ عرض الحسابات من استيراد محدد فقط
+            {selectedBatchDepartmentName && (
+              <span className="mr-2 font-semibold text-neutral-800"> — القسم: {selectedBatchDepartmentName}</span>
+            )}
           </p>
         </div>
       )}

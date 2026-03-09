@@ -139,9 +139,9 @@ export async function findStudentAccountsBatchByHash(
 
 export async function deleteStudentAccountsBatch(batchId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    // First, remove batch reference from student_users (set uploaded_batch_id to NULL)
+    // First, DELETE all student accounts that were imported in this batch
     await query(
-      `UPDATE student_users SET uploaded_batch_id = NULL WHERE uploaded_batch_id = $1`,
+      `DELETE FROM student_users WHERE uploaded_batch_id = $1`,
       [batchId]
     );
 
@@ -163,4 +163,35 @@ export async function deleteStudentAccountsBatch(batchId: string): Promise<{ suc
       error: error instanceof Error ? error.message : "حدث خطأ أثناء حذف الاستيراد" 
     };
   }
+}
+
+/**
+ * حذف حسابات الطلاب اليتيمة (التي تشير لدفعات محذوفة)
+ */
+export async function deleteOrphanedStudentAccounts(): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+  try {
+    const res = await query(
+      `DELETE FROM student_users 
+       WHERE uploaded_batch_id IS NOT NULL 
+       AND uploaded_batch_id NOT IN (SELECT id FROM student_accounts_batches)
+       RETURNING id`
+    );
+    return { success: true, deletedCount: res.rowCount ?? 0 };
+  } catch (error) {
+    console.error("Error deleting orphaned student accounts:", error);
+    return {
+      success: false,
+      deletedCount: 0,
+      error: error instanceof Error ? error.message : "حدث خطأ أثناء حذف السجلات",
+    };
+  }
+}
+
+export async function getOrphanedStudentAccountsCount(): Promise<number> {
+  const res = await query(
+    `SELECT COUNT(*) AS cnt FROM student_users 
+     WHERE uploaded_batch_id IS NOT NULL 
+     AND uploaded_batch_id NOT IN (SELECT id FROM student_accounts_batches)`
+  );
+  return parseInt(res.rows[0]?.cnt ?? "0", 10);
 }

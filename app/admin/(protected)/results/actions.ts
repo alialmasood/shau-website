@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { upsertStudent } from "@/lib/studentsRepo";
-import { createResultsBatch, updateResultsBatch, findBatchByHash, getAllBatches, getResultsStats, getBatchById } from "@/lib/resultsRepo";
+import { createResultsBatch, updateResultsBatch, findBatchByHash, getAllBatches, getResultsStats, getBatchById, deleteBatch, deleteOrphanedResults, getOrphanedResultsCount } from "@/lib/resultsRepo";
 import { query } from "@/lib/db";
 import * as XLSX from "xlsx";
 import { createHash } from "crypto";
@@ -30,6 +30,40 @@ const DEPARTMENTS = [
   { code: "CYBERSEC_CLOUD_ENG", name: "هندسة تقنيات الامن السيبراني والحوسبة السحابية" },
   { code: "CIVIL_CONSTRUCTION_ENG", name: "هندسة تقنيات البناء والانشاءات" },
 ];
+
+// Build subjects from rawRow — يُستخدم عند الاستيراد لضمان حفظ كل المواد
+// يجتاز مفاتيح rawRow مباشرة (البيانات الفعلية في الصف) دون الاعتماد على headers
+function buildSubjectsFromRawRow(
+  rawRow: Record<string, unknown>,
+  _headers: string[],
+  fixedKeys: Set<string>,
+  normalizeHeaderFn: (t: string) => string
+): Array<{ name: string; score: number | string; grade: string; units?: number | string }> {
+  const subjects: Array<{ name: string; score: number | string; grade: string; units?: number | string }> = [];
+  for (const key of Object.keys(rawRow)) {
+    const orig = String(key ?? "").trim();
+    if (!orig || /^\d+$/.test(orig)) continue;
+    const origLower = orig.toLowerCase();
+    if (origLower.includes("وحدات") || origLower.includes("units")) continue;
+    const n = normalizeHeaderFn(orig);
+    if (fixedKeys.has(orig) || fixedKeys.has(n)) continue;
+    if (orig === "التقدير" || n === normalizeHeaderFn("التقدير")) continue;
+    const value = rawRow[orig] ?? rawRow[key] ?? rawRow[orig.trim()];
+    const trimmed = value === undefined || value === null ? "" : String(value).trim();
+    const scoreNum = trimmed === "" ? 0 : (typeof value === "number" ? value : Number(trimmed));
+    const score = (trimmed !== "" && !isNaN(scoreNum) && scoreNum >= 0) ? scoreNum : 0;
+    subjects.push({
+      name: orig,
+      score,
+      grade: calculateGrade(score),
+      units: 0,
+    });
+  }
+  return subjects;
+}
+
+// أسماء مواد معروفة يجب ألا تُعامل أبداً كأعمدة وحدات (مثل رياضيات/الرياضيات)
+const SUBJECT_NAMES_NEVER_UNITS = new Set(["رياضيات", "الرياضيات", "رياضيات ", " الرياضيات"]);
 
 // Fixed keys that are not subjects
 const FIXED_KEYS = new Set([
@@ -391,54 +425,64 @@ function parseStudentRow(
   // Build subjects dynamically
   // IMPORTANT: Ignore "التقدير" column - always calculate grade from score
   // IMPORTANT: Read units (وحدات) for each subject - units is a property, NOT a subject
+  // IMPORTANT: Use column INDEX (colIndex) instead of getValue(header) when iterating - because
+  // headers like "التقدير" and "عدد الوحدات" repeat for each subject, and headerMap stores only
+  // the last occurrence, causing wrong column reads. Using row[colIndex] ensures correct value per column.
   const subjects: ParsedStudent["subjects"] = [];
   let currentSubject: { name: string; score: number | string; units?: number | string } | null = null;
 
-  for (const header of headers) {
+  headers.forEach((header, colIndex) => {
+    const cellValue = row[colIndex];
     // Skip "التقدير" column - we will calculate grade from score instead
     if (header === "التقدير" || normalizeHeader(header) === normalizeHeader("التقدير")) {
       // Ignore this column - grade will be calculated from score
-      continue;
+      return;
     }
 
     // Skip fixed keys (including general "وحدات" and "units" columns)
     const normalizedHeader = normalizeHeader(header);
     if (FIXED_KEYS.has(header) || FIXED_KEYS.has(normalizedHeader)) {
-      continue;
+      return;
     }
 
-    // Check if this is a units column (وحدات)
-    // IMPORTANT: Units column is NOT a subject - it's metadata for the previous subject
-    const normalizedHeaderLower = normalizedHeader.toLowerCase();
-    const isUnitsColumn = normalizedHeaderLower.includes("وحدات") || 
-                          normalizedHeaderLower.includes("units") ||
-                          normalizedHeaderLower === "units";
+    // Check if this is a units column (وحدات) — التحقق من النص الأصلي قبل normalize لأن normalize يحذف العربية
+    const origLower = String(header).trim().toLowerCase();
+    const origTrimmed = String(header).trim();
+    // رياضيات والرياضيات مادة دراسية وليست عمود وحدات — never treat as units column
+    const isMathSubject = SUBJECT_NAMES_NEVER_UNITS.has(origTrimmed) || SUBJECT_NAMES_NEVER_UNITS.has(origLower) ||
+      origTrimmed === "رياضيات" || origTrimmed === "الرياضيات";
+    const isUnitsColumn = !isMathSubject && (
+      origLower.includes("وحدات") || origLower.includes("units") ||
+      normalizedHeader.toLowerCase().includes("units") ||
+      normalizedHeader === "units"
+    );
     
     if (isUnitsColumn) {
       // This is a units column - attach it to the current subject (if exists)
       // IMPORTANT: Do NOT create a new subject for units column
       if (currentSubject) {
-        const unitsValue = getValue(header);
-        if (unitsValue !== undefined && unitsValue !== null && unitsValue !== "") {
-          const units = typeof unitsValue === "number" ? unitsValue : Number(unitsValue) || 0;
+        if (cellValue !== undefined && cellValue !== null && cellValue !== "") {
+          const units = typeof cellValue === "number" ? cellValue : Number(cellValue) || 0;
           currentSubject.units = units;
         }
       }
       // Skip this column - it's not a subject
-      continue;
+      return;
     }
 
-    // This might be a subject score column
-    const scoreValue = getValue(header);
+    // This might be a subject score column - use cellValue (row[colIndex]) not getValue(header)
+    const scoreValue = cellValue;
     if (scoreValue !== undefined && scoreValue !== null && scoreValue !== "") {
       // IMPORTANT: Double-check that this header is NOT a units column
       // Sometimes Excel might have "عدد الوحدات" as a column name with a numeric value
-      // We must NEVER create a subject for "عدد الوحدات" - it's metadata, not a subject
+      // رياضيات/الرياضيات are always subjects, never units
       const headerNameLower = String(header).trim().toLowerCase();
-      const isUnitsHeader = headerNameLower.includes("وحدات") || 
-                           headerNameLower.includes("units") ||
-                           headerNameLower === "عدد الوحدات" ||
-                           headerNameLower === "units";
+      const isUnitsHeader = !isMathSubject && (
+        headerNameLower.includes("وحدات") || 
+        headerNameLower.includes("units") ||
+        headerNameLower === "عدد الوحدات" ||
+        headerNameLower === "units"
+      );
       
       if (isUnitsHeader) {
         // This is a units column with a value - attach it to current subject or skip
@@ -447,7 +491,7 @@ function parseStudentRow(
           currentSubject.units = units;
         }
         // Skip - do NOT create a subject for units
-        continue;
+        return;
       }
       
       // If we have a previous subject, finalize it with calculated grade
@@ -473,9 +517,8 @@ function parseStudentRow(
       // Try to find units for this subject
       // Method 1: Check if units row exists (units in a separate row after header)
       if (unitsRow && unitsRow.length > 0) {
-        const currentHeaderIndex = headers.indexOf(header);
-        if (currentHeaderIndex >= 0 && currentHeaderIndex < unitsRow.length) {
-          const unitsValue = unitsRow[currentHeaderIndex];
+        if (colIndex < unitsRow.length) {
+          const unitsValue = unitsRow[colIndex];
           if (unitsValue !== undefined && unitsValue !== null && unitsValue !== "") {
             const units = typeof unitsValue === "number" ? unitsValue : Number(unitsValue) || 0;
             if (!isNaN(units) && units > 0) {
@@ -488,14 +531,14 @@ function parseStudentRow(
       
       // Method 2: Try to find units column for this subject (look for "وحدات" + subject name or just "وحدات")
       // Check next few headers for units (units column should be adjacent to subject column)
-      // Only if units not found from units row
+      // Only if units not found from units row - use row[i] not getValue to avoid duplicate header issue
       if (!currentSubject.units) {
-        const currentHeaderIndex = headers.indexOf(header);
-        for (let i = currentHeaderIndex + 1; i < Math.min(currentHeaderIndex + 3, headers.length); i++) {
+        for (let i = colIndex + 1; i < Math.min(colIndex + 3, headers.length); i++) {
           const nextHeader = headers[i];
           const nextNormalized = normalizeHeader(nextHeader).toLowerCase();
-          if (nextNormalized.includes("وحدات") || nextNormalized.includes("units")) {
-            const unitsValue = getValue(nextHeader);
+          if (nextNormalized.includes("وحدات") || nextNormalized.includes("units") || 
+              String(nextHeader).trim().toLowerCase().includes("وحدات") || String(nextHeader).trim().toLowerCase().includes("units")) {
+            const unitsValue = row[i];
             if (unitsValue !== undefined && unitsValue !== null && unitsValue !== "") {
               const units = typeof unitsValue === "number" ? unitsValue : Number(unitsValue) || 0;
               if (!isNaN(units) && units > 0) {
@@ -523,19 +566,21 @@ function parseStudentRow(
         currentSubject = null;
       }
     }
-  }
+  });
 
   // Add last subject if exists with calculated grade
-  if (currentSubject) {
-    const scoreNum = typeof currentSubject.score === "number" 
-      ? currentSubject.score 
-      : Number(currentSubject.score) || 0;
+  type SubjectItem = { name: string; score: number | string; units?: number | string };
+  const lastSubject = currentSubject as SubjectItem | null;
+  if (lastSubject) {
+    const scoreNum = typeof lastSubject.score === "number" 
+      ? lastSubject.score 
+      : Number(lastSubject.score) || 0;
     const calculatedGrade = calculateGrade(scoreNum);
     subjects.push({ 
-      name: currentSubject.name,
-      score: currentSubject.score,
+      name: lastSubject.name,
+      score: lastSubject.score,
       grade: calculatedGrade,
-      units: currentSubject.units ?? 0, // Default to 0 if units not found
+      units: lastSubject.units ?? 0, // Default to 0 if units not found
     });
   }
 
@@ -824,10 +869,10 @@ function parseStudentRow(
   
   console.log(`[parseStudentRow] Student ${studentId}: total=${total} (calculated=${calculatedTotal ?? 'N/A'}), avg=${avg} (calculated=${calculatedAvg ?? 'N/A'}, rounded to 2 decimals), totalUnits=${totalUnits}, evaluation=${evaluation} (calculated from avg), finalNumeric=${finalNumeric}, finalStatus=${updatedSummary.finalStatus}`);
 
-  // Build raw row object for reference
+  // Build raw row object for reference - use column index to avoid duplicate header mapping issues
   const rawRow: Record<string, unknown> = {};
-  headers.forEach((header) => {
-    const value = getValue(header);
+  headers.forEach((header, colIndex) => {
+    const value = row[colIndex];
     if (value !== undefined && value !== null) {
       rawRow[header] = value;
     }
@@ -1059,6 +1104,67 @@ export async function getBatchDetails(batchId: string) {
   }
 
   return batch;
+}
+
+export async function deleteResultsBatchAction(batchId: string): Promise<{ success: boolean; error?: string }> {
+  const currentUser = await getCurrentAdminUser();
+  if (!currentUser) {
+    redirect("/admin/login");
+  }
+
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper !== "EXAM_COMMITTEE" && roleUpper !== "ADMIN") {
+    const allowed = await canAdmin("results", "delete");
+    if (!allowed) {
+      return { success: false, error: "ليس لديك صلاحية لحذف الاستيراد" };
+    }
+  }
+
+  const result = await deleteBatch(batchId);
+
+  if (result.success) {
+    revalidatePath("/admin/results");
+    broadcast({
+      type: "RESULTS_IMPORTED",
+      payload: { batchId },
+    });
+  }
+
+  return result;
+}
+
+export async function deleteOrphanedResultsAction(): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+  const currentUser = await getCurrentAdminUser();
+  if (!currentUser) {
+    redirect("/admin/login");
+  }
+
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper !== "EXAM_COMMITTEE" && roleUpper !== "ADMIN") {
+    const allowed = await canAdmin("results", "delete");
+    if (!allowed) {
+      return { success: false, deletedCount: 0, error: "ليس لديك صلاحية لحذف السجلات" };
+    }
+  }
+
+  const result = await deleteOrphanedResults();
+  if (result.success) {
+    revalidatePath("/admin/results");
+    revalidatePath("/admin/accounts");
+    broadcast({ type: "RESULTS_IMPORTED", payload: {} });
+  }
+  return result;
+}
+
+export async function getOrphanedResultsCountAction(): Promise<number> {
+  const currentUser = await getCurrentAdminUser();
+  if (!currentUser) return 0;
+  const roleUpper = String(currentUser.role || "").toUpperCase();
+  if (roleUpper !== "EXAM_COMMITTEE" && roleUpper !== "ADMIN") {
+    const allowed = await canAdmin("results", "access");
+    if (!allowed) return 0;
+  }
+  return getOrphanedResultsCount();
 }
 
 export async function importExcel(
@@ -1311,6 +1417,21 @@ export async function importExcel(
       }
     });
 
+    // Fallback: إذا لم تُكتشف مواد من الصفوف، نأخذ أسماء الأعمدة من العناوين (كل عمود ليس ثابتاً وليس وحدات)
+    if (detectedSubjects.size === 0 && headers.length > 0) {
+      headers.forEach((h) => {
+        const orig = String(h ?? "").trim();
+        if (!orig) return;
+        const n = normalizeHeader(orig);
+        const nLower = n.toLowerCase();
+        if (FIXED_KEYS.has(orig) || FIXED_KEYS.has(n)) return;
+        if (nLower.includes("وحدات") || nLower.includes("units") || nLower === "units") return;
+        if (orig === "التقدير" || n === normalizeHeader("التقدير")) return;
+        detectedSubjects.add(orig);
+      });
+      console.log(`📋 [importExcel] Fallback: used ${detectedSubjects.size} headers as detected subjects`);
+    }
+
     const metaSubjectsJson = {
       subjects: Array.from(detectedSubjects),
       detectedAt: new Date().toISOString(),
@@ -1460,19 +1581,15 @@ export async function importExcel(
         
         console.log(`📝 [${i + 1}/${validRecords.length}] Processing: student_id="${sid}", full_name="${fullName}", study_type="${student.studyType}", stage="${student.stage}"`);
 
-        // Upsert student
-        // Unique constraint: student_id (defined in schema as @unique)
-        // IMPORTANT: Do NOT update department_code on conflict to preserve existing department data
-        // If student exists with different department_code, skip updating student record but still process result
-        // On conflict: update all fields EXCEPT department_code and financial_clearance (preserve existing values)
+        // Upsert student: القسم من دفعة الاستيراد (الجداول المستوردة)
+        // On conflict: نحدّث قسم الطالب ليطابق دفعة النتائج المستوردة
         console.log(`  📝 [${i + 1}/${validRecords.length}] Upserting student: student_id="${sid}", full_name="${fullName}"`);
         const studentRes = await rowClient.query(
           `INSERT INTO students (student_id, full_name, department_code, stage, study_type, academic_year, semester, financial_clearance)
            VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, false))
            ON CONFLICT (student_id) DO UPDATE SET
              full_name = EXCLUDED.full_name,
-             -- DO NOT update department_code: preserve existing department to avoid overwriting data from other departments
-             -- department_code = EXCLUDED.department_code,  -- REMOVED: prevents overwriting department when importing different department
+             department_code = EXCLUDED.department_code,
              stage = EXCLUDED.stage,
              study_type = EXCLUDED.study_type,
              academic_year = EXCLUDED.academic_year,
@@ -1515,21 +1632,12 @@ export async function importExcel(
         }
         
         const isStudentInsert = studentRes.rows[0].is_insert;
-        const existingDepartmentCode = studentRes.rows[0].department_code;
-        
-        // Check if department_code matches (important: student might exist in different department)
-        if (!isStudentInsert && existingDepartmentCode !== departmentCode) {
-          // Student exists but in different department - skip student update but still process result
-          console.warn(`  ⚠️ Student exists in different department: student_id="${sid}", existing_dept="${existingDepartmentCode}", new_dept="${departmentCode}" - Skipping student update but processing result`);
-          // Don't increment insertedStudents/updatedStudents, but continue to process result
+        if (isStudentInsert) {
+          insertedStudents++;
+          console.log(`  ✅ Student INSERTED: student_id="${sid}", department="${departmentCode}"`);
         } else {
-          if (isStudentInsert) {
-            insertedStudents++;
-            console.log(`  ✅ Student INSERTED: student_id="${sid}", department="${departmentCode}"`);
-          } else {
-            updatedStudents++;
-            console.log(`  ✅ Student UPDATED: student_id="${sid}", department="${existingDepartmentCode}"`);
-          }
+          updatedStudents++;
+          console.log(`  ✅ Student UPDATED: student_id="${sid}", department="${departmentCode}"`);
         }
 
         // Upsert result
@@ -1540,14 +1648,23 @@ export async function importExcel(
         
         // Ensure JSON fields are never null:
         // - summary_json: default to {} if empty/null
-        // - subjects_json: default to [] if empty/null
+        // - subjects_json: default to [] if empty/null - مع fallback من rawRow إن كانت المواد فارغة
         // - raw_row_json: default to {} if empty/null (even though it's nullable in schema, we ensure it's never null)
         const summaryJson = student.summary && Object.keys(student.summary).length > 0 
           ? JSON.stringify(student.summary) 
           : '{}';
-        const subjectsJson = student.subjects && Array.isArray(student.subjects) && student.subjects.length > 0
-          ? JSON.stringify(student.subjects)
-          : '[]';
+        // الاعتماد على rawRow دائماً إن وُجد — لضمان حفظ كل المواد المكتشفة في الدفعة
+        let subjectsToSave = student.subjects && Array.isArray(student.subjects) ? student.subjects : [];
+        if (student.rawRow && Object.keys(student.rawRow).length > 0) {
+          const fromRaw = buildSubjectsFromRawRow(student.rawRow, headers, FIXED_KEYS, normalizeHeader);
+          if (fromRaw.length >= subjectsToSave.length) {
+            subjectsToSave = fromRaw;
+            if (fromRaw.length > 0 && fromRaw.length !== (student.subjects?.length || 0)) {
+              console.log(`  📋 Subjects from rawRow: ${fromRaw.length} for student_id="${sid}"`);
+            }
+          }
+        }
+        const subjectsJson = subjectsToSave.length > 0 ? JSON.stringify(subjectsToSave) : '[]';
         const rawRowJson = student.rawRow && Object.keys(student.rawRow).length > 0
           ? JSON.stringify(student.rawRow)
           : '{}';
@@ -1558,7 +1675,7 @@ export async function importExcel(
         
         console.log(`  📝 [${i + 1}/${validRecords.length}] Upserting result: student_id="${sid}", attempt="${attempt}", batchId="${batchId}"`);
         console.log(`  📝 Summary JSON keys:`, Object.keys(student.summary || {}));
-        console.log(`  📝 Subjects count:`, student.subjects?.length || 0);
+        console.log(`  📝 Subjects count:`, subjectsToSave.length);
         
         const resultRes = await rowClient.query(
           `INSERT INTO results (student_id, department_code, academic_year, semester, stage, study_type, attempt, payload_json, summary_json, subjects_json, raw_row_json, uploaded_batch_id, uploaded_by)

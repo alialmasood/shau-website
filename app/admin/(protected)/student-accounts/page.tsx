@@ -2,12 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
-import { getStudentAccountsStats } from "./actions";
+import { getDepartmentDisplayName } from "@/lib/departmentNames";
+import { getStudentAccountsStats, getOrphanedStudentAccountsCountAction, deleteOrphanedStudentAccountsAction } from "./actions";
 import { getAllStudentAccountsBatches } from "@/lib/studentAccountsBatchesRepo";
 import StudentAccountsTable from "./StudentAccountsTable";
 import StudentAccountsImport from "./StudentAccountsImport";
 import StudentAccountsBatchCard from "./StudentAccountsBatchCard";
 import RealtimeWrapper from "./RealtimeWrapper";
+import DeleteOrphanedButton from "../DeleteOrphanedButton";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -54,11 +56,16 @@ export default async function StudentAccountsPage({
   }
 
   const params = await searchParams;
-  const stats = await getStudentAccountsStats();
+  const [stats, orphanedCount] = await Promise.all([
+    getStudentAccountsStats(),
+    getOrphanedStudentAccountsCountAction().catch(() => 0),
+  ]);
   
   // Get all batches for the import history section
   const batches = await getAllStudentAccountsBatches();
-  
+  const selectedBatch = params.batchId ? batches.find((b) => b.id === params.batchId) : null;
+  const selectedBatchDepartmentName = selectedBatch ? getDepartmentDisplayName(selectedBatch.departmentCode) : null;
+
   // Group batches by department
   const batchesByDepartment = batches.reduce((acc, batch) => {
     if (!acc[batch.departmentCode]) {
@@ -73,26 +80,37 @@ export default async function StudentAccountsPage({
       <RealtimeWrapper />
       <div className="w-full bg-white min-h-screen">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
-            إدارة حسابات الطلاب
-          </h1>
-          <p className="mt-2 text-sm text-neutral-600">
-            استيراد وإدارة حسابات تسجيل دخول الطلاب
-          </p>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
+              إدارة حسابات الطلاب
+            </h1>
+            <p className="mt-2 text-sm text-neutral-600">
+              استيراد وإدارة حسابات تسجيل دخول الطلاب
+            </p>
+          </div>
+          <DeleteOrphanedButton
+            label="حذف حسابات يتيمة"
+            count={orphanedCount}
+            onDelete={deleteOrphanedStudentAccountsAction}
+            confirmMessage="هل أنت متأكد من حذف حسابات الطلاب اليتيمة (المرتبطة بدفعات استيراد محذوفة)؟"
+          />
         </div>
 
-        {/* Debug Stats */}
+        {/* Stats - linked to imports (matches list) */}
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-blue-900">إجمالي حسابات الطلاب في DB:</span>
-              <span className="mr-2 font-bold text-blue-700">{stats.studentUsersCount}</span>
+              <span className="font-medium text-blue-900">حسابات الطلاب المعروضة (مرتبطة بالاستيرادات):</span>
+              <span className="mr-2 font-bold text-blue-700">{stats.linkedAccountsCount}</span>
             </div>
-            <div>
-              <span className="font-medium text-blue-900">إجمالي الطلاب في جدول students:</span>
-              <span className="mr-2 font-bold text-blue-700">{stats.studentsCount}</span>
-            </div>
+            {stats.totalInDb !== stats.linkedAccountsCount && (
+              <div className="text-neutral-600">
+                <span className="font-medium">إجمالي في DB:</span>
+                <span className="mr-2 font-bold">{stats.totalInDb}</span>
+                <span className="text-xs">(يشمل حسابات من استيرادات محذوفة)</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -102,7 +120,7 @@ export default async function StudentAccountsPage({
             <h2 className="text-lg font-bold text-neutral-900 mb-4">سجل الاستيرادات</h2>
             <div className="space-y-4">
               {Object.entries(batchesByDepartment).map(([deptCode, deptBatches]) => {
-                const deptName = DEPARTMENTS.find(d => d.code === deptCode)?.name || deptCode;
+                const deptName = getDepartmentDisplayName(deptCode);
                 return (
                   <div key={deptCode} className="border border-neutral-200 rounded-lg p-4">
                     <h3 className="text-sm font-bold text-neutral-700 mb-3">{deptName}</h3>
@@ -139,7 +157,10 @@ export default async function StudentAccountsPage({
         </div>
 
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-          <StudentAccountsTable selectedBatchId={params.batchId} />
+          <StudentAccountsTable
+            selectedBatchId={params.batchId}
+            selectedBatchDepartmentName={selectedBatchDepartmentName}
+          />
         </div>
       </div>
     </div>

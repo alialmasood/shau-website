@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { deleteStudentAccountsBatchAction } from "./actions";
+import { getDepartmentDisplayName } from "@/lib/departmentNames";
 import type { StudentAccountsBatchRow } from "@/lib/studentAccountsBatchesRepo";
 
 export default function StudentAccountsBatchCard({
@@ -30,7 +31,7 @@ export default function StudentAccountsBatchCard({
   const canDelete = userRole === "ADMIN";
 
   async function handleDelete() {
-    if (!confirm("⚠️ هل أنت متأكد من حذف هذا الاستيراد؟\n\nسيتم حذف سجل الاستيراد فقط، ولن يتم حذف حسابات الطلاب.")) {
+    if (!confirm("⚠️ هل أنت متأكد من حذف هذا الاستيراد؟\n\nسيتم حذف سجل الاستيراد وجميع حسابات الطلاب المرتبطة به من القائمة.")) {
       return;
     }
 
@@ -67,7 +68,7 @@ export default function StudentAccountsBatchCard({
       >
         <div className="flex items-start justify-between mb-2">
           <span className="text-xs font-semibold text-neutral-700">
-            {batch.departmentCode}
+            {getDepartmentDisplayName(batch.departmentCode)}
           </span>
           {isSelected && (
             <span className="text-xs text-[#31BD9C] font-bold">✓ محدث</span>

@@ -32,7 +32,7 @@ export default function BatchCard({
   const canDelete = userRole === "ADMIN";
 
   async function handleDelete() {
-    if (!confirm("⚠️ هل أنت متأكد من حذف هذا الاستيراد؟\n\nسيتم حذف سجل الاستيراد فقط، ولن يتم حذف بيانات الطلاب أو النتائج.")) {
+    if (!confirm("⚠️ هل أنت متأكد من حذف هذا الاستيراد؟\n\nسيتم حذف سجل الاستيراد وسجلات النتائج المرتبطة به.\nلا يمكن التراجع عن هذا الإجراء.")) {
       return;
     }
 

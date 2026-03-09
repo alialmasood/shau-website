@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { upsertStudent } from "@/lib/studentsRepo";
 import { createStudentUser, getAllStudentUsers, resetStudentPassword, toggleStudentUserActive } from "@/lib/studentUsersRepo";
-import { createStudentAccountsBatch, updateStudentAccountsBatch, findStudentAccountsBatchByHash, getAllStudentAccountsBatches, deleteStudentAccountsBatch } from "@/lib/studentAccountsBatchesRepo";
+import { createStudentAccountsBatch, updateStudentAccountsBatch, findStudentAccountsBatchByHash, getAllStudentAccountsBatches, deleteStudentAccountsBatch, deleteOrphanedStudentAccounts, getOrphanedStudentAccountsCount } from "@/lib/studentAccountsBatchesRepo";
 import { query } from "@/lib/db";
 import * as XLSX from "xlsx";
 import bcrypt from "bcryptjs";
@@ -211,15 +211,12 @@ export async function importStudentAccounts(
     // Process each record
     for (const record of records) {
       try {
-        // Upsert student (we need department_code, stage, study_type - use defaults or from existing)
+        // Upsert student: القسم من دفعة الاستيراد الحالية (الجداول المستوردة)
         const existingStudent = await query(
-          `SELECT department_code, stage, study_type FROM students WHERE student_id = $1`,
+          `SELECT stage, study_type FROM students WHERE student_id = $1`,
           [record.studentId]
         );
 
-        const departmentCode = existingStudent.rows.length > 0 
-          ? String(existingStudent.rows[0].department_code)
-          : "DENTAL_TECH"; // Default
         const stage = existingStudent.rows.length > 0
           ? String(existingStudent.rows[0].stage)
           : "المرحلة الأولى"; // Default
@@ -227,12 +224,11 @@ export async function importStudentAccounts(
           ? String(existingStudent.rows[0].study_type || "")
           : "صباحي"; // Default
 
-        // Upsert student - IMPORTANT: Do NOT update department_code on conflict
-        // This preserves existing department data when importing different departments
+        // ربط الطالب بقسم الاستيراد المختار (departmentCode = قسم الدفعة)
         await upsertStudent({
           studentId: record.studentId,
           fullName: record.fullName,
-          departmentCode, // Will be used for new students, but not updated for existing ones
+          departmentCode, // قسم الدفعة المستوردة
           stage,
           studyType,
           academicYear: ACADEMIC_YEAR,
@@ -376,16 +372,21 @@ export async function getStudentAccounts(batchId?: string) {
 export async function getStudentAccountsStats() {
   await ensureStudentAccountsAccess("access");
 
-  const { getStudentUsersCount } = await import("@/lib/studentUsersRepo");
-  
-  const [studentUsersCount, studentsCount] = await Promise.all([
-    getStudentUsersCount(),
-    query(`SELECT COUNT(*) as count FROM students`).then(res => Number(res.rows[0]?.count || 0)),
-  ]);
+  // Count accounts linked to existing imports (matches what the list shows)
+  const linkedRes = await query(
+    `SELECT COUNT(*) as count FROM student_users 
+     WHERE uploaded_batch_id IS NOT NULL 
+     AND uploaded_batch_id IN (SELECT id FROM student_accounts_batches)`
+  );
+  const linkedAccountsCount = Number(linkedRes.rows[0]?.count || 0);
+
+  // Total in DB (for reference - may include orphaned accounts from deleted imports)
+  const totalRes = await query(`SELECT COUNT(*) as count FROM student_users`);
+  const totalInDb = Number(totalRes.rows[0]?.count || 0);
 
   return {
-    studentUsersCount,
-    studentsCount,
+    linkedAccountsCount, // Matches the list display
+    totalInDb,
   };
 }
 
@@ -462,6 +463,30 @@ export async function deleteStudentAccountsBatchAction(batchId: string): Promise
   }
 
   return result;
+}
+
+export async function deleteOrphanedStudentAccountsAction(): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+  try {
+    await ensureStudentAccountsAccess("delete");
+  } catch (error) {
+    return { success: false, deletedCount: 0, error: error instanceof Error ? error.message : "ليس لديك صلاحية حذف السجلات" };
+  }
+
+  const result = await deleteOrphanedStudentAccounts();
+  if (result.success) {
+    revalidatePath("/admin/student-accounts");
+    broadcast({ type: "STUDENT_ACCOUNTS_UPDATED", payload: {} });
+  }
+  return result;
+}
+
+export async function getOrphanedStudentAccountsCountAction(): Promise<number> {
+  try {
+    await ensureStudentAccountsAccess("access");
+  } catch {
+    return 0;
+  }
+  return getOrphanedStudentAccountsCount();
 }
 
 export async function bulkResetPasswords(): Promise<{ 

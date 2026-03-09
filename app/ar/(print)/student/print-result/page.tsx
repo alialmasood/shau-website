@@ -35,6 +35,14 @@ function getDepartmentName(code: string): string {
     DENTAL_TECH: "تقنيات صناعة الأسنان",
     ANESTHESIA_TECH: "تقنيات التخدير",
     RADIOLOGY_TECH: "تقنيات الأشعة",
+    OPTICS_TECH: "تقنيات البصريات",
+    EMERGENCY_MED_TECH: "تقنيات طب الطوارئ والاسعافات الاولية",
+    COMMUNITY_HEALTH: "تقنيات صحة المجتمع",
+    PHYSIOTHERAPY_TECH: "تقنيات العلاج الطبيعي",
+    HEALTH_PHYSICS_ENG: "هندسة تقنيات الفيزياء الصحية والعلاج الاشعاعي",
+    OIL_GAS_ENG: "هندسة تقنيات النفط والغاز",
+    CYBERSEC_CLOUD_ENG: "هندسة تقنيات الامن السيبراني والحوسبة السحابية",
+    CIVIL_CONSTRUCTION_ENG: "هندسة تقنيات البناء والانشاءات",
   };
   return depts[code] || code;
 }
