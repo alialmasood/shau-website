@@ -9,6 +9,14 @@ const DEPARTMENTS = [
   { code: "DENTAL_TECH", name: "تقنيات صناعة الأسنان" },
   { code: "ANESTHESIA_TECH", name: "تقنيات التخدير" },
   { code: "RADIOLOGY_TECH", name: "تقنيات الأشعة" },
+  { code: "OPTICS_TECH", name: "تقنيات البصريات" },
+  { code: "EMERGENCY_MED_TECH", name: "تقنيات طب الطوارئ والاسعافات الاولية" },
+  { code: "COMMUNITY_HEALTH", name: "تقنيات صحة المجتمع" },
+  { code: "PHYSIOTHERAPY_TECH", name: "تقنيات العلاج الطبيعي" },
+  { code: "HEALTH_PHYSICS_ENG", name: "هندسة تقنيات الفيزياء الصحية والعلاج الاشعاعي" },
+  { code: "OIL_GAS_ENG", name: "هندسة تقنيات النفط والغاز" },
+  { code: "CYBERSEC_CLOUD_ENG", name: "هندسة تقنيات الامن السيبراني والحوسبة السحابية" },
+  { code: "CIVIL_CONSTRUCTION_ENG", name: "هندسة تقنيات البناء والانشاءات" },
 ];
 
 export default function StudentAccountsImport() {
