@@ -50,12 +50,14 @@ function buildSubjectsFromRawRow(
     if (orig === "التقدير" || n === normalizeHeaderFn("التقدير")) continue;
     const value = rawRow[orig] ?? rawRow[key] ?? rawRow[orig.trim()];
     const trimmed = value === undefined || value === null ? "" : String(value).trim();
-    const scoreNum = trimmed === "" ? 0 : (typeof value === "number" ? value : Number(trimmed));
-    const score = (trimmed !== "" && !isNaN(scoreNum) && scoreNum >= 0) ? scoreNum : 0;
+    // تخطي المواد ذات القيمة الفارغة — لا نضيفها للنتيجة
+    if (trimmed === "") continue;
+    const scoreNum = typeof value === "number" ? value : Number(trimmed);
+    if (isNaN(scoreNum) || scoreNum < 0) continue;
     subjects.push({
       name: orig,
-      score,
-      grade: calculateGrade(score),
+      score: scoreNum,
+      grade: calculateGrade(scoreNum),
       units: 0,
     });
   }

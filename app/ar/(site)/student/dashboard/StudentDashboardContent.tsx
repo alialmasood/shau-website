@@ -228,11 +228,20 @@ export default function StudentDashboardContent({
                           norm("وحدات"), "units", norm("رقم الطالب"), norm("الاسم الكامل")
                         ]);
 
+                        const hasValidScore = (score: unknown): boolean => {
+                          if (score === null || score === undefined) return false;
+                          const str = String(score).trim();
+                          if (str === "") return false;
+                          const num = typeof score === "number" ? score : Number(score);
+                          return !isNaN(num) && num >= 0;
+                        };
+
                         let fromJson: Array<{ name: string; score?: number | string }> = [];
                         if (result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0) {
                           fromJson = result.subjectsJson.filter((s: any) => {
                             const n = String(s.name || "").trim().toLowerCase();
-                            return !n.includes("وحدات") && !n.includes("units") && n !== "عدد الوحدات" && n !== "units";
+                            if (n.includes("وحدات") || n.includes("units") || n === "عدد الوحدات" || n === "units") return false;
+                            return hasValidScore(s.score);
                           }) as Array<{ name: string; score?: number | string }>;
                         }
 
@@ -245,7 +254,9 @@ export default function StudentDashboardContent({
                               const n = norm(k);
                               if (FIXED.has(n) || FIXED.has(k)) return false;
                               if (n.includes("وحدات") || n.includes("units")) return false;
-                              if (value === null || value === undefined || value === "") return false;
+                              if (value === null || value === undefined) return false;
+                              const strVal = String(value).trim();
+                              if (strVal === "") return false;
                               const num = Number(value);
                               return !isNaN(num) && num >= 0 && num <= 150;
                             })
@@ -253,7 +264,8 @@ export default function StudentDashboardContent({
                             .sort((a, b) => a.name.localeCompare(b.name));
                         }
 
-                        const actualSubjects = fromRaw.length >= fromJson.length ? fromRaw : fromJson;
+                        let actualSubjects = fromRaw.length >= fromJson.length ? fromRaw : fromJson;
+                        actualSubjects = actualSubjects.filter((s) => hasValidScore(s.score));
                         return actualSubjects.length > 0 ? (
                           <div className="mb-4 md:mb-6">
                             <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-3 md:mb-4">المواد الدراسية</h3>

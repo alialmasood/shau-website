@@ -579,14 +579,19 @@ export default async function PrintResultPage({
         {/* SubjectsTable */}
         {result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0 && (() => {
           // Filter out "عدد الوحدات" (units) - it's NOT a subject, it's metadata
-          // عدد الوحدات لا يُعرض في PDF - هو خاصية للمادة وليس مادة دراسية
+          // إظهار المواد التي لها درجة فقط (0 فأعلى) — إخفاء المواد ذات القيمة الفارغة
+          const hasValidScore = (s: unknown): boolean => {
+            if (s === null || s === undefined) return false;
+            const str = String(s).trim();
+            if (str === "") return false;
+            const num = typeof s === "number" ? s : Number(s);
+            return !isNaN(num) && num >= 0;
+          };
           const actualSubjects = result.subjectsJson.filter((subject: any) => {
             const subjectName = String(subject.name || "").trim().toLowerCase();
-            // Exclude any subject with "وحدات" or "units" in the name
-            return !subjectName.includes("وحدات") && 
-                   !subjectName.includes("units") && 
-                   subjectName !== "عدد الوحدات" &&
-                   subjectName !== "units";
+            if (subjectName.includes("وحدات") || subjectName.includes("units") || 
+                subjectName === "عدد الوحدات" || subjectName === "units") return false;
+            return hasValidScore(subject.score);
           });
           
           return actualSubjects.length > 0 ? (
