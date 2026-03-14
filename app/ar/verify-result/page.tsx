@@ -212,10 +212,15 @@ export default async function VerifyResultPage({
               </div>
             </div>
 
-            {/* Subjects Table */}
-            {result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0 && (() => {
-              // Filter out "عدد الوحدات" (units) and subjects with empty scores
-              // إظهار المواد التي لها درجة فقط (0 فأعلى) — إخفاء المواد ذات القيمة الفارغة
+            {/* Subjects Table - نفس منطق لوحة الطالب و PDF: استخدام rawRowJson عند احتوائه مواد أكثر */}
+            {(() => {
+              const rawData = result.rawRowJson && typeof result.rawRowJson === "object" ? result.rawRowJson as Record<string, unknown> : null;
+              const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, "_").replace(/[^\w\u0600-\u06FF_]/g, "");
+              const FIXED = new Set([
+                "student_id", "full_name", "study_type", "stage",
+                norm("المجموع"), norm("المعدل"), norm("التقييم"), norm("النتيجة النهائية"), norm("التقدير"),
+                norm("وحدات"), "units", norm("رقم الطالب"), norm("الاسم الكامل")
+              ]);
               const hasValidScore = (s: unknown): boolean => {
                 if (s === null || s === undefined) return false;
                 const str = String(s).trim();
@@ -223,14 +228,39 @@ export default async function VerifyResultPage({
                 const num = typeof s === "number" ? s : Number(s);
                 return !isNaN(num) && num >= 0;
               };
-              const actualSubjects = result.subjectsJson.filter((subject: any) => {
-                const subjectName = String(subject.name || "").trim().toLowerCase();
-                if (subjectName.includes("وحدات") || subjectName.includes("units") || 
-                    subjectName === "عدد الوحدات" || subjectName === "units") return false;
-                return hasValidScore(subject.score);
-              });
-              
-              return actualSubjects.length > 0 ? (
+
+              let fromJson: Array<{ name: string; score?: number | string }> = [];
+              if (result.subjectsJson && Array.isArray(result.subjectsJson) && result.subjectsJson.length > 0) {
+                fromJson = result.subjectsJson.filter((subject: any) => {
+                  const n = String(subject.name || "").trim().toLowerCase();
+                  if (n.includes("وحدات") || n.includes("units") || n === "عدد الوحدات" || n === "units") return false;
+                  return hasValidScore(subject.score);
+                }) as Array<{ name: string; score?: number | string }>;
+              }
+
+              let fromRaw: Array<{ name: string; score?: number | string }> = [];
+              if (rawData) {
+                fromRaw = Object.entries(rawData)
+                  .filter(([key, value]) => {
+                    const k = String(key).trim();
+                    if (!k || /^\d+$/.test(k)) return false;
+                    const n = norm(k);
+                    if (FIXED.has(n) || FIXED.has(k)) return false;
+                    if (n.includes("وحدات") || n.includes("units")) return false;
+                    if (value === null || value === undefined) return false;
+                    const strVal = String(value).trim();
+                    if (strVal === "") return false;
+                    const num = Number(value);
+                    return !isNaN(num) && num >= 0 && num <= 150;
+                  })
+                  .map(([name, value]) => ({ name: String(name).trim(), score: Number(value) }))
+                  .sort((a, b) => a.name.localeCompare(b.name));
+              }
+
+              const actualSubjects = fromRaw.length >= fromJson.length ? fromRaw : fromJson;
+              const filtered = actualSubjects.filter((s) => hasValidScore(s.score));
+
+              return filtered.length > 0 ? (
                 <div className="mt-6">
                   <h3 className="font-bold mb-3">جدول المواد</h3>
                   <div className="overflow-x-auto">
@@ -243,7 +273,7 @@ export default async function VerifyResultPage({
                         </tr>
                       </thead>
                       <tbody>
-                        {actualSubjects.map((subject: any, idx: number) => {
+                        {filtered.map((subject: any, idx: number) => {
                           const scoreNum = typeof subject.score === "number" 
                             ? subject.score 
                             : Number(subject.score) || 0;
