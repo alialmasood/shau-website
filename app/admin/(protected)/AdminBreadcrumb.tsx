@@ -16,6 +16,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   edit: "تعديل",
   "registration-affairs": "شؤون التسجيل",
   "required-documents": "المستمسكات المطلوبة",
+  "staff-identity": "هويات الكادر",
 };
 
 function segmentToLabel(segment: string, prev: string): string {

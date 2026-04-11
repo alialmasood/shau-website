@@ -1,4 +1,5 @@
 import { getCurrentAdminUser } from "./adminCurrent";
+import { ensureAdminCatalogPages } from "./adminPagesRepo";
 import { query } from "./db";
 
 type Action = "access" | "view" | "create" | "edit" | "delete" | "upload" | "export" | "publish";
@@ -86,6 +87,13 @@ export async function getAccessiblePages(): Promise<string[]> {
       return [];
     }
 
+    // إدراج أي صفحات جديدة (مثل staff-identity) في admin_pages قبل بناء قائمة التنقل
+    try {
+      await ensureAdminCatalogPages();
+    } catch (e) {
+      console.error("[getAccessiblePages] ensureAdminCatalogPages failed:", e);
+    }
+
     // إذا كان ADMIN => كل الصفحات
     if (user.role.toUpperCase() === "ADMIN") {
       try {
@@ -94,7 +102,7 @@ export async function getAccessiblePages(): Promise<string[]> {
       } catch (error) {
         console.error("[getAccessiblePages] Error fetching all pages for ADMIN:", error);
         // في حالة خطأ (مثل عدم وجود الجدول)، نرجع قائمة افتراضية
-        return ["admin", "news", "programs", "users", "applications", "registration", "ticker", "social", "tuition"];
+        return ["admin", "news", "programs", "users", "applications", "registration", "ticker", "social", "tuition", "staff-identity"];
       }
     }
 

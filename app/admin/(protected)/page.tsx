@@ -53,6 +53,7 @@ export default async function AdminDashboardPage() {
         grades: "/admin/grades",
         accounts: "/admin/accounts",
         "student-accounts": "/admin/student-accounts",
+        "staff-identity": "/admin/staff-identity",
       };
       const target = pageToPath[accessiblePages[0]] || "/admin";
       redirect(target);

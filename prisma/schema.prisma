@@ -143,6 +143,7 @@ model Media {
   highSchoolCertificateBackFor RegistrationDocument[] @relation("HighSchoolCertificateBack")
   barcodeDocumentFor RegistrationDocument[] @relation("BarcodeDocument")
   studentIdCardPhotos StudentIdCard[] @relation("StudentIdCardPhoto")
+  staffIdentityPhotos StaffIdentityRequest[] @relation("StaffIdentityPhoto")
 
   @@map("media")
 }
@@ -492,6 +493,26 @@ model StudentUser {
   @@index([username])
   @@index([uploaded_batch_id])
   @@map("student_users")
+}
+
+model StaffIdentityRequest {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nameAr           String    @map("name_ar") @db.VarChar(200)
+  nameEn           String    @map("name_en") @db.VarChar(200)
+  dateOfBirth      DateTime  @map("date_of_birth") @db.Date
+  academicTitle    String?   @map("academic_title") @db.VarChar(120)
+  workplace        String    @db.VarChar(200)
+  position         String?   @db.VarChar(120)
+  phone            String    @db.VarChar(30)
+  universityEmail  String    @map("university_email") @db.VarChar(120)
+  photoMediaId     String?   @map("photo_media_id") @db.Uuid
+  locale           String?   @db.VarChar(10)
+  created_at       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  photoMedia Media? @relation("StaffIdentityPhoto", fields: [photoMediaId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([created_at])
+  @@map("staff_identity_requests")
 }
 
 model StudentAccountsBatch {

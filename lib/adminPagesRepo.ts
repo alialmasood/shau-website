@@ -70,6 +70,7 @@ const REQUIRED_PAGES: Array<{
   { code: "accounts", nameAr: "الحسابات", nameEn: "Accounts", parentCode: null },
   { code: "student-accounts", nameAr: "حسابات الطلاب", nameEn: "Student Accounts", parentCode: null },
   { code: "student-id", nameAr: "هويات الطلبة", nameEn: "Student ID", parentCode: null },
+  { code: "staff-identity", nameAr: "هويات الكادر", nameEn: "Staff identity requests", parentCode: null },
 ];
 
 async function hasParentCodeColumn(): Promise<boolean> {
@@ -105,6 +106,16 @@ async function ensureRequiredAdminPages(existingCodes: Set<string>) {
       );
     }
   }
+}
+
+/**
+ * يضمن وجود كل الصفحات المعرفة في REQUIRED_PAGES داخل admin_pages (للتنقل و RBAC).
+ * آمن للاستدعاء المتكرر — INSERT ... ON CONFLICT DO NOTHING.
+ */
+export async function ensureAdminCatalogPages(): Promise<void> {
+  const rows = await fetchAdminPages();
+  const existingCodes = new Set(rows.map((r) => String(r.code)));
+  await ensureRequiredAdminPages(existingCodes);
 }
 
 async function fetchAdminPages() {

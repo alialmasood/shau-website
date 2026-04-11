@@ -124,6 +124,7 @@ const navItems = [
           { label: "قوائم متابعة البحوث المنشورة", href: "/published-research-tracking" },
           { label: "جدول المحاضرات الاسبوعي", href: "/weekly-schedule" },
           { label: "استمارة الخطة الدراسية", href: "/study-plan-form" },
+          { label: "طلب هوية", href: "/identity-request" },
         ]
       },
     ]

@@ -1,0 +1,171 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentAdminUser } from "@/lib/adminCurrent";
+import { canAdmin } from "@/lib/adminAuthz";
+import { listStaffIdentityRequests } from "@/lib/staffIdentityRequestsRepo";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function formatDate(iso: string): string {
+  if (!iso) return "—";
+  try {
+    return new Intl.DateTimeFormat("ar-IQ", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(iso));
+  } catch {
+    return "—";
+  }
+}
+
+function formatDob(s: string): string {
+  if (!s) return "—";
+  try {
+    return new Intl.DateTimeFormat("ar-IQ", { dateStyle: "medium" }).format(new Date(s + "T12:00:00"));
+  } catch {
+    return s;
+  }
+}
+
+export default async function StaffIdentityAdminPage() {
+  const user = await getCurrentAdminUser();
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const roleUpper = String(user.role || "").toUpperCase();
+  const hasAccess = roleUpper === "ADMIN" || (await canAdmin("staff-identity", "access"));
+
+  if (!hasAccess) {
+    return (
+      <div className="w-full bg-white min-h-[40vh] flex items-center justify-center rounded-2xl border border-neutral-200 p-8">
+        <div className="text-center">
+          <p className="text-red-600 font-bold text-xl">❌ غير مصرح - ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
+          <Link href="/admin" prefetch={false} className="mt-4 inline-block text-[#31BD9C] hover:underline">
+            العودة إلى لوحة التحكم
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  let rows: Awaited<ReturnType<typeof listStaffIdentityRequests>> = [];
+  try {
+    rows = await listStaffIdentityRequests();
+  } catch (e) {
+    console.error("[staff-identity] list failed", e);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">هويات الكادر</h1>
+          <p className="text-sm text-neutral-600 mt-1">طلبات التقديم للحصول على هوية — جميع الحقول كما أدخلها مقدّم الطلب</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <a
+            href="/api/admin/staff-identity/export/excel"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-bold text-neutral-800 shadow-sm hover:bg-neutral-50 hover:border-[#31BD9C]/40 transition-colors"
+          >
+            <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            تصدير Excel
+          </a>
+          <a
+            href="/api/admin/staff-identity/export/pdf"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-bold text-neutral-800 shadow-sm hover:bg-neutral-50 hover:border-[#31BD9C]/40 transition-colors"
+          >
+            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            تصدير PDF
+          </a>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <table className="min-w-[1050px] w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-neutral-100 border-b border-neutral-200 text-neutral-800">
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">توقيت الإرسال</th>
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">الاسم (عربي)</th>
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">الاسم (إنجليزي)</th>
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">التولد</th>
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">اللقب العلمي</th>
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">القسم</th>
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">المنصب</th>
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">الهاتف</th>
+              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">البريد الجامعي</th>
+              <th className="px-3 py-3 text-center font-bold whitespace-nowrap">الصورة</th>
+              <th className="px-3 py-3 text-center font-bold whitespace-nowrap">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="px-4 py-10 text-center text-neutral-500 font-medium">
+                  لا توجد طلبات بعد
+                </td>
+              </tr>
+            ) : (
+              rows.map((r) => (
+                <tr key={r.id} className="border-b border-neutral-100 hover:bg-neutral-50/80 align-middle">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-neutral-700 tabular-nums">{formatDate(r.created_at)}</td>
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium max-w-[180px]">{r.name_ar}</td>
+                  <td className="px-3 py-2.5 text-neutral-800 max-w-[180px]" dir="ltr">
+                    {r.name_en}
+                  </td>
+                  <td className="px-3 py-2.5 whitespace-nowrap text-neutral-700">{formatDob(r.date_of_birth)}</td>
+                  <td className="px-3 py-2.5 text-neutral-700 max-w-[120px]">{r.academic_title || "—"}</td>
+                  <td className="px-3 py-2.5 text-neutral-800 max-w-[160px]">{r.workplace}</td>
+                  <td className="px-3 py-2.5 text-neutral-700 max-w-[120px]">{r.position || "—"}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap text-neutral-700" dir="ltr">
+                    {r.phone}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-700 max-w-[200px] break-all" dir="ltr">
+                    {r.university_email}
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    {r.photo_media_id ? (
+                      <a
+                        href={`/api/media/${r.photo_media_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block rounded-lg border border-neutral-200 overflow-hidden hover:ring-2 hover:ring-[#31BD9C]/40"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`/api/media/${r.photo_media_id}`}
+                          alt=""
+                          width={56}
+                          height={56}
+                          className="object-cover w-14 h-14 block"
+                        />
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                    <a
+                      href={`/api/admin/staff-identity/${r.id}/download`}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#31BD9C] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#2aa88a] transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      تحميل
+                    </a>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

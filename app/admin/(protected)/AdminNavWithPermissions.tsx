@@ -89,7 +89,18 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
     ["news", "ticker", "programs", "social"].includes(item.pageCode)
   );
   const managementItems = filteredItems.filter((item) =>
-    ["tuition", "applications", "registration", "users", "results", "grades", "accounts", "student-accounts", "student-id"].includes(item.pageCode)
+    [
+      "tuition",
+      "applications",
+      "registration",
+      "users",
+      "results",
+      "grades",
+      "accounts",
+      "student-accounts",
+      "student-id",
+      "staff-identity",
+    ].includes(item.pageCode)
   );
 
   return (
