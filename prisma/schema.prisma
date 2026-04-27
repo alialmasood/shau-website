@@ -144,8 +144,114 @@ model Media {
   barcodeDocumentFor RegistrationDocument[] @relation("BarcodeDocument")
   studentIdCardPhotos StudentIdCard[] @relation("StudentIdCardPhoto")
   staffIdentityPhotos StaffIdentityRequest[] @relation("StaffIdentityPhoto")
+  eventCoverFor       Event[]                @relation("EventCoverImage")
+  eventBrochureFor    Event[]                @relation("EventBrochureMedia")
+  eventGalleryItems   EventGallery[]
+  ceActivityCovers    CeActivity[]       @relation("CeActivityCover")
+  ceActivityCertsZips CeActivity[]       @relation("CeActivityCertsZip")
+  ceActivityGalleryItems CeActivityGallery[]
+  ceCertificatePdfs   CeCertificate[]
 
   @@map("media")
+}
+
+model Event {
+  id                    String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  titleAr               String    @map("title_ar") @db.VarChar(300)
+  titleEn               String?   @map("title_en") @db.VarChar(300)
+  excerptAr             String?   @map("excerpt_ar") @db.Text
+  excerptEn             String?   @map("excerpt_en") @db.Text
+  detailsAr             String    @default("") @map("details_ar") @db.Text
+  detailsEn             String?   @map("details_en") @db.Text
+  startsAt              DateTime  @map("starts_at") @db.Timestamptz(6)
+  endsAt                DateTime? @map("ends_at") @db.Timestamptz(6)
+  registrationLabelAr   String?   @map("registration_label_ar") @db.VarChar(120)
+  registrationLabelEn   String?   @map("registration_label_en") @db.VarChar(120)
+  registrationUrl       String?   @map("registration_url") @db.VarChar(500)
+  published             Boolean   @default(false) @map("is_published")
+  featured              Boolean   @default(false)
+  coverImageId          String?   @map("cover_image_id") @db.Uuid
+  coverImage            Media?    @relation("EventCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  brochureMediaId       String?   @map("brochure_media_id") @db.Uuid
+  brochureMedia         Media?    @relation("EventBrochureMedia", fields: [brochureMediaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  videoUrl              String?   @map("video_url") @db.VarChar(500)
+  gallery               EventGallery[]
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([published, startsAt])
+  @@map("events")
+}
+
+model EventGallery {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  eventId    String   @map("event_id") @db.Uuid
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mediaId    String   @map("media_id") @db.Uuid
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sortOrder  Int      @default(0) @map("sort_order")
+
+  @@unique([eventId, mediaId])
+  @@index([eventId])
+  @@map("event_gallery")
+}
+
+model CeActivity {
+  id                       String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  titleAr                  String             @map("title_ar") @db.VarChar(300)
+  titleEn                  String?            @map("title_en") @db.VarChar(300)
+  excerptAr                String?            @map("excerpt_ar") @db.Text
+  excerptEn                String?            @map("excerpt_en") @db.Text
+  announcementDetailsAr  String             @default("") @map("announcement_details_ar") @db.Text
+  announcementDetailsEn  String?            @map("announcement_details_en") @db.Text
+  recapDetailsAr           String?            @map("recap_details_ar") @db.Text
+  recapDetailsEn           String?            @map("recap_details_en") @db.Text
+  eventStartsAt            DateTime           @map("event_starts_at") @db.Timestamptz(6)
+  eventEndsAt              DateTime?          @map("event_ends_at") @db.Timestamptz(6)
+  showAnnouncement         Boolean            @default(true) @map("show_announcement")
+  showRecap                Boolean            @default(false) @map("show_recap")
+  published                Boolean            @default(false) @map("is_published")
+  featured                 Boolean            @default(false)
+  coverImageId             String?            @map("cover_image_id") @db.Uuid
+  coverImage               Media?             @relation("CeActivityCover", fields: [coverImageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  certificatesZipMediaId  String?            @map("certificates_zip_media_id") @db.Uuid
+  certificatesZipMedia     Media?             @relation("CeActivityCertsZip", fields: [certificatesZipMediaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  gallery                  CeActivityGallery[]
+  certificates             CeCertificate[]
+  created_at               DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime           @default(now()) @db.Timestamptz(6)
+
+  @@index([published, eventStartsAt])
+  @@map("ce_activities")
+}
+
+model CeActivityGallery {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activityId String    @map("activity_id") @db.Uuid
+  activity   CeActivity @relation(fields: [activityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mediaId    String    @map("media_id") @db.Uuid
+  media      Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sortOrder  Int       @default(0) @map("sort_order")
+  kind       String    @default("announcement") @db.VarChar(20)
+
+  @@unique([activityId, mediaId])
+  @@index([activityId])
+  @@map("ce_activity_gallery")
+}
+
+model CeCertificate {
+  id                 String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  activityId         String     @map("activity_id") @db.Uuid
+  activity           CeActivity @relation(fields: [activityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  code               String     @unique @db.VarChar(32)
+  participantNameAr String    @map("participant_name_ar") @db.VarChar(200)
+  participantNameEn String?    @map("participant_name_en") @db.VarChar(200)
+  pdfMediaId         String     @map("pdf_media_id") @db.Uuid
+  pdfMedia           Media      @relation(fields: [pdfMediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  created_at         DateTime   @default(now()) @db.Timestamptz(6)
+
+  @@index([activityId])
+  @@map("ce_certificates")
 }
 
 model News {

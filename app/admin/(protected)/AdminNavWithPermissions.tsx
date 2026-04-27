@@ -90,6 +90,8 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
   );
   const managementItems = filteredItems.filter((item) =>
     [
+      "events",
+      "continuing-education",
       "tuition",
       "applications",
       "registration",

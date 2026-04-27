@@ -40,8 +40,12 @@ export async function GET(
     "Content-Type": mimeType,
     "Cache-Control": "public, max-age=31536000, immutable",
   };
-  if (mimeType === "application/pdf") {
-    const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "document.pdf";
+  if (
+    mimeType === "application/pdf" ||
+    mimeType === "application/zip" ||
+    mimeType === "application/x-zip-compressed"
+  ) {
+    const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "download";
     headers["Content-Disposition"] = `attachment; filename="${safe}"`;
   }
 

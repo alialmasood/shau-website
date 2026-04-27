@@ -22,11 +22,15 @@ export async function POST(request: Request) {
     );
   }
 
-  // صور أو PDF
-  const ok = file.type?.startsWith("image/") || file.type === "application/pdf";
+  // صور أو PDF أو ZIP (مثلاً ملفات الحدث / البروشور)
+  const ok =
+    file.type?.startsWith("image/") ||
+    file.type === "application/pdf" ||
+    file.type === "application/zip" ||
+    file.type === "application/x-zip-compressed";
   if (!file.type || !ok) {
     return NextResponse.json(
-      { error: "يُقبل الصور (image/*) وملفات PDF فقط" },
+      { error: "يُقبل الصور (image/*) وملفات PDF وZIP فقط" },
       { status: 400 }
     );
   }

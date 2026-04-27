@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 const SEGMENT_LABELS: Record<string, string> = {
   admin: "لوحة التحكم",
   news: "الأخبار",
+  events: "الأحداث",
+  "continuing-education": "التعليم المستمر",
   new: "إضافة جديد",
   ticker: "الشريط الإخباري",
   "tuition-fees": "إدارة الرسوم",
@@ -21,6 +23,8 @@ const SEGMENT_LABELS: Record<string, string> = {
 
 function segmentToLabel(segment: string, prev: string): string {
   if (segment === "new" && prev === "news") return "إضافة خبر";
+  if (segment === "new" && prev === "events") return "حدث جديد";
+  if (segment === "new" && prev === "continuing-education") return "نشاط جديد";
   if (segment === "new" && prev === "tuition-fees") return "إضافة قسم";
   if (segment === "new" && prev === "programs") return "إضافة برنامج";
   if (SEGMENT_LABELS[segment]) return SEGMENT_LABELS[segment];

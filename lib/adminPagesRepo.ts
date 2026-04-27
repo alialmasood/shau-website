@@ -40,6 +40,8 @@ const PAGE_ORDER: Record<string, number> = {
   "social": 10,
   "tuition": 11,
   "tuition-pdf": 12,
+  "events": 13,
+  "continuing-education": 14,
 };
 
 // خريطة الصفحات الفرعية -> الصفحات الأساسية
@@ -56,6 +58,7 @@ const REQUIRED_PAGES: Array<{
 }> = [
   { code: "admin", nameAr: "لوحة التحكم", nameEn: "Admin", parentCode: null },
   { code: "news", nameAr: "الأخبار", nameEn: "News", parentCode: null },
+  { code: "events", nameAr: "الأحداث", nameEn: "Events", parentCode: null },
   { code: "programs", nameAr: "برامج الكلية", nameEn: "Programs", parentCode: null },
   { code: "ticker", nameAr: "الشريط الإخباري", nameEn: "Ticker", parentCode: null },
   { code: "social", nameAr: "السوشيال ميديا", nameEn: "Social", parentCode: null },
@@ -71,6 +74,12 @@ const REQUIRED_PAGES: Array<{
   { code: "student-accounts", nameAr: "حسابات الطلاب", nameEn: "Student Accounts", parentCode: null },
   { code: "student-id", nameAr: "هويات الطلبة", nameEn: "Student ID", parentCode: null },
   { code: "staff-identity", nameAr: "هويات الكادر", nameEn: "Staff identity requests", parentCode: null },
+  {
+    code: "continuing-education",
+    nameAr: "التعليم المستمر",
+    nameEn: "Continuing Education",
+    parentCode: null,
+  },
 ];
 
 async function hasParentCodeColumn(): Promise<boolean> {
