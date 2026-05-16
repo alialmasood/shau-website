@@ -5,7 +5,7 @@ import { isValidStaffIdentityNumber } from "@/lib/staffIdentityNumber";
 
 export const runtime = "nodejs";
 
-import { STAFF_IDENTITY_COLLEGE_AR } from "@/lib/staffIdentityQr";
+import { STAFF_IDENTITY_COLLEGE_AR } from "@/lib/staffIdentityConfig";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);

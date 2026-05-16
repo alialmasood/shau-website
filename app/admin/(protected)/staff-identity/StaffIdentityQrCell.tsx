@@ -5,6 +5,7 @@ type Props = {
   requestId: string;
   nameAr: string;
   position: string | null;
+  photoMediaId: string | null;
 };
 
 export default async function StaffIdentityQrCell({
@@ -12,8 +13,15 @@ export default async function StaffIdentityQrCell({
   requestId,
   nameAr,
   position,
+  photoMediaId,
 }: Props) {
-  const qrContent = buildStaffQrContent({ identityNumber, requestId, nameAr, position });
+  const qrContent = buildStaffQrContent({
+    identityNumber,
+    requestId,
+    nameAr,
+    position,
+    photoMediaId,
+  });
   const qrDataUrl = await staffQrToDataUrl(qrContent);
   const downloadHref = `/api/admin/staff-identity/${requestId}/qr`;
 

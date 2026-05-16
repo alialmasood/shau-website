@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { STAFF_IDENTITY_COLLEGE_AR, staffMediaUrl } from "@/lib/staffIdentityConfig";
+import { isValidStaffIdentityNumber } from "@/lib/staffIdentityNumber";
+import { getStaffIdentityRequestByIdentityNumber } from "@/lib/staffIdentityRequestsRepo";
+import { verifyStaffToken } from "@/lib/staffIdentitySign";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-import { STAFF_IDENTITY_COLLEGE_AR } from "@/lib/staffIdentityQr";
 
 export default async function VerifyStaffPage({
   searchParams,
@@ -11,18 +13,31 @@ export default async function VerifyStaffPage({
   searchParams: Promise<{ id?: string; t?: string }>;
 }) {
   const params = await searchParams;
-  const id = params.id || "";
-  const t = params.t || "";
+  const identityNumber = String(params.id ?? "").trim();
+  const token = String(params.t ?? "").trim();
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3020";
-  const res = await fetch(
-    `${baseUrl}/api/verify-staff?id=${encodeURIComponent(id)}&t=${encodeURIComponent(t)}`,
-    { cache: "no-store" }
-  );
-  const json = await res.json().catch(() => ({ status: "invalid" }));
-  const valid = json?.status === "valid";
-  const data = valid ? json?.data : null;
-  const photoUrl = data?.photoMediaId ? `/api/media/${data.photoMediaId}` : null;
+  let valid = false;
+  let data: {
+    identityNumber: string;
+    nameAr: string;
+    position: string | null;
+    photoMediaId: string | null;
+  } | null = null;
+
+  if (identityNumber && token && isValidStaffIdentityNumber(identityNumber)) {
+    const row = await getStaffIdentityRequestByIdentityNumber(identityNumber);
+    if (row?.identity_number && verifyStaffToken(row.identity_number, row.id, token)) {
+      valid = true;
+      data = {
+        identityNumber: row.identity_number,
+        nameAr: row.name_ar,
+        position: row.position,
+        photoMediaId: row.photo_media_id,
+      };
+    }
+  }
+
+  const photoUrl = data?.photoMediaId ? staffMediaUrl(data.photoMediaId) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-100 to-neutral-200" dir="rtl">
@@ -101,14 +116,27 @@ export default async function VerifyStaffPage({
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-neutral-200 space-y-2">
-                  <div className="flex justify-between items-center text-sm">
+              <div className="mt-4 pt-4 border-t border-neutral-200">
+                <div className="flex justify-between items-center text-sm">
                   <span className="text-neutral-500">رقم الهوية</span>
                   <span className="font-mono font-semibold text-neutral-800" dir="ltr">
                     {data.identityNumber}
                   </span>
                 </div>
               </div>
+
+              {photoUrl && (
+                <p className="mt-3 text-center">
+                  <a
+                    href={photoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-[#31BD9C] hover:underline"
+                  >
+                    فتح الصورة بحجم كامل
+                  </a>
+                </p>
+              )}
 
               <p className="text-xs text-neutral-400 mt-4 text-center">
                 تم التحقق من هذه الهوية عبر رمز QR الرسمي
@@ -118,7 +146,7 @@ export default async function VerifyStaffPage({
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 text-[#31BD9C] font-semibold hover:underline">
+          <Link href="/ar" className="inline-flex items-center gap-2 text-[#31BD9C] font-semibold hover:underline">
             العودة إلى الموقع
           </Link>
         </div>
@@ -126,3 +154,4 @@ export default async function VerifyStaffPage({
     </div>
   );
 }
+

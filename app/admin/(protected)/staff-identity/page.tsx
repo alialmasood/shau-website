@@ -134,6 +134,7 @@ export default async function StaffIdentityAdminPage() {
                         requestId={r.id}
                         nameAr={r.name_ar}
                         position={r.position}
+                        photoMediaId={r.photo_media_id}
                       />
                     ) : (
                       "—"

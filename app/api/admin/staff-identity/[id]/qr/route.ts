@@ -32,6 +32,7 @@ export async function GET(
     requestId: row.id,
     nameAr: row.name_ar,
     position: row.position,
+    photoMediaId: row.photo_media_id,
   });
   const png = await staffQrToPngBuffer(qrContent);
 
