@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
-import { listStaffIdentityRequests } from "@/lib/staffIdentityRequestsRepo";
+import { ensureStaffIdentityNumber, listStaffIdentityRequests } from "@/lib/staffIdentityRequestsRepo";
+import StaffIdentityQrCell from "./StaffIdentityQrCell";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -53,6 +54,13 @@ export default async function StaffIdentityAdminPage() {
   let rows: Awaited<ReturnType<typeof listStaffIdentityRequests>> = [];
   try {
     rows = await listStaffIdentityRequests();
+    await Promise.all(
+      rows.map(async (r) => {
+        if (!r.identity_number) {
+          r.identity_number = await ensureStaffIdentityNumber(r.id);
+        }
+      })
+    );
   } catch (e) {
     console.error("[staff-identity] list failed", e);
   }
@@ -86,46 +94,65 @@ export default async function StaffIdentityAdminPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm">
-        <table className="min-w-[1050px] w-full border-collapse text-sm">
-          <thead>
-            <tr className="bg-neutral-100 border-b border-neutral-200 text-neutral-800">
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">توقيت الإرسال</th>
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">الاسم (عربي)</th>
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">الاسم (إنجليزي)</th>
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">التولد</th>
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">اللقب العلمي</th>
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">القسم</th>
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">المنصب</th>
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">الهاتف</th>
-              <th className="px-3 py-3 text-right font-bold whitespace-nowrap">البريد الجامعي</th>
-              <th className="px-3 py-3 text-center font-bold whitespace-nowrap">الصورة</th>
-              <th className="px-3 py-3 text-center font-bold whitespace-nowrap">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-neutral-100 border-b border-neutral-200 text-neutral-800">
+                <th className="px-3 py-3 text-right font-bold whitespace-nowrap">توقيت الإرسال</th>
+                <th className="px-3 py-3 text-center font-bold whitespace-nowrap">رمز QR</th>
+                <th className="px-3 py-3 text-right font-bold whitespace-nowrap">رقم الهوية</th>
+                <th className="px-3 py-3 text-right font-bold">الاسم (عربي)</th>
+                <th className="px-3 py-3 text-right font-bold">الاسم (إنجليزي)</th>
+                <th className="px-3 py-3 text-right font-bold whitespace-nowrap">التولد</th>
+                <th className="px-3 py-3 text-right font-bold">اللقب العلمي</th>
+                <th className="px-3 py-3 text-right font-bold">القسم</th>
+                <th className="px-3 py-3 text-right font-bold">المنصب</th>
+                <th className="px-3 py-3 text-right font-bold whitespace-nowrap">الهاتف</th>
+                <th className="px-3 py-3 text-right font-bold">البريد الجامعي</th>
+                <th className="px-3 py-3 text-center font-bold whitespace-nowrap">الصورة</th>
+                <th className="px-3 py-3 text-center font-bold whitespace-nowrap">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-4 py-10 text-center text-neutral-500 font-medium">
+                <td colSpan={13} className="px-3 py-10 text-center text-neutral-500 font-medium">
                   لا توجد طلبات بعد
                 </td>
               </tr>
             ) : (
               rows.map((r) => (
-                <tr key={r.id} className="border-b border-neutral-100 hover:bg-neutral-50/80 align-middle">
-                  <td className="px-3 py-2.5 whitespace-nowrap text-neutral-700 tabular-nums">{formatDate(r.created_at)}</td>
-                  <td className="px-3 py-2.5 text-neutral-900 font-medium max-w-[180px]">{r.name_ar}</td>
-                  <td className="px-3 py-2.5 text-neutral-800 max-w-[180px]" dir="ltr">
+                <tr key={r.id} className="border-b border-neutral-100 hover:bg-neutral-50/80 align-top">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-neutral-700 tabular-nums">
+                    {formatDate(r.created_at)}
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    {r.identity_number ? (
+                      <StaffIdentityQrCell
+                        identityNumber={r.identity_number}
+                        requestId={r.id}
+                        nameAr={r.name_ar}
+                      />
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-neutral-800 text-xs font-semibold whitespace-nowrap" dir="ltr">
+                    {r.identity_number ?? "—"}
+                  </td>
+                  <td className="px-3 py-2.5 text-neutral-900 font-medium">{r.name_ar}</td>
+                  <td className="px-3 py-2.5 text-neutral-800" dir="ltr">
                     {r.name_en}
                   </td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-neutral-700">{formatDob(r.date_of_birth)}</td>
-                  <td className="px-3 py-2.5 text-neutral-700 max-w-[120px]">{r.academic_title || "—"}</td>
-                  <td className="px-3 py-2.5 text-neutral-800 max-w-[160px]">{r.workplace}</td>
-                  <td className="px-3 py-2.5 text-neutral-700 max-w-[120px]">{r.position || "—"}</td>
+                  <td className="px-3 py-2.5 text-neutral-700">{r.academic_title || "—"}</td>
+                  <td className="px-3 py-2.5 text-neutral-800">{r.workplace}</td>
+                  <td className="px-3 py-2.5 text-neutral-700">{r.position || "—"}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-neutral-700" dir="ltr">
                     {r.phone}
                   </td>
-                  <td className="px-3 py-2.5 text-neutral-700 max-w-[200px] break-all" dir="ltr">
+                  <td className="px-3 py-2.5 text-neutral-700 break-all" dir="ltr">
                     {r.university_email}
                   </td>
                   <td className="px-3 py-2.5 text-center">
@@ -142,7 +169,7 @@ export default async function StaffIdentityAdminPage() {
                           alt=""
                           width={56}
                           height={56}
-                          className="object-cover w-14 h-14 block"
+                          className="object-cover w-14 h-14 block mx-auto"
                         />
                       </a>
                     ) : (
@@ -150,21 +177,37 @@ export default async function StaffIdentityAdminPage() {
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-center whitespace-nowrap">
-                    <a
-                      href={`/api/admin/staff-identity/${r.id}/download`}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#31BD9C] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#2aa88a] transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      تحميل
-                    </a>
+                    <div className="flex flex-col items-center gap-1.5">
+                      <a
+                        href={`/api/admin/staff-identity/${r.id}/download`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#31BD9C] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#2aa88a] transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                        البيانات
+                      </a>
+                      {r.identity_number && (
+                        <a
+                          href={`/api/admin/staff-identity/${r.id}/qr`}
+                          className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-700 hover:bg-neutral-50"
+                        >
+                          QR
+                        </a>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

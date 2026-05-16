@@ -603,6 +603,7 @@ model StudentUser {
 
 model StaffIdentityRequest {
   id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  identityNumber   String?   @unique @map("identity_number") @db.VarChar(10)
   nameAr           String    @map("name_ar") @db.VarChar(200)
   nameEn           String    @map("name_en") @db.VarChar(200)
   dateOfBirth      DateTime  @map("date_of_birth") @db.Date

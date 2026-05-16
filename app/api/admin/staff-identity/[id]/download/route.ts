@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import archiver from "archiver";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
-import { getStaffIdentityRequestById } from "@/lib/staffIdentityRequestsRepo";
+import { ensureStaffIdentityNumber, getStaffIdentityRequestById } from "@/lib/staffIdentityRequestsRepo";
 import { query } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -36,6 +36,8 @@ export async function GET(
     return NextResponse.json({ error: "السجل غير موجود" }, { status: 404 });
   }
 
+  const identityNumber = row.identity_number ?? (await ensureStaffIdentityNumber(id));
+
   const folderName = sanitizeFolderName(row.name_ar);
   const archive = archiver("zip", { zlib: { level: 9 } });
   const chunks: Buffer[] = [];
@@ -61,6 +63,7 @@ export async function GET(
     `اللقب العلمي: ${row.academic_title ?? "—"}`,
     `مكان العمل (القسم): ${row.workplace}`,
     `المنصب: ${row.position ?? "—"}`,
+    `رقم الهوية: ${identityNumber}`,
     `رقم الهاتف: ${row.phone}`,
     `البريد الإلكتروني الجامعي: ${row.university_email}`,
     `معرّف السجل: ${row.id}`,
