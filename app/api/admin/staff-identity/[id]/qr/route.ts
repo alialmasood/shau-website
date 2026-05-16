@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import QRCode from "qrcode";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
 import { ensureStaffIdentityNumber, getStaffIdentityRequestById } from "@/lib/staffIdentityRequestsRepo";
-import { buildStaffVerifyUrl } from "@/lib/staffIdentitySign";
+import { buildStaffQrContent, staffQrToPngBuffer } from "@/lib/staffIdentityQr";
 
 export const runtime = "nodejs";
 
@@ -28,8 +27,13 @@ export async function GET(
   }
 
   const identityNumber = row.identity_number ?? (await ensureStaffIdentityNumber(id));
-  const verifyUrl = buildStaffVerifyUrl(identityNumber, row.id);
-  const png = await QRCode.toBuffer(verifyUrl, { margin: 2, width: 512, type: "png" });
+  const qrContent = buildStaffQrContent({
+    identityNumber,
+    requestId: row.id,
+    nameAr: row.name_ar,
+    position: row.position,
+  });
+  const png = await staffQrToPngBuffer(qrContent);
 
   const safeName = row.name_ar.replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").trim().slice(0, 60) || "staff";
   const filename = `QR-${identityNumber}-${safeName}.png`;

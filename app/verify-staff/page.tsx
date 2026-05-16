@@ -3,7 +3,7 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const COLLEGE_NAME_AR = "كلية الشرق التقنية التخصصية";
+import { STAFF_IDENTITY_COLLEGE_AR } from "@/lib/staffIdentityQr";
 
 export default async function VerifyStaffPage({
   searchParams,
@@ -71,8 +71,10 @@ export default async function VerifyStaffPage({
 
           {valid && data && (
             <div className="p-5">
-              <p className="text-center text-sm font-semibold text-[#31BD9C] mb-4">{COLLEGE_NAME_AR}</p>
-              <p className="text-center text-xs text-neutral-500 mb-4">هذه الهوية صادرة عن {COLLEGE_NAME_AR}</p>
+              <p className="text-center text-sm font-semibold text-[#31BD9C] mb-4">{STAFF_IDENTITY_COLLEGE_AR}</p>
+              <p className="text-center text-xs text-neutral-500 mb-4">
+                هذه الهوية صادرة عن {STAFF_IDENTITY_COLLEGE_AR}
+              </p>
 
               <div className="flex gap-4 items-start">
                 <div className="shrink-0 w-28 h-28 rounded-xl overflow-hidden border-2 border-neutral-200 bg-neutral-100">

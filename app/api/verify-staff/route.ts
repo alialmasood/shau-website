@@ -5,7 +5,7 @@ import { isValidStaffIdentityNumber } from "@/lib/staffIdentityNumber";
 
 export const runtime = "nodejs";
 
-const COLLEGE_NAME_AR = "كلية الشرق التقنية التخصصية";
+import { STAFF_IDENTITY_COLLEGE_AR } from "@/lib/staffIdentityQr";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       workplace: row.workplace,
       academicTitle: row.academic_title ?? null,
       photoMediaId: row.photo_media_id,
-      issuer: COLLEGE_NAME_AR,
+      issuer: STAFF_IDENTITY_COLLEGE_AR,
     },
   });
 }

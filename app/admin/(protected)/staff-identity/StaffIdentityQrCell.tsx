@@ -1,15 +1,20 @@
-import { makeQrDataUrl } from "@/lib/idCodeGen";
-import { buildStaffVerifyUrl } from "@/lib/staffIdentitySign";
+import { buildStaffQrContent, staffQrToDataUrl } from "@/lib/staffIdentityQr";
 
 type Props = {
   identityNumber: string;
   requestId: string;
   nameAr: string;
+  position: string | null;
 };
 
-export default async function StaffIdentityQrCell({ identityNumber, requestId, nameAr }: Props) {
-  const verifyUrl = buildStaffVerifyUrl(identityNumber, requestId);
-  const qrDataUrl = await makeQrDataUrl(verifyUrl);
+export default async function StaffIdentityQrCell({
+  identityNumber,
+  requestId,
+  nameAr,
+  position,
+}: Props) {
+  const qrContent = buildStaffQrContent({ identityNumber, requestId, nameAr, position });
+  const qrDataUrl = await staffQrToDataUrl(qrContent);
   const downloadHref = `/api/admin/staff-identity/${requestId}/qr`;
 
   return (

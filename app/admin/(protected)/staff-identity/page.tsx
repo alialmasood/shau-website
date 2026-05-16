@@ -133,6 +133,7 @@ export default async function StaffIdentityAdminPage() {
                         identityNumber={r.identity_number}
                         requestId={r.id}
                         nameAr={r.name_ar}
+                        position={r.position}
                       />
                     ) : (
                       "—"
