@@ -27,14 +27,7 @@ export async function GET(
   }
 
   const identityNumber = row.identity_number ?? (await ensureStaffIdentityNumber(id));
-  const qrContent = buildStaffQrContent({
-    identityNumber,
-    nameAr: row.name_ar,
-    nameEn: row.name_en,
-    position: row.position,
-    workplace: row.workplace,
-    academicTitle: row.academic_title,
-  });
+  const qrContent = buildStaffQrContent({ identityNumber, requestId: id });
   const png = await staffQrToPngBuffer(qrContent);
 
   const safeName = row.name_ar.replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").trim().slice(0, 60) || "staff";

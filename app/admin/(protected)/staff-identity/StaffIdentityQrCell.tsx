@@ -4,29 +4,10 @@ type Props = {
   identityNumber: string;
   requestId: string;
   nameAr: string;
-  nameEn: string;
-  position: string | null;
-  workplace: string;
-  academicTitle: string | null;
 };
 
-export default async function StaffIdentityQrCell({
-  identityNumber,
-  requestId,
-  nameAr,
-  nameEn,
-  position,
-  workplace,
-  academicTitle,
-}: Props) {
-  const qrContent = buildStaffQrContent({
-    identityNumber,
-    nameAr,
-    nameEn,
-    position,
-    workplace,
-    academicTitle,
-  });
+export default async function StaffIdentityQrCell({ identityNumber, requestId, nameAr }: Props) {
+  const qrContent = buildStaffQrContent({ identityNumber, requestId });
   const qrDataUrl = await staffQrToDataUrl(qrContent);
   const downloadHref = `/api/admin/staff-identity/${requestId}/qr`;
 
@@ -39,6 +20,7 @@ export default async function StaffIdentityQrCell({
         width={64}
         height={64}
         className="w-16 h-16 rounded-lg border border-neutral-200 bg-white p-0.5"
+        title="رابط التحقق الرسمي من هوية الكادر"
       />
       <a
         href={downloadHref}

@@ -7,6 +7,26 @@ import { verifyStaffToken } from "@/lib/staffIdentitySign";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function formatDob(s: string): string {
+  if (!s) return "—";
+  try {
+    return new Intl.DateTimeFormat("ar-IQ", { dateStyle: "medium" }).format(new Date(s + "T12:00:00"));
+  } catch {
+    return s;
+  }
+}
+
+function DetailRow({ label, value, dir }: { label: string; value: string; dir?: "ltr" | "rtl" }) {
+  return (
+    <div className="flex justify-between items-start gap-3 text-sm py-2 border-b border-neutral-100 last:border-0">
+      <span className="text-neutral-500 shrink-0">{label}</span>
+      <span className={`font-semibold text-neutral-800 text-end ${dir === "ltr" ? "font-mono" : ""}`} dir={dir}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export default async function VerifyStaffPage({
   searchParams,
 }: {
@@ -20,7 +40,11 @@ export default async function VerifyStaffPage({
   let data: {
     identityNumber: string;
     nameAr: string;
+    nameEn: string;
+    dateOfBirth: string;
     position: string | null;
+    workplace: string;
+    academicTitle: string | null;
     photoMediaId: string | null;
   } | null = null;
 
@@ -31,7 +55,11 @@ export default async function VerifyStaffPage({
       data = {
         identityNumber: row.identity_number,
         nameAr: row.name_ar,
+        nameEn: row.name_en,
+        dateOfBirth: row.date_of_birth,
         position: row.position,
+        workplace: row.workplace,
+        academicTitle: row.academic_title,
         photoMediaId: row.photo_media_id,
       };
     }
@@ -64,7 +92,7 @@ export default async function VerifyStaffPage({
                 </svg>
                 <div className="text-start">
                   <p className="text-xl font-bold">الهوية صالحة</p>
-                  <p className="text-sm opacity-90">تم التحقق بنجاح من بيانات الكادر</p>
+                  <p className="text-sm opacity-90">صادرة عن {STAFF_IDENTITY_COLLEGE_AR}</p>
                 </div>
               </>
             ) : (
@@ -86,13 +114,11 @@ export default async function VerifyStaffPage({
 
           {valid && data && (
             <div className="p-5">
-              <p className="text-center text-sm font-semibold text-[#31BD9C] mb-4">{STAFF_IDENTITY_COLLEGE_AR}</p>
-              <p className="text-center text-xs text-neutral-500 mb-4">
-                هذه الهوية صادرة عن {STAFF_IDENTITY_COLLEGE_AR}
-              </p>
+              <p className="text-center text-sm font-bold text-[#31BD9C] mb-1">{STAFF_IDENTITY_COLLEGE_AR}</p>
+              <p className="text-center text-xs text-neutral-500 mb-5">بطاقة هوية الكادر — للتحقق الرسمي</p>
 
-              <div className="flex gap-4 items-start">
-                <div className="shrink-0 w-28 h-28 rounded-xl overflow-hidden border-2 border-neutral-200 bg-neutral-100">
+              <div className="flex gap-4 items-start mb-5">
+                <div className="shrink-0 w-28 h-32 rounded-xl overflow-hidden border-2 border-[#31BD9C]/30 bg-neutral-100 shadow-sm">
                   {photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={photoUrl} alt={data.nameAr} className="w-full h-full object-cover" />
@@ -108,25 +134,28 @@ export default async function VerifyStaffPage({
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pt-1">
                   <p className="text-lg font-bold text-neutral-900 leading-tight">{data.nameAr}</p>
-                  {data.position && (
-                    <p className="text-sm text-neutral-700 mt-2 font-medium">الوظيفة: {data.position}</p>
+                  {data.nameEn && (
+                    <p className="text-sm text-neutral-600 mt-1 font-medium" dir="ltr">
+                      {data.nameEn}
+                    </p>
+                  )}
+                  {data.academicTitle && (
+                    <p className="text-sm text-[#2aa88a] mt-2 font-semibold">{data.academicTitle}</p>
                   )}
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-neutral-200">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-neutral-500">رقم الهوية</span>
-                  <span className="font-mono font-semibold text-neutral-800" dir="ltr">
-                    {data.identityNumber}
-                  </span>
-                </div>
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 py-1">
+                <DetailRow label="رقم الهوية" value={data.identityNumber} dir="ltr" />
+                <DetailRow label="تاريخ التولد" value={formatDob(data.dateOfBirth)} />
+                <DetailRow label="القسم" value={data.workplace} />
+                {data.position && <DetailRow label="المنصب" value={data.position} />}
               </div>
 
               {photoUrl && (
-                <p className="mt-3 text-center">
+                <p className="mt-4 text-center">
                   <a
                     href={photoUrl}
                     target="_blank"
@@ -139,7 +168,7 @@ export default async function VerifyStaffPage({
               )}
 
               <p className="text-xs text-neutral-400 mt-4 text-center">
-                تم التحقق من هذه الهوية عبر رمز QR الرسمي
+                تم التحقق من هذه الهوية عبر رمز QR الرسمي الصادر من نظام الكلية
               </p>
             </div>
           )}
@@ -154,4 +183,3 @@ export default async function VerifyStaffPage({
     </div>
   );
 }
-

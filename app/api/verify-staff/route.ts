@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
     data: {
       identityNumber: row.identity_number,
       nameAr: row.name_ar,
+      nameEn: row.name_en,
+      dateOfBirth: row.date_of_birth,
       position: row.position ?? null,
       workplace: row.workplace,
       academicTitle: row.academic_title ?? null,
