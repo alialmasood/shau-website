@@ -54,6 +54,7 @@ export default async function AdminDashboardPage() {
         accounts: "/admin/accounts",
         "student-accounts": "/admin/student-accounts",
         "staff-identity": "/admin/staff-identity",
+        "employee-identity": "/admin/employee-identity",
         events: "/admin/events",
         "continuing-education": "/admin/continuing-education",
       };

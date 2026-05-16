@@ -1,13 +1,13 @@
 import Link from "next/link";
+import { educationLevelLabelAr, jobCategoryLabelAr } from "@/lib/employeeIdentityConfig";
+import { isValidEmployeeIdentityNumber } from "@/lib/employeeIdentityNumber";
+import { getEmployeeIdentityRequestByIdentityNumber } from "@/lib/employeeIdentityRequestsRepo";
+import { verifyEmployeeToken } from "@/lib/employeeIdentitySign";
 import { STAFF_IDENTITY_COLLEGE_AR, staffMediaUrl } from "@/lib/staffIdentityConfig";
-import { isValidStaffIdentityNumber } from "@/lib/staffIdentityNumber";
-import { getStaffIdentityRequestByIdentityNumber } from "@/lib/staffIdentityRequestsRepo";
-import { verifyStaffToken } from "@/lib/staffIdentitySign";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-/** الأزرق الأكاديمي — لون هوية الكلية */
 const ACADEMIC_BLUE = "#04025E";
 const ACADEMIC_BLUE_LIGHT = "#1a3a8f";
 
@@ -31,7 +31,7 @@ function DetailRow({ label, value, dir }: { label: string; value: string; dir?: 
   );
 }
 
-export default async function VerifyStaffPage({
+export default async function VerifyEmployeePage({
   searchParams,
 }: {
   searchParams: Promise<{ id?: string; t?: string }>;
@@ -46,28 +46,32 @@ export default async function VerifyStaffPage({
     nameAr: string;
     nameEn: string;
     dateOfBirth: string;
-    position: string | null;
-    workplace: string;
-    academicTitle: string | null;
     address: string;
+    phone: string;
     bloodType: string;
+    educationLevel: string | null;
+    workplace: string;
+    jobCategory: string;
+    position: string | null;
     photoMediaId: string | null;
   } | null = null;
 
-  if (identityNumber && token && isValidStaffIdentityNumber(identityNumber)) {
-    const row = await getStaffIdentityRequestByIdentityNumber(identityNumber);
-    if (row?.identity_number && verifyStaffToken(row.identity_number, row.id, token)) {
+  if (identityNumber && token && isValidEmployeeIdentityNumber(identityNumber)) {
+    const row = await getEmployeeIdentityRequestByIdentityNumber(identityNumber);
+    if (row?.identity_number && verifyEmployeeToken(row.identity_number, row.id, token)) {
       valid = true;
       data = {
         identityNumber: row.identity_number,
         nameAr: row.name_ar,
         nameEn: row.name_en,
         dateOfBirth: row.date_of_birth,
-        position: row.position,
-        workplace: row.workplace,
-        academicTitle: row.academic_title,
         address: row.address,
+        phone: row.phone,
         bloodType: row.blood_type,
+        educationLevel: row.education_level,
+        workplace: row.workplace,
+        jobCategory: row.job_category,
+        position: row.position,
         photoMediaId: row.photo_media_id,
       };
     }
@@ -80,9 +84,9 @@ export default async function VerifyStaffPage({
       <div className="w-full max-w-md mx-auto px-4 py-8 sm:py-12">
         <div className="text-center mb-6">
           <h1 className="text-lg font-bold" style={{ color: ACADEMIC_BLUE }}>
-            التحقق من هوية الكادر
+            التحقق من هوية الموظف
           </h1>
-          <p className="text-sm text-blue-700/80 mt-1">Staff ID Verification</p>
+          <p className="text-sm text-blue-700/80 mt-1">Employee ID Verification</p>
         </div>
 
         <div className="rounded-2xl border-2 border-blue-200 bg-white shadow-xl overflow-hidden">
@@ -128,7 +132,7 @@ export default async function VerifyStaffPage({
               <p className="text-center text-sm font-bold mb-1" style={{ color: ACADEMIC_BLUE }}>
                 {STAFF_IDENTITY_COLLEGE_AR}
               </p>
-              <p className="text-center text-xs text-blue-700/70 mb-5">بطاقة هوية الكادر — للتحقق الرسمي</p>
+              <p className="text-center text-xs text-blue-700/70 mb-5">بطاقة هوية الموظف — للتحقق الرسمي</p>
 
               <div className="flex gap-4 items-start mb-5">
                 <div
@@ -157,20 +161,20 @@ export default async function VerifyStaffPage({
                       {data.nameEn}
                     </p>
                   )}
-                  {data.academicTitle && (
-                    <p className="text-sm mt-2 font-semibold" style={{ color: ACADEMIC_BLUE_LIGHT }}>
-                      {data.academicTitle}
-                    </p>
-                  )}
                 </div>
               </div>
 
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-1">
                 <DetailRow label="رقم الهوية" value={data.identityNumber} dir="ltr" />
                 <DetailRow label="تاريخ التولد" value={formatDob(data.dateOfBirth)} />
-                {data.address && <DetailRow label="عنوان السكن" value={data.address} />}
-                {data.bloodType && <DetailRow label="فصيلة الدم" value={data.bloodType} dir="ltr" />}
-                <DetailRow label="القسم" value={data.workplace} />
+                <DetailRow label="عنوان السكن" value={data.address} />
+                <DetailRow label="الهاتف" value={data.phone} dir="ltr" />
+                <DetailRow label="فصيلة الدم" value={data.bloodType} dir="ltr" />
+                {data.educationLevel && (
+                  <DetailRow label="التحصيل العلمي" value={educationLevelLabelAr(data.educationLevel)} />
+                )}
+                <DetailRow label="مكان العمل" value={data.workplace} />
+                <DetailRow label="الوظيفة" value={jobCategoryLabelAr(data.jobCategory)} />
                 {data.position && <DetailRow label="المنصب" value={data.position} />}
               </div>
 
@@ -208,5 +212,3 @@ export default async function VerifyStaffPage({
     </div>
   );
 }
-
-

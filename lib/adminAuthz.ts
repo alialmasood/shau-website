@@ -102,7 +102,7 @@ export async function getAccessiblePages(): Promise<string[]> {
       } catch (error) {
         console.error("[getAccessiblePages] Error fetching all pages for ADMIN:", error);
         // في حالة خطأ (مثل عدم وجود الجدول)، نرجع قائمة افتراضية
-        return ["admin", "news", "events", "continuing-education", "programs", "users", "applications", "registration", "ticker", "social", "tuition", "staff-identity"];
+        return ["admin", "news", "events", "continuing-education", "programs", "users", "applications", "registration", "ticker", "social", "tuition", "staff-identity", "employee-identity"];
       }
     }
 

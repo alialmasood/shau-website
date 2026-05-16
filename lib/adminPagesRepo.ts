@@ -74,6 +74,7 @@ const REQUIRED_PAGES: Array<{
   { code: "student-accounts", nameAr: "حسابات الطلاب", nameEn: "Student Accounts", parentCode: null },
   { code: "student-id", nameAr: "هويات الطلبة", nameEn: "Student ID", parentCode: null },
   { code: "staff-identity", nameAr: "هويات الكادر", nameEn: "Staff identity requests", parentCode: null },
+  { code: "employee-identity", nameAr: "هويات الموظفين", nameEn: "Employee identity requests", parentCode: null },
   {
     code: "continuing-education",
     nameAr: "التعليم المستمر",

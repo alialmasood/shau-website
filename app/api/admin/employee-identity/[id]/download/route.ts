@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import archiver from "archiver";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
-import { ensureStaffIdentityNumber, getStaffIdentityRequestById } from "@/lib/staffIdentityRequestsRepo";
+import bwipjs from "bwip-js";
+import { educationLevelLabelAr, jobCategoryLabelAr } from "@/lib/employeeIdentityConfig";
+import { buildEmployeeQrContent, employeeQrToPngBuffer } from "@/lib/employeeIdentityQr";
+import {
+  ensureEmployeeIdentityNumber,
+  getEmployeeIdentityRequestById,
+} from "@/lib/employeeIdentityRequestsRepo";
+import { buildEmployeeVerifyUrl } from "@/lib/employeeIdentitySign";
 import { query } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -25,54 +32,74 @@ export async function GET(
     return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
   }
   const roleUpper = String(user.role || "").toUpperCase();
-  const hasAccess = roleUpper === "ADMIN" || (await canAdmin("staff-identity", "access"));
+  const hasAccess = roleUpper === "ADMIN" || (await canAdmin("employee-identity", "access"));
   if (!hasAccess) {
     return NextResponse.json({ error: "ممنوع" }, { status: 403 });
   }
 
   const { id } = await params;
-  const row = await getStaffIdentityRequestById(id);
+  const row = await getEmployeeIdentityRequestById(id);
   if (!row) {
     return NextResponse.json({ error: "السجل غير موجود" }, { status: 404 });
   }
 
-  const identityNumber = row.identity_number ?? (await ensureStaffIdentityNumber(id));
-
+  const identityNumber = row.identity_number ?? (await ensureEmployeeIdentityNumber(id));
   const folderName = sanitizeFolderName(row.name_ar);
   const archive = archiver("zip", { zlib: { level: 9 } });
   const chunks: Buffer[] = [];
-  archive.on("data", (chunk: Buffer) => {
-    chunks.push(chunk);
-  });
-  archive.on("error", (err) => {
-    throw err;
-  });
+  archive.on("data", (chunk: Buffer) => chunks.push(chunk));
 
   const sentAt = new Date(row.created_at).toLocaleString("ar-IQ", {
     dateStyle: "long",
     timeStyle: "short",
   });
-  const dobDisplay = row.date_of_birth;
+
   const text = [
-    "طلب هوية الكادر — كلية الشرق للعلوم التقنية التخصصية",
+    "طلب هوية الموظف — كلية الشرق للعلوم التقنية التخصصية",
     "",
     `توقيت الإرسال: ${sentAt}`,
-    `الاسم الثلاثي (عربي): ${row.name_ar}`,
-    `الاسم الثلاثي (إنجليزي): ${row.name_en}`,
-    `تاريخ التولد: ${dobDisplay}`,
-    `عنوان السكن: ${row.address || "—"}`,
-    `فصيلة الدم: ${row.blood_type || "—"}`,
-    `اللقب العلمي: ${row.academic_title ?? "—"}`,
-    `مكان العمل (القسم): ${row.workplace}`,
+    `الاسم الكامل (عربي): ${row.name_ar}`,
+    `الاسم الكامل (إنجليزي): ${row.name_en}`,
+    `تاريخ التولد: ${row.date_of_birth}`,
+    `عنوان السكن: ${row.address}`,
+    `رقم الهاتف: ${row.phone}`,
+    `فصيلة الدم: ${row.blood_type}`,
+    `التحصيل العلمي: ${row.education_level ? educationLevelLabelAr(row.education_level) : "—"}`,
+    `مكان العمل: ${row.workplace}`,
+    `الوظيفة: ${jobCategoryLabelAr(row.job_category)}`,
     `المنصب: ${row.position ?? "—"}`,
     `رقم الهوية: ${identityNumber}`,
-    `رقم الهاتف: ${row.phone}`,
-    `البريد الإلكتروني الجامعي: ${row.university_email}`,
+    `البريد الإلكتروني الرسمي: ${row.official_email ?? "—"}`,
+    `رابط التحقق: ${buildEmployeeVerifyUrl(identityNumber, id)}`,
     `معرّف السجل: ${row.id}`,
     row.photo_media_id ? `معرّف الصورة في النظام: ${row.photo_media_id}` : "لا توجد صورة مرفوعة",
   ].join("\n");
 
   archive.append(text, { name: `${folderName}/بيانات_الطلب.txt` });
+
+  try {
+    const qrContent = buildEmployeeQrContent({ identityNumber, requestId: id });
+    const qrPng = await employeeQrToPngBuffer(qrContent);
+    archive.append(qrPng, { name: `${folderName}/رمز_QR.png` });
+
+    const barcodePng = await bwipjs.toBuffer({
+      bcid: "code128",
+      text: identityNumber,
+      scale: 3,
+      scaleX: 5,
+      scaleY: 3,
+      height: 24,
+      includetext: true,
+      textxalign: "center",
+      paddingwidth: 6,
+      paddingheight: 6,
+      barcolor: "04025E",
+      backgroundcolor: "FFFFFF",
+    });
+    archive.append(barcodePng, { name: `${folderName}/الباركود.png` });
+  } catch (e) {
+    console.error("[employee-identity download] qr/barcode:", e);
+  }
 
   if (row.photo_media_id) {
     try {
@@ -97,7 +124,7 @@ export async function GET(
         archive.append(data, { name: `${folderName}/الصورة_الشخصية${extension}` });
       }
     } catch (e) {
-      console.error("[staff-identity download] media:", e);
+      console.error("[employee-identity download] media:", e);
     }
   }
 

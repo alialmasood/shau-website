@@ -94,9 +94,9 @@ export default async function StaffIdentityAdminPage() {
         </div>
       </div>
 
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <table className="w-full border-collapse text-sm">
+      <div className="w-screen max-w-[100vw] ms-[calc(50%-50vw)] me-[calc(50%-50vw)]">
+        <div className="overflow-x-auto rounded-none sm:rounded-2xl border-y sm:border border-neutral-200 bg-white shadow-sm px-3 sm:px-4 lg:px-6">
+          <table className="w-full border-collapse text-sm table-auto">
             <thead>
               <tr className="bg-neutral-100 border-b border-neutral-200 text-neutral-800">
                 <th className="px-3 py-3 text-right font-bold whitespace-nowrap">توقيت الإرسال</th>
@@ -105,6 +105,8 @@ export default async function StaffIdentityAdminPage() {
                 <th className="px-3 py-3 text-right font-bold">الاسم (عربي)</th>
                 <th className="px-3 py-3 text-right font-bold">الاسم (إنجليزي)</th>
                 <th className="px-3 py-3 text-right font-bold whitespace-nowrap">التولد</th>
+                <th className="px-3 py-3 text-right font-bold">عنوان السكن</th>
+                <th className="px-3 py-3 text-center font-bold whitespace-nowrap">فصيلة الدم</th>
                 <th className="px-3 py-3 text-right font-bold">اللقب العلمي</th>
                 <th className="px-3 py-3 text-right font-bold">القسم</th>
                 <th className="px-3 py-3 text-right font-bold">المنصب</th>
@@ -117,7 +119,7 @@ export default async function StaffIdentityAdminPage() {
             <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={13} className="px-3 py-10 text-center text-neutral-500 font-medium">
+                <td colSpan={15} className="px-3 py-10 text-center text-neutral-500 font-medium">
                   لا توجد طلبات بعد
                 </td>
               </tr>
@@ -146,6 +148,10 @@ export default async function StaffIdentityAdminPage() {
                     {r.name_en}
                   </td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-neutral-700">{formatDob(r.date_of_birth)}</td>
+                  <td className="px-3 py-2.5 text-neutral-700 min-w-[8rem]">{r.address || "—"}</td>
+                  <td className="px-3 py-2.5 text-center font-mono font-semibold" dir="ltr">
+                    {r.blood_type || "—"}
+                  </td>
                   <td className="px-3 py-2.5 text-neutral-700">{r.academic_title || "—"}</td>
                   <td className="px-3 py-2.5 text-neutral-800">{r.workplace}</td>
                   <td className="px-3 py-2.5 text-neutral-700">{r.position || "—"}</td>

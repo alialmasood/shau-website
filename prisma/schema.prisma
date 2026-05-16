@@ -144,6 +144,7 @@ model Media {
   barcodeDocumentFor RegistrationDocument[] @relation("BarcodeDocument")
   studentIdCardPhotos StudentIdCard[] @relation("StudentIdCardPhoto")
   staffIdentityPhotos StaffIdentityRequest[] @relation("StaffIdentityPhoto")
+  employeeIdentityPhotos EmployeeIdentityRequest[] @relation("EmployeeIdentityPhoto")
   eventCoverFor       Event[]                @relation("EventCoverImage")
   eventBrochureFor    Event[]                @relation("EventBrochureMedia")
   eventGalleryItems   EventGallery[]
@@ -607,6 +608,8 @@ model StaffIdentityRequest {
   nameAr           String    @map("name_ar") @db.VarChar(200)
   nameEn           String    @map("name_en") @db.VarChar(200)
   dateOfBirth      DateTime  @map("date_of_birth") @db.Date
+  address          String    @default("") @db.VarChar(300)
+  bloodType        String    @default("") @map("blood_type") @db.VarChar(10)
   academicTitle    String?   @map("academic_title") @db.VarChar(120)
   workplace        String    @db.VarChar(200)
   position         String?   @db.VarChar(120)
@@ -620,6 +623,30 @@ model StaffIdentityRequest {
 
   @@index([created_at])
   @@map("staff_identity_requests")
+}
+
+model EmployeeIdentityRequest {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  identityNumber String?  @unique @map("identity_number") @db.VarChar(10)
+  nameAr        String    @map("name_ar") @db.VarChar(200)
+  nameEn        String    @map("name_en") @db.VarChar(200)
+  dateOfBirth   DateTime  @map("date_of_birth") @db.Date
+  address       String    @db.VarChar(300)
+  phone         String    @db.VarChar(30)
+  bloodType     String    @map("blood_type") @db.VarChar(10)
+  educationLevel String?  @map("education_level") @db.VarChar(30)
+  workplace     String    @db.VarChar(200)
+  jobCategory   String    @map("job_category") @db.VarChar(20)
+  position      String?   @db.VarChar(120)
+  officialEmail String?   @map("official_email") @db.VarChar(120)
+  photoMediaId  String?   @map("photo_media_id") @db.Uuid
+  locale        String?   @db.VarChar(10)
+  created_at    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  photoMedia Media? @relation("EmployeeIdentityPhoto", fields: [photoMediaId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([created_at])
+  @@map("employee_identity_requests")
 }
 
 model StudentAccountsBatch {

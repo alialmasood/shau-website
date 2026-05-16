@@ -4,9 +4,11 @@ import {
   mediaExists,
 } from "@/lib/staffIdentityRequestsRepo";
 import {
+  isValidArabicAddress,
   isValidArabicFullName,
   isValidArabicOptional,
   isValidArabicWorkplace,
+  isValidBloodType,
   isValidEnglishFullName,
   isValidIraqiMobile,
   isValidShauUniversityEmail,
@@ -46,6 +48,8 @@ export async function POST(request: Request) {
     const nameAr = String((body as { nameAr?: unknown }).nameAr ?? "").trim();
     const nameEn = String((body as { nameEn?: unknown }).nameEn ?? "").trim();
     const dateOfBirth = String((body as { dateOfBirth?: unknown }).dateOfBirth ?? "").trim();
+    const address = String((body as { address?: unknown }).address ?? "").trim();
+    const bloodType = String((body as { bloodType?: unknown }).bloodType ?? "").trim();
     const academicTitleRaw = (body as { academicTitle?: unknown }).academicTitle;
     const academicTitle =
       academicTitleRaw == null || academicTitleRaw === ""
@@ -97,6 +101,25 @@ export async function POST(request: Request) {
             "تاريخ التولد يجب أن يكون في الماضي (قبل اليوم)",
             "Date of birth must be in the past (before today)"
           ),
+        },
+        { status: 400 }
+      );
+    }
+    if (!isValidArabicAddress(address)) {
+      return NextResponse.json(
+        {
+          error: err(
+            "عنوان السكن مطلوب (5 أحرف على الأقل) وبالعربية فقط.",
+            "Home address is required (at least 5 characters) and must be in Arabic only."
+          ),
+        },
+        { status: 400 }
+      );
+    }
+    if (!isValidBloodType(bloodType)) {
+      return NextResponse.json(
+        {
+          error: err("فصيلة الدم مطلوبة ويجب اختيارها من القائمة.", "Blood type is required and must be selected from the list."),
         },
         { status: 400 }
       );
@@ -176,6 +199,8 @@ export async function POST(request: Request) {
       nameAr,
       nameEn,
       dateOfBirth,
+      address,
+      bloodType,
       academicTitle,
       workplace,
       position,

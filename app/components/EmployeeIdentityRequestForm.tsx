@@ -1,52 +1,52 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BLOOD_TYPES } from "@/lib/employeeIdentityConfig";
+import { BLOOD_TYPES, EDUCATION_LEVELS, JOB_CATEGORIES } from "@/lib/employeeIdentityConfig";
 import {
   filterArabicFieldInput,
   filterEnglishNameInput,
   filterIraqiPhoneInput,
-  filterUniversityEmailInput,
+  filterOptionalEmailInput,
   isValidArabicAddress,
   isValidArabicFullName,
   isValidArabicOptional,
   isValidArabicWorkplace,
   isValidBloodType,
+  isValidEducationLevel,
   isValidEnglishFullName,
   isValidIraqiMobile,
-  isValidShauUniversityEmail,
-} from "@/lib/staffIdentityRequestValidation";
+  isValidJobCategory,
+  isValidOptionalEmail,
+} from "@/lib/employeeIdentityRequestValidation";
 
-export type StaffIdentityLabels = Record<string, string>;
+export type EmployeeIdentityLabels = Record<string, string>;
 
 type Props = {
   locale: "ar" | "en";
-  labels: StaffIdentityLabels;
+  labels: EmployeeIdentityLabels;
 };
 
 function yesterdayYmd(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function StaffIdentityRequestForm({ locale, labels }: Props) {
-  const L = (k: string) => labels[k] ?? (fallback as Record<string, string>)[k] ?? "";
+export default function EmployeeIdentityRequestForm({ locale, labels }: Props) {
+  const L = (k: string) => labels[k] ?? fallback[k] ?? "";
   const isRtl = locale === "ar";
 
   const [nameAr, setNameAr] = useState("");
   const [nameEn, setNameEn] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [address, setAddress] = useState("");
-  const [bloodType, setBloodType] = useState("");
-  const [academicTitle, setAcademicTitle] = useState("");
-  const [workplace, setWorkplace] = useState("");
-  const [position, setPosition] = useState("");
   const [phone, setPhone] = useState("");
-  const [universityEmail, setUniversityEmail] = useState("");
+  const [bloodType, setBloodType] = useState("");
+  const [educationLevel, setEducationLevel] = useState("");
+  const [workplace, setWorkplace] = useState("");
+  const [jobCategory, setJobCategory] = useState("");
+  const [position, setPosition] = useState("");
+  const [officialEmail, setOfficialEmail] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -54,6 +54,8 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
   const [success, setSuccess] = useState(false);
 
   const maxDob = useMemo(() => yesterdayYmd(), []);
+  const fieldClass =
+    "w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 shadow-sm focus:border-[#04025E] focus:outline-none focus:ring-2 focus:ring-[#04025E]/20";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,10 +67,12 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
       !nameEn.trim() ||
       !dateOfBirth ||
       !address.trim() ||
-      !bloodType ||
-      !workplace.trim() ||
       !phone.trim() ||
-      !universityEmail.trim()
+      !bloodType ||
+      !educationLevel ||
+      !workplace.trim() ||
+      !jobCategory ||
+      !photoFile
     ) {
       setError(L("required"));
       return;
@@ -81,7 +85,7 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
       setError(L("errorNameEnEnglish"));
       return;
     }
-    if (!dateOfBirth || dateOfBirth > maxDob) {
+    if (dateOfBirth > maxDob) {
       setError(L("dobHint"));
       return;
     }
@@ -89,34 +93,34 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
       setError(L("errorAddress"));
       return;
     }
-    if (!isValidBloodType(bloodType)) {
-      setError(L("errorBloodType"));
+    const phoneNorm = filterIraqiPhoneInput(phone);
+    if (!isValidIraqiMobile(phoneNorm)) {
+      setError(L("errorPhoneIraqi"));
       return;
     }
-    if (!isValidArabicOptional(academicTitle)) {
-      setError(L("errorArabicField"));
+    if (!isValidBloodType(bloodType)) {
+      setError(L("required"));
+      return;
+    }
+    if (!isValidEducationLevel(educationLevel)) {
+      setError(L("required"));
       return;
     }
     if (!isValidArabicWorkplace(workplace)) {
       setError(L("errorArabicField"));
       return;
     }
+    if (!isValidJobCategory(jobCategory)) {
+      setError(L("required"));
+      return;
+    }
     if (!isValidArabicOptional(position)) {
       setError(L("errorArabicField"));
       return;
     }
-    const phoneNorm = filterIraqiPhoneInput(phone);
-    if (!isValidIraqiMobile(phoneNorm)) {
-      setError(L("errorPhoneIraqi"));
-      return;
-    }
-    const emailNorm = universityEmail.trim().toLowerCase();
-    if (!isValidShauUniversityEmail(emailNorm)) {
-      setError(L("errorEmailShau"));
-      return;
-    }
-    if (!photoFile) {
-      setError(L("required"));
+    const emailNorm = officialEmail.trim().toLowerCase();
+    if (!isValidOptionalEmail(emailNorm || null)) {
+      setError(L("errorEmail"));
       return;
     }
 
@@ -126,12 +130,10 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
       fd.append("file", photoFile);
       const up = await fetch("/api/media/public", { method: "POST", body: fd });
       const upJson = await up.json().catch(() => ({}));
-      if (!up.ok) {
-        throw new Error(String(upJson?.error || L("errorUpload")));
-      }
+      if (!up.ok) throw new Error(String(upJson?.error || L("errorUpload")));
       const photoMediaId = String(upJson.id);
 
-      const res = await fetch("/api/staff-identity-request", {
+      const res = await fetch("/api/employee-identity-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,32 +141,32 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
           nameEn: nameEn.trim(),
           dateOfBirth,
           address: address.trim(),
-          bloodType,
-          academicTitle: academicTitle.trim() || null,
-          workplace: workplace.trim(),
-          position: position.trim() || null,
           phone: phoneNorm,
-          universityEmail: emailNorm,
+          bloodType,
+          educationLevel,
+          workplace: workplace.trim(),
+          jobCategory,
+          position: position.trim() || null,
+          officialEmail: emailNorm || null,
           photoMediaId,
           locale,
         }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(String(j?.error || L("errorGeneric")));
-      }
+      if (!res.ok) throw new Error(String(j?.error || L("errorGeneric")));
 
       setSuccess(true);
       setNameAr("");
       setNameEn("");
       setDateOfBirth("");
       setAddress("");
-      setBloodType("");
-      setAcademicTitle("");
-      setWorkplace("");
-      setPosition("");
       setPhone("");
-      setUniversityEmail("");
+      setBloodType("");
+      setEducationLevel("");
+      setWorkplace("");
+      setJobCategory("");
+      setPosition("");
+      setOfficialEmail("");
       setPhotoFile(null);
       setFileInputKey((k) => k + 1);
     } catch (err) {
@@ -174,9 +176,6 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
     }
   }
 
-  const fieldClass =
-    "w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 shadow-sm focus:border-[#31BD9C] focus:outline-none focus:ring-2 focus:ring-[#31BD9C]/20";
-
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-10" dir={isRtl ? "rtl" : "ltr"}>
       <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-6 sm:p-8">
@@ -184,10 +183,7 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
         <p className="text-sm text-neutral-600 mb-8 leading-relaxed">{L("subtitle")}</p>
 
         {success && (
-          <div
-            className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900"
-            role="status"
-          >
+          <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-[#04025E]" role="status">
             {L("success")}
           </div>
         )}
@@ -204,11 +200,9 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
               className={fieldClass}
               value={nameAr}
               onChange={(e) => setNameAr(filterArabicFieldInput(e.target.value))}
-              autoComplete="name"
               required
               maxLength={200}
             />
-            <p className="mt-1 text-xs text-neutral-500">{L("nameArHint")}</p>
           </div>
           <div>
             <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("nameEn")}</label>
@@ -216,11 +210,10 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
               className={fieldClass}
               value={nameEn}
               onChange={(e) => setNameEn(filterEnglishNameInput(e.target.value))}
-              autoComplete="name"
+              dir="ltr"
               required
               maxLength={200}
             />
-            <p className="mt-1 text-xs text-neutral-500">{L("nameEnHint")}</p>
           </div>
           <div>
             <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("dob")}</label>
@@ -243,7 +236,19 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
               required
               maxLength={300}
             />
-            <p className="mt-1 text-xs text-neutral-500">{L("arabicFieldsHint")}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("phone")}</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              className={fieldClass}
+              value={phone}
+              onChange={(e) => setPhone(filterIraqiPhoneInput(e.target.value))}
+              placeholder={L("phonePlaceholder")}
+              required
+              maxLength={11}
+            />
           </div>
           <div>
             <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("bloodType")}</label>
@@ -262,17 +267,20 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-neutral-800 mb-1">
-              {L("academicTitle")}{" "}
-              <span className="text-neutral-400 font-normal">({L("academicTitleOptional")})</span>
-            </label>
-            <input
+            <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("educationLevel")}</label>
+            <select
               className={fieldClass}
-              value={academicTitle}
-              onChange={(e) => setAcademicTitle(filterArabicFieldInput(e.target.value))}
-              maxLength={120}
-            />
-            <p className="mt-1 text-xs text-neutral-500">{L("arabicFieldsHint")}</p>
+              value={educationLevel}
+              onChange={(e) => setEducationLevel(e.target.value)}
+              required
+            >
+              <option value="">{L("educationLevelChoose")}</option>
+              {EDUCATION_LEVELS.map((e) => (
+                <option key={e.value} value={e.value}>
+                  {e.labelAr}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("workplace")}</label>
@@ -283,7 +291,22 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
               required
               maxLength={200}
             />
-            <p className="mt-1 text-xs text-neutral-500">{L("arabicFieldsHint")}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("jobCategory")}</label>
+            <select
+              className={fieldClass}
+              value={jobCategory}
+              onChange={(e) => setJobCategory(e.target.value)}
+              required
+            >
+              <option value="">{L("jobCategoryChoose")}</option>
+              {JOB_CATEGORIES.map((j) => (
+                <option key={j.value} value={j.value}>
+                  {j.labelAr}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-semibold text-neutral-800 mb-1">
@@ -296,36 +319,20 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
               onChange={(e) => setPosition(filterArabicFieldInput(e.target.value))}
               maxLength={120}
             />
-            <p className="mt-1 text-xs text-neutral-500">{L("arabicFieldsHint")}</p>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("phone")}</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              className={fieldClass}
-              value={phone}
-              onChange={(e) => setPhone(filterIraqiPhoneInput(e.target.value))}
-              autoComplete="tel"
-              placeholder={L("phonePlaceholder")}
-              required
-              maxLength={11}
-            />
-            <p className="mt-1 text-xs text-neutral-500">{L("phonePlaceholder")}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("universityEmail")}</label>
+            <label className="block text-sm font-semibold text-neutral-800 mb-1">
+              {L("officialEmail")}{" "}
+              <span className="text-neutral-400 font-normal">({L("officialEmailOptional")})</span>
+            </label>
             <input
               type="email"
               className={fieldClass}
-              value={universityEmail}
-              onChange={(e) => setUniversityEmail(filterUniversityEmailInput(e.target.value))}
-              autoComplete="email"
-              placeholder="name@shau.edu.iq"
-              required
+              value={officialEmail}
+              onChange={(e) => setOfficialEmail(filterOptionalEmailInput(e.target.value))}
+              dir="ltr"
               maxLength={120}
             />
-            <p className="mt-1 text-xs text-neutral-500">{L("emailHint")}</p>
           </div>
           <div>
             <label className="block text-sm font-semibold text-neutral-800 mb-1">{L("photo")}</label>
@@ -333,7 +340,7 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
               key={fileInputKey}
               type="file"
               accept="image/*"
-              className="block w-full text-sm text-neutral-600 file:me-3 file:rounded-lg file:border-0 file:bg-[#31BD9C]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#31BD9C] hover:file:bg-[#31BD9C]/20"
+              className="block w-full text-sm text-neutral-600 file:me-3 file:rounded-lg file:border-0 file:bg-[#04025E]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#04025E] hover:file:bg-[#04025E]/20"
               onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
               required
             />
@@ -343,7 +350,7 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-[#31BD9C] px-8 py-3 text-sm font-bold text-white shadow-md hover:bg-[#2aa88a] disabled:opacity-60 disabled:pointer-events-none transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-[#04025E] px-8 py-3 text-sm font-bold text-white shadow-md hover:bg-[#1a3a8f] disabled:opacity-60 disabled:pointer-events-none transition-colors"
           >
             {submitting ? L("submitting") : L("submit")}
           </button>
@@ -354,40 +361,24 @@ export default function StaffIdentityRequestForm({ locale, labels }: Props) {
 }
 
 const fallback: Record<string, string> = {
-  title: "",
+  title: "طلب هوية موظف",
   subtitle: "",
-  nameAr: "",
-  nameEn: "",
-  dob: "",
+  nameAr: "الاسم الكامل (بالعربية)",
+  nameEn: "الاسم الكامل (بالإنجليزية)",
+  dob: "التولد",
   dobHint: "",
-  address: "",
-  bloodType: "",
-  bloodTypeChoose: "",
-  errorAddress: "",
-  errorBloodType: "",
-  academicTitle: "",
-  academicTitleOptional: "",
-  workplace: "",
-  position: "",
-  positionOptional: "",
-  phone: "",
-  universityEmail: "",
-  phonePlaceholder: "",
-  emailHint: "",
-  nameArHint: "",
-  nameEnHint: "",
-  arabicFieldsHint: "",
-  errorNameArArabic: "",
-  errorNameEnEnglish: "",
-  errorArabicField: "",
-  errorPhoneIraqi: "",
-  errorEmailShau: "",
-  photo: "",
-  photoHint: "",
-  submit: "",
-  submitting: "",
-  success: "",
-  errorGeneric: "",
-  errorUpload: "",
-  required: "",
+  address: "عنوان السكن",
+  phone: "رقم الهاتف",
+  bloodType: "فصيلة الدم",
+  educationLevel: "التحصيل العلمي",
+  educationLevelChoose: "اختر التحصيل العلمي",
+  workplace: "مكان العمل",
+  jobCategory: "الوظيفة",
+  position: "المنصب",
+  officialEmail: "البريد الإلكتروني الرسمي",
+  photo: "صورة شخصية",
+  submit: "رفع البيانات",
+  submitting: "جاري الرفع…",
+  success: "تم حفظ البيانات بنجاح",
+  required: "هذا الحقل مطلوب",
 };

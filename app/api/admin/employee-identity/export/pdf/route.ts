@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { chromium } from "playwright";
 import { getCurrentAdminUser } from "@/lib/adminCurrent";
 import { canAdmin } from "@/lib/adminAuthz";
-import { listStaffIdentityRequests } from "@/lib/staffIdentityRequestsRepo";
+import { educationLevelLabelAr, jobCategoryLabelAr } from "@/lib/employeeIdentityConfig";
+import { listEmployeeIdentityRequests } from "@/lib/employeeIdentityRequestsRepo";
 
 export const runtime = "nodejs";
 
@@ -20,12 +21,12 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const roleUpper = String(user.role || "").toUpperCase();
-  const hasAccess = roleUpper === "ADMIN" || (await canAdmin("staff-identity", "access"));
+  const hasAccess = roleUpper === "ADMIN" || (await canAdmin("employee-identity", "access"));
   if (!hasAccess) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const rows = await listStaffIdentityRequests();
+  const rows = await listEmployeeIdentityRequests();
   const tableRows = rows
     .map((r) => {
       const sent = r.created_at
@@ -33,16 +34,18 @@ export async function GET() {
         : "";
       return `<tr>
         <td>${escapeHtml(sent)}</td>
+        <td dir="ltr">${escapeHtml(r.identity_number ?? "—")}</td>
         <td>${escapeHtml(r.name_ar)}</td>
         <td dir="ltr">${escapeHtml(r.name_en)}</td>
         <td>${escapeHtml(r.date_of_birth)}</td>
-        <td>${escapeHtml(r.address || "—")}</td>
-        <td dir="ltr">${escapeHtml(r.blood_type || "—")}</td>
-        <td>${escapeHtml(r.academic_title ?? "—")}</td>
-        <td>${escapeHtml(r.workplace)}</td>
-        <td>${escapeHtml(r.position ?? "—")}</td>
+        <td>${escapeHtml(r.address)}</td>
         <td dir="ltr">${escapeHtml(r.phone)}</td>
-        <td dir="ltr">${escapeHtml(r.university_email)}</td>
+        <td dir="ltr">${escapeHtml(r.blood_type)}</td>
+        <td>${escapeHtml(r.education_level ? educationLevelLabelAr(r.education_level) : "—")}</td>
+        <td>${escapeHtml(r.workplace)}</td>
+        <td>${escapeHtml(jobCategoryLabelAr(r.job_category))}</td>
+        <td>${escapeHtml(r.position ?? "—")}</td>
+        <td dir="ltr">${escapeHtml(r.official_email ?? "—")}</td>
       </tr>`;
     })
     .join("");
@@ -52,32 +55,34 @@ export async function GET() {
 <head>
   <meta charset="utf-8"/>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; margin: 24px; color: #111; }
-    h1 { font-size: 18px; margin-bottom: 16px; color: #0f172a; }
-    table { width: 100%; border-collapse: collapse; font-size: 10px; }
-    th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: right; vertical-align: top; }
-    th { background: #f1f5f9; font-weight: 700; }
+    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; margin: 16px; color: #111; }
+    h1 { font-size: 16px; margin-bottom: 12px; color: #04025E; }
+    table { width: 100%; border-collapse: collapse; font-size: 8px; }
+    th, td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: right; vertical-align: top; }
+    th { background: #e0e7ff; font-weight: 700; }
   </style>
 </head>
 <body>
-  <h1>طلبات هوية الكادر — كلية الشرق للعلوم التقنية التخصصية</h1>
+  <h1>طلبات هوية الموظفين — كلية الشرق للعلوم التقنية التخصصية</h1>
   <table>
     <thead>
       <tr>
         <th>توقيت الإرسال</th>
+        <th>رقم الهوية</th>
         <th>الاسم (عربي)</th>
         <th>الاسم (إنجليزي)</th>
-        <th>تاريخ التولد</th>
+        <th>التولد</th>
         <th>عنوان السكن</th>
-        <th>فصيلة الدم</th>
-        <th>اللقب العلمي</th>
-        <th>القسم</th>
-        <th>المنصب</th>
         <th>الهاتف</th>
-        <th>البريد الجامعي</th>
+        <th>فصيلة الدم</th>
+        <th>التحصيل العلمي</th>
+        <th>مكان العمل</th>
+        <th>الوظيفة</th>
+        <th>المنصب</th>
+        <th>البريد الرسمي</th>
       </tr>
     </thead>
-    <tbody>${tableRows || "<tr><td colspan=\"11\">لا توجد بيانات</td></tr>"}</tbody>
+    <tbody>${tableRows || "<tr><td colspan=\"13\">لا توجد بيانات</td></tr>"}</tbody>
   </table>
 </body>
 </html>`;
@@ -89,14 +94,15 @@ export async function GET() {
     await page.setContent(html, { waitUntil: "load" });
     const pdfBuffer = await page.pdf({
       format: "A4",
+      landscape: true,
       printBackground: true,
-      margin: { top: "12mm", right: "10mm", bottom: "12mm", left: "10mm" },
+      margin: { top: "10mm", right: "8mm", bottom: "10mm", left: "8mm" },
     });
     await browser.close();
     browser = undefined;
 
-    const filenameAr = "هويات-الكادر.pdf";
-    const disposition = `attachment; filename="staff-identity.pdf"; filename*=UTF-8''${encodeURIComponent(filenameAr)}`;
+    const filenameAr = "هويات-الموظفين.pdf";
+    const disposition = `attachment; filename="employee-identity.pdf"; filename*=UTF-8''${encodeURIComponent(filenameAr)}`;
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
@@ -114,7 +120,7 @@ export async function GET() {
         /* ignore */
       }
     }
-    console.error("[staff-identity export pdf]", e);
+    console.error("[employee-identity export pdf]", e);
     return NextResponse.json({ error: "فشل إنشاء ملف PDF" }, { status: 500 });
   }
 }

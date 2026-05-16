@@ -102,8 +102,11 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
       "student-accounts",
       "student-id",
       "staff-identity",
+      "employee-identity",
     ].includes(item.pageCode)
   );
+  const managementMain = managementItems.filter((item) => item.pageCode !== "employee-identity");
+  const managementEmployeeRow = managementItems.filter((item) => item.pageCode === "employee-identity");
 
   return (
     <nav className="flex flex-wrap items-stretch gap-3">
@@ -190,11 +193,11 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
             </div>
           </div>
         )}
-        {managementItems.length > 0 && (
+        {(managementMain.length > 0 || managementEmployeeRow.length > 0) && (
           <div>
             <p className="text-xs font-bold text-neutral-500 uppercase tracking-wide mb-3 px-1">الإدارة</p>
-            <div className="grid grid-rows-2 grid-flow-col auto-cols-max gap-2 overflow-x-auto pb-1">
-              {managementItems.map((item) => (
+            <div className="grid grid-rows-2 grid-flow-col auto-cols-max gap-2 max-w-full">
+              {managementMain.map((item) => (
                 <NavLink
                   key={item.label}
                   href={item.href}
@@ -207,6 +210,22 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
                 </NavLink>
               ))}
             </div>
+            {managementEmployeeRow.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-neutral-100">
+                {managementEmployeeRow.map((item) => (
+                  <NavLink
+                    key={item.label}
+                    href={item.href}
+                    variant={item.variant}
+                    active={isActive(pathname, item.href)}
+                    title={item.title}
+                    icon={item.icon}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
