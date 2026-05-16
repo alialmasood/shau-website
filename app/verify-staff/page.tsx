@@ -7,6 +7,10 @@ import { verifyStaffToken } from "@/lib/staffIdentitySign";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+/** الأزرق الأكاديمي — لون هوية الكلية */
+const ACADEMIC_BLUE = "#04025E";
+const ACADEMIC_BLUE_LIGHT = "#1a3a8f";
+
 function formatDob(s: string): string {
   if (!s) return "—";
   try {
@@ -18,7 +22,7 @@ function formatDob(s: string): string {
 
 function DetailRow({ label, value, dir }: { label: string; value: string; dir?: "ltr" | "rtl" }) {
   return (
-    <div className="flex justify-between items-start gap-3 text-sm py-2 border-b border-neutral-100 last:border-0">
+    <div className="flex justify-between items-start gap-3 text-sm py-2 border-b border-blue-100 last:border-0">
       <span className="text-neutral-500 shrink-0">{label}</span>
       <span className={`font-semibold text-neutral-800 text-end ${dir === "ltr" ? "font-mono" : ""}`} dir={dir}>
         {value}
@@ -68,18 +72,21 @@ export default async function VerifyStaffPage({
   const photoUrl = data?.photoMediaId ? staffMediaUrl(data.photoMediaId) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-100 to-neutral-200" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50" dir="rtl">
       <div className="w-full max-w-md mx-auto px-4 py-8 sm:py-12">
         <div className="text-center mb-6">
-          <h1 className="text-lg font-bold text-neutral-800">التحقق من هوية الكادر</h1>
-          <p className="text-sm text-neutral-500 mt-1">Staff ID Verification</p>
+          <h1 className="text-lg font-bold" style={{ color: ACADEMIC_BLUE }}>
+            التحقق من هوية الكادر
+          </h1>
+          <p className="text-sm text-blue-700/80 mt-1">Staff ID Verification</p>
         </div>
 
-        <div className="rounded-2xl border-2 border-neutral-200 bg-white shadow-xl overflow-hidden">
+        <div className="rounded-2xl border-2 border-blue-200 bg-white shadow-xl overflow-hidden">
           <div
             className={`flex items-center justify-center gap-3 py-4 px-4 ${
-              valid ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
+              valid ? "text-white" : "bg-red-600 text-white"
             }`}
+            style={valid ? { backgroundColor: ACADEMIC_BLUE } : undefined}
           >
             {valid ? (
               <>
@@ -114,16 +121,21 @@ export default async function VerifyStaffPage({
 
           {valid && data && (
             <div className="p-5">
-              <p className="text-center text-sm font-bold text-[#31BD9C] mb-1">{STAFF_IDENTITY_COLLEGE_AR}</p>
-              <p className="text-center text-xs text-neutral-500 mb-5">بطاقة هوية الكادر — للتحقق الرسمي</p>
+              <p className="text-center text-sm font-bold mb-1" style={{ color: ACADEMIC_BLUE }}>
+                {STAFF_IDENTITY_COLLEGE_AR}
+              </p>
+              <p className="text-center text-xs text-blue-700/70 mb-5">بطاقة هوية الكادر — للتحقق الرسمي</p>
 
               <div className="flex gap-4 items-start mb-5">
-                <div className="shrink-0 w-28 h-32 rounded-xl overflow-hidden border-2 border-[#31BD9C]/30 bg-neutral-100 shadow-sm">
+                <div
+                  className="shrink-0 w-28 h-32 rounded-xl overflow-hidden border-2 bg-neutral-100 shadow-sm"
+                  style={{ borderColor: `${ACADEMIC_BLUE}40` }}
+                >
                   {photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={photoUrl} alt={data.nameAr} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-neutral-400">
+                    <div className="w-full h-full flex items-center justify-center text-blue-300">
                       <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
                         <path
                           fillRule="evenodd"
@@ -142,12 +154,14 @@ export default async function VerifyStaffPage({
                     </p>
                   )}
                   {data.academicTitle && (
-                    <p className="text-sm text-[#2aa88a] mt-2 font-semibold">{data.academicTitle}</p>
+                    <p className="text-sm mt-2 font-semibold" style={{ color: ACADEMIC_BLUE_LIGHT }}>
+                      {data.academicTitle}
+                    </p>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 py-1">
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-1">
                 <DetailRow label="رقم الهوية" value={data.identityNumber} dir="ltr" />
                 <DetailRow label="تاريخ التولد" value={formatDob(data.dateOfBirth)} />
                 <DetailRow label="القسم" value={data.workplace} />
@@ -160,14 +174,15 @@ export default async function VerifyStaffPage({
                     href={photoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-semibold text-[#31BD9C] hover:underline"
+                    className="text-sm font-semibold hover:underline"
+                    style={{ color: ACADEMIC_BLUE }}
                   >
                     فتح الصورة بحجم كامل
                   </a>
                 </p>
               )}
 
-              <p className="text-xs text-neutral-400 mt-4 text-center">
+              <p className="text-xs text-blue-700/50 mt-4 text-center">
                 تم التحقق من هذه الهوية عبر رمز QR الرسمي الصادر من نظام الكلية
               </p>
             </div>
@@ -175,7 +190,11 @@ export default async function VerifyStaffPage({
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/ar" className="inline-flex items-center gap-2 text-[#31BD9C] font-semibold hover:underline">
+          <Link
+            href="/ar"
+            className="inline-flex items-center gap-2 font-semibold hover:underline"
+            style={{ color: ACADEMIC_BLUE }}
+          >
             العودة إلى الموقع
           </Link>
         </div>
@@ -183,3 +202,5 @@ export default async function VerifyStaffPage({
     </div>
   );
 }
+
+
