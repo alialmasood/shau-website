@@ -133,8 +133,10 @@ export default async function StaffIdentityAdminPage() {
                         identityNumber={r.identity_number}
                         requestId={r.id}
                         nameAr={r.name_ar}
+                        nameEn={r.name_en}
                         position={r.position}
-                        photoMediaId={r.photo_media_id}
+                        workplace={r.workplace}
+                        academicTitle={r.academic_title}
                       />
                     ) : (
                       "—"

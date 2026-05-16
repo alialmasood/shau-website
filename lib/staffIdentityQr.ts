@@ -1,35 +1,45 @@
 import QRCode from "qrcode";
-import { STAFF_IDENTITY_COLLEGE_AR, getStaffSiteBaseUrl, staffMediaUrl } from "./staffIdentityConfig";
-import { buildStaffVerifyUrl } from "./staffIdentitySign";
+import { STAFF_IDENTITY_COLLEGE_AR } from "./staffIdentityConfig";
 
 export { STAFF_IDENTITY_COLLEGE_AR } from "./staffIdentityConfig";
 
 export type StaffQrInput = {
   identityNumber: string;
-  requestId: string;
   nameAr: string;
+  nameEn?: string | null;
   position: string | null;
-  photoMediaId: string | null;
+  workplace?: string | null;
+  academicTitle?: string | null;
 };
 
-/** نص كامل عند المسح المباشر — مع رابط صورة مباشر وصفحة تحقق */
+/**
+ * نص فقط — بدون روابط (تطبيقات المسح غالباً تفتح الروابط داخل النص كبحث وليس كصفحة).
+ * كل التفاصيل تظهر مباشرة عند القراءة.
+ */
 export function buildStaffQrContent(input: StaffQrInput): string {
   const position = input.position?.trim() || "—";
+  const workplace = input.workplace?.trim();
+  const academicTitle = input.academicTitle?.trim();
+  const nameEn = input.nameEn?.trim();
+
   const lines: string[] = [
     "── هوية الكادر ──",
     `صادرة عن: ${STAFF_IDENTITY_COLLEGE_AR}`,
     "",
     `الاسم: ${input.nameAr.trim()}`,
-    `رقم الهوية: ${input.identityNumber}`,
-    `الوظيفة: ${position}`,
   ];
 
-  if (input.photoMediaId) {
-    lines.push("", `الصورة الشخصية: ${staffMediaUrl(input.photoMediaId)}`);
+  if (nameEn) {
+    lines.push(`الاسم (إنجليزي): ${nameEn}`);
+  }
+  if (academicTitle) {
+    lines.push(`اللقب العلمي: ${academicTitle}`);
+  }
+  if (workplace) {
+    lines.push(`القسم: ${workplace}`);
   }
 
-  const verifyUrl = buildStaffVerifyUrl(input.identityNumber, input.requestId);
-  lines.push("", `صفحة التحقق: ${verifyUrl}`);
+  lines.push(`رقم الهوية: ${input.identityNumber}`, `الوظيفة: ${position}`);
 
   return lines.join("\n");
 }

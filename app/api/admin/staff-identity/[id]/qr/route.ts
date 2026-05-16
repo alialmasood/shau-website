@@ -29,10 +29,11 @@ export async function GET(
   const identityNumber = row.identity_number ?? (await ensureStaffIdentityNumber(id));
   const qrContent = buildStaffQrContent({
     identityNumber,
-    requestId: row.id,
     nameAr: row.name_ar,
+    nameEn: row.name_en,
     position: row.position,
-    photoMediaId: row.photo_media_id,
+    workplace: row.workplace,
+    academicTitle: row.academic_title,
   });
   const png = await staffQrToPngBuffer(qrContent);
 
