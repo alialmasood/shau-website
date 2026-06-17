@@ -115,6 +115,7 @@
       "/citation-service": "Thesis Citation Service",
       "/college-research": "College Research",
       "/technology-projects": "Technology Projects",
+      "/strategic-plan": "Strategic Plan",
       "/library": "Library",
       "/iraqi-virtual-library": "Iraqi Virtual Library",
       "/college-library": "College Library",
@@ -262,6 +263,107 @@
     "registerCta": "Register or apply",
     "registerSoon": "Registration (coming soon)",
     "videoTitle": "Event video"
+  },
+  "strategicPlanPage": {
+    "heroTitle": "Strategic Plan",
+    "heroSubtitle": "Transforming Alsharq College for Specialized Technical Sciences into Alsharq University",
+    "introTitle": "I. Introduction",
+    "introBody": "In alignment with the Iraqi Ministry of Higher Education and Scientific Research policies on developing higher education and enhancing academic outcomes, Alsharq College for Specialized Technical Sciences seeks to transform into a comprehensive university that meets sustainable development requirements and labor market needs.",
+    "visionTitle": "II. Vision",
+    "visionBody": "For the college to become a leading university locally and regionally in technical, applied education and scientific research.",
+    "missionTitle": "III. Mission",
+    "missionBody": "To provide high-quality education in technical and scientific specializations, and prepare qualified cadres capable of innovation and competing in the labor market.",
+    "objectivesTitle": "IV. Strategic Objectives",
+    "objectives": [
+      "Meet Ministry of Higher Education requirements for university transformation.",
+      "Develop academic programs in accordance with international standards.",
+      "Strengthen scientific research and academic publishing.",
+      "Attract scientific competencies holding senior academic titles.",
+      "Develop infrastructure and laboratories.",
+      "Achieve local and international academic accreditation."
+    ],
+    "swotTitle": "V. Current Situation Analysis",
+    "swot": [
+      {
+        "title": "Strengths",
+        "items": ["Availability of modern technical specializations", "Qualified teaching staff", "Suitable geographic location"]
+      },
+      {
+        "title": "Weaknesses",
+        "items": ["Limited number of scientific departments", "Need to increase senior academic titles", "Shortage of some advanced laboratories"]
+      },
+      {
+        "title": "Opportunities",
+        "items": ["Ministry support for university expansion", "Growing demand for technical education", "Potential for international partnerships"]
+      },
+      {
+        "title": "Challenges",
+        "items": ["Competition with other universities", "Changes in education policies", "Economic challenges"]
+      }
+    ],
+    "requirementsTitle": "VI. University Transformation Requirements (Ministry Guidelines)",
+    "requirements": [
+      "A sufficient number of colleges and scientific departments (at least 3 departments).",
+      "Teaching staff according to academic rank:",
+      "Integrated infrastructure (classrooms, laboratories, central library).",
+      "Undergraduate and postgraduate programs.",
+      "An effective quality assurance system."
+    ],
+    "facultyLoads": [
+      { "rank": "Professor", "hours": "8 teaching hours" },
+      { "rank": "Assistant Professor", "hours": "10 hours" },
+      { "rank": "Lecturer", "hours": "12 hours" },
+      { "rank": "Assistant Lecturer", "hours": "14 hours" }
+    ],
+    "actionPlanTitle": "VII. Implementation Plan",
+    "actionPlan": [
+      "Submit an official request for university transformation",
+      "Complete Ministry requirements",
+      "Obtain final approvals"
+    ],
+    "structureTitle": "VIII. Proposed University Structure",
+    "structureNote": "Attached to the plan",
+    "proposedCollegesTitle": "Proposed Colleges:",
+    "proposedColleges": [
+      "Technical Engineering College",
+      "Technical Medical College",
+      "Law",
+      "College of Administration and Economics",
+      "College of Medicine"
+    ],
+    "resourcesTitle": "IX. Required Resources",
+    "resources": [
+      {
+        "title": "Human Resources",
+        "items": ["Professors and assistant professors", "Technical and administrative staff"]
+      },
+      {
+        "title": "Financial Resources",
+        "items": ["Investment funding", "Support for scientific research projects"]
+      },
+      {
+        "title": "Material Resources",
+        "items": ["Modern laboratories", "Smart classrooms", "Digital library"]
+      }
+    ],
+    "kpisTitle": "X. Performance Indicators",
+    "kpis": [
+      "Number of newly established departments",
+      "Percentage of senior academic title holders",
+      "Number of published research papers",
+      "Graduate employment rate",
+      "Obtaining academic accreditation"
+    ],
+    "problemsTitle": "XI. Problems and Remediation Plans",
+    "problemsTableHeaderProblem": "Problems",
+    "problemsTableHeaderSolution": "Remediation",
+    "problemsTable": [
+      { "problem": "Shortage of scientific staff", "solution": "Contracting qualified academics" },
+      { "problem": "Weak funding", "solution": "Diversifying funding sources" },
+      { "problem": "Delayed approvals", "solution": "Continuous follow-up with the Ministry" }
+    ],
+    "conclusionTitle": "XII. Conclusion",
+    "conclusionBody": "This plan represents a strategic roadmap for transforming Alsharq College for Specialized Technical Sciences into a comprehensive university, enhancing its scientific standing and contributing to serving society and meeting labor market needs in Iraq."
   },
   "cePage": {
     "title": "Continuing Education",

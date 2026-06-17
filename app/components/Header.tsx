@@ -72,6 +72,7 @@ const navItems = [
       { label: "خدمة الاستشهاد للاطاريح والرسائل", href: "/citation-service" },
       { label: "الابحاث العلمية في الكلية", href: "/college-research" },
       { label: "مشاريع تكنولوجيا", href: "/technology-projects" },
+      { label: "الخطة الاستراتيجية", href: "/strategic-plan" },
       { 
         label: "المكتبة", 
         href: "/library",
