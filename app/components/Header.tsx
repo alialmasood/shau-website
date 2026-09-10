@@ -209,16 +209,16 @@ export default function Header() {
   }, [mobileMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-[100] w-full bg-white shadow-sm border-b border-neutral-200 overflow-x-hidden overflow-y-visible md:overflow-visible">
-      <div className="w-full px-4 md:px-10 overflow-visible">
-        <div className="flex items-center justify-between h-14 md:h-20 lg:h-24 gap-2 sm:gap-3 md:gap-4">
+    <header className="sticky top-0 z-[100] w-full bg-white shadow-sm border-b border-neutral-200 overflow-visible">
+      <div className="w-full px-4 md:px-6 2xl:px-10 overflow-visible">
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between min-h-14 md:h-20 lg:h-24 py-2 md:py-0 gap-2 sm:gap-3 md:gap-4">
           
           {/* المنطقة 1: الشعار (Logo) - اليسار - ثابت لا ينضغط */}
           <div 
-            className="flex items-center justify-center shrink-0 whitespace-nowrap overflow-hidden max-w-[240px] sm:max-w-[280px] md:max-w-[320px] md:min-w-[320px] md:w-[320px]"
+            className="flex items-center shrink-0 w-[clamp(180px,40vw,256px)] max-w-full xl:w-48 2xl:w-64"
           >
             <Link href={localePrefix} className="flex items-center justify-center w-full h-full">
-              <div className="relative flex items-center justify-center overflow-visible h-14 w-32 md:h-20 md:w-44 lg:h-24 lg:w-60 xl:h-24 xl:w-64">
+              <div className="relative w-full aspect-[2560/556]">
                 <Image
                   src="/Untit4545led-1.png"
                   alt={t.header.logoAlt}
@@ -226,14 +226,14 @@ export default function Header() {
                   className="object-contain object-center"
                   priority
                   unoptimized
-                  sizes="(max-width: 640px) 128px, (max-width: 768px) 176px, (max-width: 1024px) 240px, 256px"
+                  sizes="(min-width: 1536px) 256px, (min-width: 1280px) 192px, (min-width: 640px) 256px, (min-width: 450px) 40vw, 180px"
                 />
               </div>
             </Link>
           </div>
 
           {/* المنطقة 2: وسط - التبويبات (Nav) */}
-          <nav className="hidden md:flex items-center justify-center flex-1 min-w-0 max-w-none overflow-visible px-2">
+          <nav className="hidden xl:flex items-center justify-center flex-1 min-w-0 overflow-visible">
             <div className="flex items-center justify-center gap-0 flex-nowrap overflow-visible">
               {navItems.map((item, index) => (
                 <div 
@@ -258,7 +258,7 @@ export default function Header() {
                     >
                       <button
                         onClick={() => setOpenMenu(openMenu === item.href ? null : item.href)}
-                        className="group relative px-2.5 py-2.5 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg flex items-center gap-1"
+                        className="group relative px-1.5 2xl:px-2.5 py-2.5 text-xs 2xl:text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg flex items-center gap-1"
                       >
                         {/* النص */}
                         <span className="relative z-10 flex items-center">
@@ -469,7 +469,7 @@ export default function Header() {
                       href={toLocaleHref(item.href)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group relative px-2.5 py-2.5 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
+                        className="group relative px-1.5 2xl:px-2.5 py-2.5 text-xs 2xl:text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
                       >
                         {/* النص */}
                         <span className="relative z-10 flex items-center">
@@ -479,7 +479,7 @@ export default function Header() {
                     ) : (
                       <Link
                       href={toLocaleHref(item.href)}
-                        className="group relative px-2.5 py-2.5 text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
+                        className="group relative px-1.5 2xl:px-2.5 py-2.5 text-xs 2xl:text-sm font-semibold text-neutral-700 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-[#31BD9C] border-2 border-transparent hover:border-[#31BD9C] rounded-lg"
                       >
                         {/* النص */}
                         <span className="relative z-10 flex items-center">
@@ -499,7 +499,7 @@ export default function Header() {
           </nav>
 
           {/* المنطقة 3: يمين - اللغة والبحث */}
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 min-w-0 ms-auto">
             {/* Search Button */}
             <button
               className="group relative flex items-center justify-center w-9 h-9 bg-neutral-50 hover:bg-white border border-neutral-200 hover:border-[#31BD9C] rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#31BD9C] focus:ring-offset-2"
@@ -551,7 +551,7 @@ export default function Header() {
 
             {/* زر القائمة للهواتف المحمولة والشاشات المتوسطة */}
             <button
-              className="md:hidden flex-shrink-0 p-2 text-neutral-700 hover:text-[#31BD9C] rounded-lg hover:bg-[#31BD9C]/5 transition-colors duration-200"
+              className="xl:hidden flex-shrink-0 p-2 text-neutral-700 hover:text-[#31BD9C] rounded-lg hover:bg-[#31BD9C]/5 transition-colors duration-200"
               aria-label={t.header.navMenu}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
@@ -586,7 +586,7 @@ export default function Header() {
 
         {/* القائمة المنسدلة للهواتف المحمولة — مع القوائم المنبثقة */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200 max-h-[70vh] overflow-y-auto">
+          <div className="xl:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200 max-h-[70vh] overflow-y-auto">
             <nav className="flex flex-col py-2">
               {navItems.map((item) => {
                 if (item.external) {

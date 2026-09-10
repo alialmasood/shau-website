@@ -135,12 +135,12 @@ export default function Footer({ socialButtons }: FooterProps) {
       {/* التبويبات الرئيسية */}
       <div className="w-full border-b border-neutral-800 pt-6 sm:pt-8 md:pt-12 pb-6 sm:pb-8 md:pb-12">
         <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <div className="flex flex-col md:grid md:grid-cols-4 lg:grid-cols-7 gap-8 md:gap-10 lg:gap-8">
+          <div className="flex flex-col md:grid md:grid-cols-4 xl:grid-cols-8 gap-8 md:gap-10 lg:gap-8">
             {/* شعار الكلية والنشرة البريدية */}
-            <div className="flex flex-col items-center text-center md:items-start md:text-start">
+            <div className="flex flex-col min-w-0 md:col-span-2 items-center text-center md:items-start md:text-start">
               {/* الشعار */}
-              <Link href="/" className="flex items-center -mb-3 sm:-mb-4 md:-mb-5 -mt-6 sm:-mt-8 md:-mt-12">
-                <div className="relative w-32 h-24 sm:w-40 sm:h-[7.5rem] md:w-40 md:h-[7.5rem] lg:w-44 lg:h-[8.25rem] xl:w-56 xl:h-42">
+              <Link href="/" className="flex items-center w-full max-w-64 mb-4 md:mb-5">
+                <div className="relative w-full aspect-[2560/556]">
                   <Image
                     src="/Untitledoffffffff2 copy.png"
                     alt={t.footer.logoAlt}
