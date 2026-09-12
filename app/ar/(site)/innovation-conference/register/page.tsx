@@ -15,13 +15,11 @@ export const dynamic = "force-dynamic";
 export default async function InnovationConferenceRegisterPage() {
   const [open, edition] = await Promise.all([isRegistrationOpen(), getEdition2026()]);
   const eventDate = edition?.eventDate ?? "2026-10-25";
-  const titleAr = edition?.titleAr ?? "مؤتمر الشرق الدولي الأول للابتكار والإبداع 2026";
+  const title = edition?.titleAr ?? "مؤتمر الشرق الدولي الأول للابتكار والإبداع 2026";
 
   if (!open) {
-    return <RegisterClosedPanel eventDate={eventDate} titleAr={titleAr} />;
+    return <RegisterClosedPanel locale="ar" eventDate={eventDate} title={title} />;
   }
 
-  return (
-    <RegisterWizard registrationOpen eventDate={eventDate} titleAr={titleAr} />
-  );
+  return <RegisterWizard locale="ar" registrationOpen eventDate={eventDate} title={title} />;
 }

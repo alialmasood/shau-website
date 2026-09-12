@@ -85,7 +85,7 @@ const navItems = [
   },
   { label: "الاحداث", href: "/events" },
   { label: "الأخبار", href: "/news" },
-  { label: "مؤتمر الابتكار", href: "/ar/innovation-conference" },
+  { label: "مؤتمر الابتكار", href: "/innovation-conference" },
   { 
     label: "خدماتنا", 
     href: "/services",
@@ -142,9 +142,6 @@ export default function Header() {
   const router = useRouter();
 
   const isArabicPath = (pathname ?? "").startsWith("/ar");
-  const visibleNavItems = navItems.filter(
-    (item) => isArabicPath || item.href !== "/ar/innovation-conference"
-  );
   const locale: Locale = isArabicPath ? "ar" : "en";
   const t = getTranslations(locale);
   const nav = (t.header.nav || {}) as Record<string, string>;
@@ -239,7 +236,7 @@ export default function Header() {
           {/* المنطقة 2: وسط - التبويبات (Nav) */}
           <nav className="hidden xl:flex items-center justify-center flex-1 min-w-0 overflow-visible">
             <div className="flex items-center justify-center gap-0 flex-nowrap overflow-visible">
-              {visibleNavItems.map((item, index) => (
+              {navItems.map((item, index) => (
                 <div 
                   key={item.href} 
                   className="flex items-center flex-shrink-0 relative"
@@ -592,7 +589,7 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="xl:hidden border-t border-neutral-200 bg-white animate-in slide-in-from-top duration-200 max-h-[70vh] overflow-y-auto">
             <nav className="flex flex-col py-2">
-              {visibleNavItems.map((item) => {
+              {navItems.map((item) => {
                 if (item.external) {
                   return (
                     <a

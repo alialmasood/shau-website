@@ -5,11 +5,26 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 const focus =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#31BD9C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#061528]";
 
-const POINTS = [
-  "مخصصة لطلبة المدارس",
-  "تقييم علمي متخصص",
-  "تكريم وجوائز",
-] as const;
+const COPY = {
+  ar: {
+    trigger: "جائزة الشرق للمبتكر الشاب",
+    eyebrow: "لأن الإبداع يبدأ مبكراً",
+    title: "جائزة الشرق للمبتكر الشاب",
+    body: "جائزة خاصة بطلبة المدارس لاكتشاف الطاقات الإبداعية وتحويل الأفكار إلى مشاريع قابلة للتطبيق، مع عرضها أمام خبراء ومؤسسات داعمة.",
+    points: ["مخصصة لطلبة المدارس", "تقييم علمي متخصص", "تكريم وجوائز"],
+    close: "إغلاق",
+    closeDialog: "إغلاق النافذة",
+  },
+  en: {
+    trigger: "Al-Sharq Young Innovator Award",
+    eyebrow: "Because creativity starts early",
+    title: "Al-Sharq Young Innovator Award",
+    body: "A dedicated award for school students that uncovers creative talent and turns ideas into applicable projects, presented before experts and supporting institutions.",
+    points: ["Dedicated to school students", "Specialized scientific review", "Recognition and prizes"],
+    close: "Close",
+    closeDialog: "Close dialog",
+  },
+} as const;
 
 function CheckIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
   return (
@@ -22,15 +37,17 @@ function CheckIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
 type Props = {
   className?: string;
   children?: ReactNode;
+  locale?: "ar" | "en";
 };
 
 /**
  * زر يفتح تفاصيل جائزة الشرق للمبتكر الشاب في نافذة منبثقة.
  */
-export default function YouthAwardButton({ className = "", children }: Props) {
+export default function YouthAwardButton({ className = "", children, locale = "ar" }: Props) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const t = COPY[locale];
 
   useEffect(() => {
     if (!open) return;
@@ -55,7 +72,7 @@ export default function YouthAwardButton({ className = "", children }: Props) {
         onClick={() => setOpen(true)}
         className={className}
       >
-        {children ?? "جائزة الشرق للمبتكر الشاب"}
+        {children ?? t.trigger}
       </button>
 
       {open ? (
@@ -65,7 +82,7 @@ export default function YouthAwardButton({ className = "", children }: Props) {
         >
           <button
             type="button"
-            aria-label="إغلاق"
+            aria-label={t.close}
             className="absolute inset-0 bg-[#061528]/65 backdrop-blur-[2px]"
             onClick={() => setOpen(false)}
           />
@@ -79,13 +96,13 @@ export default function YouthAwardButton({ className = "", children }: Props) {
             <div className="flex items-start justify-between gap-4 border-b border-[#E8D4A4]/40 px-5 py-4 sm:px-6">
               <div className="min-w-0 text-start">
                 <p className="text-xs font-bold tracking-wide text-[#B8892D] sm:text-sm">
-                  لأن الإبداع يبدأ مبكراً
+                  {t.eyebrow}
                 </p>
                 <h2
                   id={titleId}
                   className="mt-1 text-xl font-extrabold leading-snug text-[#163364] sm:text-2xl"
                 >
-                  جائزة الشرق للمبتكر الشاب
+                  {t.title}
                 </h2>
               </div>
               <button
@@ -93,7 +110,7 @@ export default function YouthAwardButton({ className = "", children }: Props) {
                 type="button"
                 onClick={() => setOpen(false)}
                 className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#163364]/70 transition hover:bg-white/80 hover:text-[#163364] ${focus}`}
-                aria-label="إغلاق النافذة"
+                aria-label={t.closeDialog}
               >
                 <span aria-hidden="true" className="text-xl leading-none">
                   ×
@@ -102,13 +119,10 @@ export default function YouthAwardButton({ className = "", children }: Props) {
             </div>
 
             <div className="px-5 py-5 text-start sm:px-6 sm:py-6">
-              <p className="text-sm leading-7 text-neutral-700">
-                جائزة خاصة بطلبة المدارس لاكتشاف الطاقات الإبداعية وتحويل الأفكار إلى مشاريع قابلة
-                للتطبيق، مع عرضها أمام خبراء ومؤسسات داعمة.
-              </p>
+              <p className="text-sm leading-7 text-neutral-700">{t.body}</p>
 
               <ul className="mt-5 flex flex-wrap gap-2">
-                {POINTS.map((point) => (
+                {t.points.map((point) => (
                   <li
                     key={point}
                     className="inline-flex items-center gap-2 rounded-full border border-[#E8D4A4]/80 bg-white px-3 py-1.5 text-xs font-semibold text-[#163364]"

@@ -11,14 +11,47 @@ import {
 import { FieldError, IcIcon, icFocus } from "./IcFormChrome";
 
 type UploadKind = "image" | "pdf";
+type UploadLocale = "ar" | "en";
 
-async function uploadFile(file: File): Promise<IcUploadedFile> {
+const UPLOAD_COPY = {
+  ar: {
+    dropHint: "اسحب الملفات هنا أو انقر للاختيار",
+    uploading: " · جاري الرفع...",
+    uploaded: "تم الرفع",
+    retry: "إعادة",
+    remove: "إزالة",
+    removeFile: (name: string) => `إزالة ${name}`,
+    uploadFailed: "تعذر رفع الملف.",
+    imageTypeInvalid: "يُقبل JPG أو PNG أو WEBP فقط.",
+    imageTooLarge: "حجم الصورة يتجاوز 5MB.",
+    pdfTypeInvalid: "يُقبل ملف PDF فقط.",
+    pdfTooLarge: "حجم الملف يتجاوز 10MB.",
+  },
+  en: {
+    dropHint: "Drag files here or click to choose",
+    uploading: " · uploading...",
+    uploaded: "uploaded",
+    retry: "Retry",
+    remove: "Remove",
+    removeFile: (name: string) => `Remove ${name}`,
+    uploadFailed: "The file could not be uploaded.",
+    imageTypeInvalid: "Only JPG, PNG or WEBP files are accepted.",
+    imageTooLarge: "Image size exceeds 5MB.",
+    pdfTypeInvalid: "Only PDF files are accepted.",
+    pdfTooLarge: "File size exceeds 10MB.",
+  },
+} as const;
+
+async function uploadFile(file: File, locale: UploadLocale): Promise<IcUploadedFile> {
   const fd = new FormData();
   fd.append("file", file);
   const res = await fetch("/api/media/public", { method: "POST", body: fd });
   const json = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
   if (!res.ok || !json.id) {
-    throw new Error(json.error || "تعذر رفع الملف.");
+    // رسالة الخادم عربية دائماً، لذا نعرض رسالتنا في الواجهة الإنجليزية.
+    throw new Error(
+      locale === "en" ? UPLOAD_COPY.en.uploadFailed : json.error || UPLOAD_COPY.ar.uploadFailed
+    );
   }
   return {
     mediaId: String(json.id),
@@ -28,14 +61,15 @@ async function uploadFile(file: File): Promise<IcUploadedFile> {
   };
 }
 
-function validateClientFile(file: File, kind: UploadKind): string | null {
+function validateClientFile(file: File, kind: UploadKind, locale: UploadLocale): string | null {
+  const c = UPLOAD_COPY[locale];
   if (kind === "image") {
     const ok = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
-    if (!ok) return "يُقبل JPG أو PNG أو WEBP فقط.";
-    if (file.size > IC_MAX_IMAGE_BYTES) return "حجم الصورة يتجاوز 5MB.";
+    if (!ok) return c.imageTypeInvalid;
+    if (file.size > IC_MAX_IMAGE_BYTES) return c.imageTooLarge;
   } else {
-    if (file.type !== "application/pdf") return "يُقبل ملف PDF فقط.";
-    if (file.size > IC_MAX_PDF_BYTES) return "حجم الملف يتجاوز 10MB.";
+    if (file.type !== "application/pdf") return c.pdfTypeInvalid;
+    if (file.size > IC_MAX_PDF_BYTES) return c.pdfTooLarge;
   }
   return null;
 }
@@ -60,6 +94,7 @@ type Props = {
   onChange: (files: IcUploadedFile[]) => void;
   error?: string;
   fieldKey: string;
+  locale?: UploadLocale;
 };
 
 export default function IcFileUploadZone({
@@ -72,10 +107,12 @@ export default function IcFileUploadZone({
   onChange,
   error,
   fieldKey,
+  locale = "ar",
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<ItemState[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const c = UPLOAD_COPY[locale];
 
   const accept = kind === "image" ? IC_IMAGE_ACCEPT : IC_PDF_ACCEPT;
   const busy = items.some((i) => i.status === "uploading");
@@ -90,7 +127,7 @@ export default function IcFileUploadZone({
 
     for (const file of slice) {
       const localId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const clientErr = validateClientFile(file, kind);
+      const clientErr = validateClientFile(file, kind, locale);
       const previewUrl =
         kind === "image" && file.type.startsWith("image/")
           ? URL.createObjectURL(file)
@@ -113,7 +150,7 @@ export default function IcFileUploadZone({
         setItems((prev) =>
           prev.map((it) => (it.localId === localId ? { ...it, progress: 70 } : it))
         );
-        const uploaded = await uploadFile(file);
+        const uploaded = await uploadFile(file, locale);
         setItems((prev) =>
           prev.map((it) =>
             it.localId === localId
@@ -131,7 +168,7 @@ export default function IcFileUploadZone({
                   ...it,
                   status: "error",
                   progress: 0,
-                  error: e instanceof Error ? e.message : "تعذر رفع الملف.",
+                  error: e instanceof Error ? e.message : c.uploadFailed,
                 }
               : it
           )
@@ -201,12 +238,10 @@ export default function IcFileUploadZone({
         <span className="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#187c67] shadow-sm">
           <IcIcon name="upload" className="h-5 w-5" />
         </span>
-        <span className="text-sm font-semibold text-[#163364]">
-          اسحب الملفات هنا أو انقر للاختيار
-        </span>
+        <span className="text-sm font-semibold text-[#163364]">{c.dropHint}</span>
         <span className="mt-1 text-xs text-neutral-500">
           {value.length}/{maxFiles}
-          {busy ? " · جاري الرفع..." : ""}
+          {busy ? c.uploading : ""}
         </span>
         <input
           ref={inputRef}
@@ -241,14 +276,14 @@ export default function IcFileUploadZone({
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-neutral-800">{f.fileName}</p>
               <p className="text-xs text-neutral-500">
-                {(f.size / 1024).toFixed(0)} KB · تم الرفع
+                {(f.size / 1024).toFixed(0)} KB · {c.uploaded}
               </p>
             </div>
             <button
               type="button"
               onClick={() => removeDone(f.mediaId)}
               className={`rounded-lg p-2 text-neutral-500 hover:bg-red-50 hover:text-red-600 ${icFocus}`}
-              aria-label={`إزالة ${f.fileName}`}
+              aria-label={c.removeFile(f.fileName)}
             >
               <IcIcon name="trash" className="h-4 w-4" />
             </button>
@@ -290,13 +325,13 @@ export default function IcFileUploadZone({
                     className={`rounded-lg px-2 py-1 text-xs font-semibold text-[#163364] hover:bg-[#eef2f8] ${icFocus}`}
                     onClick={() => void retry(it.localId)}
                   >
-                    إعادة
+                    {c.retry}
                   </button>
                   <button
                     type="button"
                     className={`rounded-lg p-2 text-neutral-500 hover:bg-red-50 hover:text-red-600 ${icFocus}`}
                     onClick={() => removeItem(it.localId)}
-                    aria-label="إزالة"
+                    aria-label={c.remove}
                   >
                     <IcIcon name="trash" className="h-4 w-4" />
                   </button>

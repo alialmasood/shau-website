@@ -20,6 +20,7 @@ import {
 } from "@/lib/innovationConferenceTypes";
 import {
   firstErrorKey,
+  localizeServerFieldErrors,
   validateAllSteps,
   validateStep,
 } from "@/lib/innovationConferenceClientValidation";
@@ -32,13 +33,8 @@ import {
   emptyTeamMember,
   formHasMeaningfulData,
   IC_FIELD_LIMITS,
-  IC_FIELD_OPTIONS,
-  IC_GENDER_LABELS,
   IC_IRAQI_GOVERNORATES,
-  IC_PATENT_LABELS,
-  IC_ROLE_LABELS,
-  IC_STAGE_OPTIONS,
-  IC_STEP_LABELS,
+  icUi,
   loadDraft,
   loadSuccess,
   roleNeedsInstitution,
@@ -62,13 +58,325 @@ import {
   SectionTitle,
 } from "./IcFormChrome";
 
+type IcLocale = "ar" | "en";
+
+/** رسائل أخطاء الخادم تعود بالعربية، لذا نعرض مقابلها الإنجليزي بحسب الرمز. */
+const EN_ERROR_BY_CODE: Record<string, string> = {
+  VALIDATION_ERROR: "Please review the details you entered.",
+  INVALID_ATTACHMENTS: "The attachments are not valid.",
+  REGISTRATION_CLOSED: "Conference registration is not available at the moment.",
+  RATE_LIMITED: "You have exceeded the number of allowed attempts. Please try again later.",
+  SUBMISSION_FAILED: "The application could not be sent. Please try again.",
+};
+
+/** كل النصوص الظاهرة في المعالج بحسب اللغة (القيم المرسلة للخادم لا تتغير). */
+const WIZARD_COPY = {
+  ar: {
+    loading: "جاري التحميل...",
+    closedHeading: "التسجيل لم يُفتح بعد",
+    backToConference: "العودة إلى صفحة المؤتمر",
+    eyebrow: "تسجيل المشاركين",
+    heading: "سجّل ابتكارك",
+    lead: "أكمل الخطوات التالية لإرسال مشروعك للمشاركة في مؤتمر الشرق الدولي الأول للابتكار والإبداع 2026.",
+    badge: "6 خطوات • يستغرق تقريباً 10–15 دقيقة",
+    draftFound: "وجدنا بيانات تسجيل غير مكتملة.",
+    draftResume: "استكمال التسجيل",
+    draftFresh: "بدء تسجيل جديد",
+    stepOf: (n: number) => `الخطوة ${n} من 6`,
+    prev: "السابق",
+    next: "التالي",
+    submit: "إرسال طلب المشاركة",
+    submitting: "جاري إرسال طلبك...",
+    edit: "تعديل",
+    submitFailed: "تعذر إرسال الطلب. حاول مرة أخرى.",
+    networkFailed: "تعذر الاتصال بالخادم. بياناتك محفوظة محلياً.",
+    successHeading: "تم استلام طلبك بنجاح",
+    successLead: "احتفظ بمعلومات المتابعة أدناه في مكان آمن.",
+    successCode: "رقم المشاركة",
+    successProject: "اسم المشروع",
+    successStatus: "الحالة",
+    successStatusValue: "تم الاستلام",
+    successToken: "رمز المتابعة",
+    successWarning: "احفظ رمز المتابعة الآن، لأنه لن يُعرض لك مرة أخرى بهذه الصيغة.",
+    copied: "تم النسخ",
+    copyCode: "نسخ رقم المشاركة",
+    copyToken: "نسخ رمز المتابعة",
+    print: "طباعة",
+    track: "متابعة الطلب",
+    honeypot: "الموقع",
+    s1: {
+      title: "بيانات المشارك",
+      lead: "أدخل بياناتك الشخصية وبيانات التواصل بدقة.",
+      fullName: "الاسم الكامل *",
+      birthDate: "تاريخ الميلاد *",
+      ageKnown: (age: number, eventDate: string) =>
+        `العمر يوم المؤتمر (${eventDate}): حوالي ${age} سنة`,
+      ageHint: (eventDate: string) => `يُحسب العمر بالنسبة لتاريخ المؤتمر ${eventDate}`,
+      gender: "الجنس (اختياري)",
+      governorate: "المحافظة *",
+      governoratePlaceholder: "اختر المحافظة",
+      phone: "رقم الهاتف *",
+      email: "البريد الإلكتروني *",
+      role: "الصفة *",
+      rolePlaceholder: "اختر الصفة",
+      institution: "اسم المدرسة/الجامعة/المؤسسة",
+      stageOrMajor: "المرحلة / التخصص",
+    },
+    s2: {
+      title: "بيانات المشروع",
+      lead: "صف مشروعك بوضوح ليتمكن المقيّمون من فهم فكرته وأثره.",
+      projectTitle: "اسم المشروع *",
+      innovationField: "مجال الابتكار *",
+      projectSummary: "وصف مختصر *",
+      problem: "المشكلة التي يعالجها *",
+      solution: "الحل المقترح *",
+      novelty: "الجانب المبتكر / الجديد *",
+      beneficiaries: "الفئة المستفيدة *",
+      expectedImpact: "الأثر المتوقع على المجتمع *",
+    },
+    s3: {
+      title: "الفريق ومرحلة المشروع",
+      lead: "حدد نوع المشاركة ومرحلة نضج مشروعك.",
+      participationType: "نوع المشاركة *",
+      individual: "فردي",
+      individualDesc: "تقديم المشروع باسمك كمشارك فردي.",
+      team: "فريق",
+      teamDesc: "أنت القائد مع حتى 3 أعضاء إضافيين.",
+      leader: "قائد الفريق",
+      leaderEmpty: "— أكمل بيانات الخطوة 1",
+      member: (n: number) => `عضو إضافي ${n}`,
+      remove: "إزالة",
+      memberFullName: "الاسم الكامل *",
+      memberRoleInTeam: "الدور في الفريق",
+      memberPhone: "الهاتف",
+      memberEmail: "البريد",
+      memberBirthDate: "تاريخ الميلاد",
+      memberInstitutionName: "الجهة",
+      addMember: "إضافة عضو",
+      projectStage: "مرحلة المشروع *",
+    },
+    s4: {
+      title: "الملكية الفكرية والمشاركات السابقة",
+      lead: "لا يشترط امتلاك براءة اختراع للمشاركة في المؤتمر.",
+      shownBefore: "هل سبق عرض المشروع؟ *",
+      yes: "نعم",
+      no: "لا",
+      shownBeforeDetails: "أين ومتى تم عرض المشروع؟ *",
+      patentStatus: "حالة البراءة *",
+      patentNumber: "رقم البراءة / الطلب *",
+      patentNote: "لا يشترط امتلاك براءة اختراع للمشاركة في المؤتمر.",
+    },
+    s5: {
+      title: "المرفقات",
+      lead: "ارفع صور المشروع وملف PDF التعريفي. يتم الرفع مباشرة ثم تُربط الملفات عند الإرسال.",
+      images: "صور المشروع *",
+      imagesHint: "من 1 إلى 5 صور · JPG / PNG / WEBP · حتى 5MB لكل صورة",
+      projectPdf: "ملف PDF المشروع *",
+      projectPdfHint: "ملف واحد · حتى 10MB",
+      patentDocument: "مستند البراءة *",
+      patentDocumentHint: "ملف PDF واحد · حتى 10MB",
+      videoUrl: "رابط فيديو تعريفي (اختياري)",
+      videoUrlHint: "يجب أن يكون الرابط بصيغة HTTPS.",
+    },
+    s6: {
+      title: "المراجعة والإقرار والإرسال",
+      lead: "راجع بياناتك ثم وافق على الإقرارات قبل الإرسال.",
+      applicantBlock: "بيانات المشارك",
+      projectBlock: "المشروع",
+      teamBlock: "الفريق",
+      ipBlock: "الملكية الفكرية",
+      attachmentsBlock: "المرفقات",
+      name: "الاسم",
+      birthDate: "الميلاد",
+      governorate: "المحافظة",
+      phone: "الهاتف",
+      email: "البريد",
+      role: "الصفة",
+      field: "المجال",
+      summary: "الملخص",
+      type: "النوع",
+      stage: "المرحلة",
+      members: "الأعضاء",
+      membersSeparator: "، ",
+      shownBefore: "عُرض سابقاً",
+      patent: "البراءة",
+      images: "الصور",
+      pdf: "PDF",
+      patentDocument: "مستند البراءة",
+      video: "فيديو",
+      filesCount: (n: number) => `${n} ملف(ات)`,
+      yes: "نعم",
+      no: "لا",
+      consentsLegend: "الإقرارات *",
+      consentAccuracy: "أقر بصحة المعلومات المدخلة.",
+      consentOwnership: "أقر بملكية المشروع أو حقي القانوني في تقديمه.",
+      consentTerms: "أوافق على شروط المشاركة في المؤتمر.",
+      consentMedia:
+        "أوافق على استخدام الصور والمعلومات العامة لأغراض المؤتمر والتغطية الإعلامية وفق سياسة الكلية.",
+      submitErrorNote: "بياناتك محفوظة محلياً ويمكنك إعادة المحاولة.",
+    },
+  },
+  en: {
+    loading: "Loading...",
+    closedHeading: "Registration is not open yet",
+    backToConference: "Back to the conference page",
+    eyebrow: "Participant registration",
+    heading: "Register your innovation",
+    lead: "Complete the following steps to submit your project to the First Al-Sharq International Conference on Innovation & Creativity 2026.",
+    badge: "6 steps • takes about 10–15 minutes",
+    draftFound: "We found an incomplete registration.",
+    draftResume: "Resume registration",
+    draftFresh: "Start a new registration",
+    stepOf: (n: number) => `Step ${n} of 6`,
+    prev: "Previous",
+    next: "Next",
+    submit: "Submit application",
+    submitting: "Submitting your application...",
+    edit: "Edit",
+    submitFailed: "The application could not be sent. Please try again.",
+    networkFailed: "Could not reach the server. Your data is saved locally.",
+    successHeading: "Your application has been received",
+    successLead: "Keep the follow-up details below in a safe place.",
+    successCode: "Participation number",
+    successProject: "Project name",
+    successStatus: "Status",
+    successStatusValue: "Received",
+    successToken: "Tracking code",
+    successWarning: "Save the tracking code now — it will not be shown to you again in this form.",
+    copied: "Copied",
+    copyCode: "Copy participation number",
+    copyToken: "Copy tracking code",
+    print: "Print",
+    track: "Track application",
+    honeypot: "Website",
+    s1: {
+      title: "Participant details",
+      lead: "Enter your personal and contact details accurately.",
+      fullName: "Full name *",
+      birthDate: "Date of birth *",
+      ageKnown: (age: number, eventDate: string) =>
+        `Age on the conference date (${eventDate}): about ${age} years`,
+      ageHint: (eventDate: string) =>
+        `Age is calculated as of the conference date ${eventDate}`,
+      gender: "Gender (optional)",
+      governorate: "Governorate *",
+      governoratePlaceholder: "Select a governorate",
+      phone: "Phone number *",
+      email: "Email address *",
+      role: "Role *",
+      rolePlaceholder: "Select a role",
+      institution: "School / university / institution name",
+      stageOrMajor: "Grade / major",
+    },
+    s2: {
+      title: "Project details",
+      lead: "Describe your project clearly so reviewers can understand its idea and impact.",
+      projectTitle: "Project name *",
+      innovationField: "Innovation field *",
+      projectSummary: "Brief description *",
+      problem: "Problem it addresses *",
+      solution: "Proposed solution *",
+      novelty: "Innovative / novel aspect *",
+      beneficiaries: "Target beneficiaries *",
+      expectedImpact: "Expected impact on society *",
+    },
+    s3: {
+      title: "Team and project stage",
+      lead: "Choose your participation type and how mature your project is.",
+      participationType: "Participation type *",
+      individual: "Individual",
+      individualDesc: "Submit the project in your own name as an individual participant.",
+      team: "Team",
+      teamDesc: "You are the leader, with up to 3 additional members.",
+      leader: "Team leader",
+      leaderEmpty: "— Complete the details in step 1",
+      member: (n: number) => `Additional member ${n}`,
+      remove: "Remove",
+      memberFullName: "Full name *",
+      memberRoleInTeam: "Role in team",
+      memberPhone: "Phone",
+      memberEmail: "Email",
+      memberBirthDate: "Date of birth",
+      memberInstitutionName: "Institution",
+      addMember: "Add member",
+      projectStage: "Project stage *",
+    },
+    s4: {
+      title: "Intellectual property and previous participation",
+      lead: "A patent is not required to take part in the conference.",
+      shownBefore: "Has the project been presented before? *",
+      yes: "Yes",
+      no: "No",
+      shownBeforeDetails: "Where and when was the project presented? *",
+      patentStatus: "Patent status *",
+      patentNumber: "Patent / application number *",
+      patentNote: "A patent is not required to take part in the conference.",
+    },
+    s5: {
+      title: "Attachments",
+      lead: "Upload your project images and the introductory PDF. Files are uploaded immediately and linked to your application when you submit.",
+      images: "Project images *",
+      imagesHint: "1 to 5 images · JPG / PNG / WEBP · up to 5MB each",
+      projectPdf: "Project PDF file *",
+      projectPdfHint: "One file · up to 10MB",
+      patentDocument: "Patent document *",
+      patentDocumentHint: "One PDF file · up to 10MB",
+      videoUrl: "Introductory video link (optional)",
+      videoUrlHint: "The link must use HTTPS.",
+    },
+    s6: {
+      title: "Review, declarations and submit",
+      lead: "Review your details, then agree to the declarations before submitting.",
+      applicantBlock: "Participant details",
+      projectBlock: "Project",
+      teamBlock: "Team",
+      ipBlock: "Intellectual property",
+      attachmentsBlock: "Attachments",
+      name: "Name",
+      birthDate: "Date of birth",
+      governorate: "Governorate",
+      phone: "Phone",
+      email: "Email",
+      role: "Role",
+      field: "Field",
+      summary: "Summary",
+      type: "Type",
+      stage: "Stage",
+      members: "Members",
+      membersSeparator: ", ",
+      shownBefore: "Presented before",
+      patent: "Patent",
+      images: "Images",
+      pdf: "PDF",
+      patentDocument: "Patent document",
+      video: "Video",
+      filesCount: (n: number) => `${n} file(s)`,
+      yes: "Yes",
+      no: "No",
+      consentsLegend: "Declarations *",
+      consentAccuracy: "I declare that the information entered is accurate.",
+      consentOwnership:
+        "I declare that I own the project or have the legal right to submit it.",
+      consentTerms: "I agree to the conference participation terms.",
+      consentMedia:
+        "I agree to the use of images and public information for conference purposes and media coverage in line with the college policy.",
+      submitErrorNote: "Your data is saved locally and you can try again.",
+    },
+  },
+} as const;
+
 type Props = {
   registrationOpen: boolean;
   eventDate: string;
-  titleAr: string;
+  title: string;
+  locale?: IcLocale;
 };
 
-export default function RegisterWizard({ registrationOpen, eventDate, titleAr }: Props) {
+export default function RegisterWizard({ registrationOpen, eventDate, locale = "ar" }: Props) {
+  const t = WIZARD_COPY[locale];
+  const ui = icUi(locale);
+  const dir = locale === "ar" ? "rtl" : "ltr";
+  const conferenceHref = `/${locale}/innovation-conference`;
   const [bootstrapped, setBootstrapped] = useState(false);
   const [draftPrompt, setDraftPrompt] = useState(false);
   const [step, setStep] = useState(1);
@@ -156,7 +464,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
   }, []);
 
   const goNext = () => {
-    const errs = validateStep(step, form);
+    const errs = validateStep(step, form, locale);
     setErrors(errs);
     if (Object.keys(errs).length) {
       const k = firstErrorKey(errs);
@@ -179,7 +487,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
     if (n < 1 || n > 6) return;
     if (n > maxReached) return;
     if (n > step) {
-      const errs = validateStep(step, form);
+      const errs = validateStep(step, form, locale);
       if (Object.keys(errs).length) {
         setErrors(errs);
         return;
@@ -194,11 +502,11 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
     e.preventDefault();
     if (submittingRef.current || submitState === "loading") return;
 
-    const errs = validateAllSteps(form);
+    const errs = validateAllSteps(form, locale);
     setErrors(errs);
     if (Object.keys(errs).length) {
       for (let s = 1; s <= 6; s++) {
-        const stepErrs = validateStep(s, form);
+        const stepErrs = validateStep(s, form, locale);
         if (Object.keys(stepErrs).length) {
           setStep(s);
           setMaxReached((m) => Math.max(m, s));
@@ -229,9 +537,15 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
       };
 
       if (!res.ok || !json.ok || !json.application) {
-        if (json.error?.fields) setErrors(json.error.fields);
+        if (json.error?.fields) {
+          setErrors(localizeServerFieldErrors(json.error.fields, form, locale));
+        }
         setSubmitState("error");
-        setSubmitError(json.error?.message || "تعذر إرسال الطلب. حاول مرة أخرى.");
+        setSubmitError(
+          locale === "en"
+            ? (json.error?.code && EN_ERROR_BY_CODE[json.error.code]) || t.submitFailed
+            : json.error?.message || t.submitFailed
+        );
         return;
       }
 
@@ -243,7 +557,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setSubmitState("error");
-      setSubmitError("تعذر الاتصال بالخادم. بياناتك محفوظة محلياً.");
+      setSubmitError(t.networkFailed);
     } finally {
       submittingRef.current = false;
     }
@@ -252,21 +566,21 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
   if (!bootstrapped) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center text-neutral-500">
-        جاري التحميل...
+        {t.loading}
       </div>
     );
   }
 
   if (!registrationOpen && !success) {
     return (
-      <div dir="rtl" className="overflow-x-hidden bg-white">
+      <div dir={dir} className="overflow-x-hidden bg-white">
         <div className="bg-[#061528] px-4 py-14 text-center text-white">
-          <h1 className="text-3xl font-extrabold">التسجيل لم يُفتح بعد</h1>
+          <h1 className="text-3xl font-extrabold">{t.closedHeading}</h1>
           <Link
-            href="/ar/innovation-conference"
+            href={conferenceHref}
             className={`mt-8 inline-flex rounded-xl bg-[#31BD9C] px-6 py-3 text-sm font-bold text-[#061528] ${icFocus}`}
           >
-            العودة إلى صفحة المؤتمر
+            {t.backToConference}
           </Link>
         </div>
       </div>
@@ -277,6 +591,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
     return (
       <SuccessPanel
         data={success}
+        locale={locale}
         onDone={() => {
           clearSuccess();
         }}
@@ -289,7 +604,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
   const progressPct = ((step - 1) / 5) * 100;
 
   return (
-    <div dir="rtl" className="overflow-x-hidden bg-white text-neutral-800">
+    <div dir={dir} className="overflow-x-hidden bg-white text-neutral-800">
       <header className="relative isolate overflow-hidden bg-[#061528] text-white">
         <div
           aria-hidden
@@ -300,14 +615,13 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
           }}
         />
         <div className="relative mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
-          <p className="text-sm font-bold text-[#31BD9C]">تسجيل المشاركين</p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">سجّل ابتكارك</h1>
+          <p className="text-sm font-bold text-[#31BD9C]">{t.eyebrow}</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{t.heading}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/75 sm:text-base">
-            أكمل الخطوات التالية لإرسال مشروعك للمشاركة في مؤتمر الشرق الدولي الأول للابتكار والإبداع
-            2026.
+            {t.lead}
           </p>
           <span className="mt-5 inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/90 sm:text-sm">
-            6 خطوات • يستغرق تقريباً 10–15 دقيقة
+            {t.badge}
           </span>
         </div>
       </header>
@@ -315,21 +629,21 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
       {draftPrompt && (
         <div className="border-b border-[#31BD9C]/25 bg-[#eef8f5]">
           <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-sm font-semibold text-[#163364]">وجدنا بيانات تسجيل غير مكتملة.</p>
+            <p className="text-sm font-semibold text-[#163364]">{t.draftFound}</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={resumeDraft}
                 className={`rounded-xl bg-[#31BD9C] px-4 py-2 text-sm font-bold text-[#061528] ${icFocus}`}
               >
-                استكمال التسجيل
+                {t.draftResume}
               </button>
               <button
                 type="button"
                 onClick={startFresh}
                 className={`rounded-xl border border-[#163364]/20 bg-white px-4 py-2 text-sm font-semibold text-[#163364] ${icFocus}`}
               >
-                بدء تسجيل جديد
+                {t.draftFresh}
               </button>
             </div>
           </div>
@@ -341,10 +655,8 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
           {/* Mobile progress */}
           <div className="sm:hidden">
             <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-[#31BD9C]">
-                الخطوة {step} من 6
-              </span>
-              <span className="text-[#163364]">{IC_STEP_LABELS[step - 1]}</span>
+              <span className="text-[#31BD9C]">{t.stepOf(step)}</span>
+              <span className="text-[#163364]">{ui.stepLabels[step - 1]}</span>
             </div>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-200">
               <div
@@ -356,7 +668,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
           {/* Desktop steps */}
           <ol className="hidden gap-1 sm:grid sm:grid-cols-6">
-            {IC_STEP_LABELS.map((label, i) => {
+            {ui.stepLabels.map((label, i) => {
               const n = i + 1;
               const done = n < step;
               const current = n === step;
@@ -367,7 +679,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                     type="button"
                     disabled={!clickable}
                     onClick={() => goToStep(n)}
-                    className={`flex w-full flex-col items-start gap-1 rounded-xl px-2 py-2 text-right transition ${
+                    className={`flex w-full flex-col items-start gap-1 rounded-xl px-2 py-2 text-start transition ${
                       clickable ? "cursor-pointer hover:bg-white/80" : "cursor-default opacity-60"
                     } ${icFocus}`}
                   >
@@ -401,7 +713,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
         {/* honeypot */}
         <div className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden" aria-hidden>
           <label>
-            الموقع
+            {t.honeypot}
             <input
               tabIndex={-1}
               autoComplete="off"
@@ -414,13 +726,13 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
         {step === 1 && (
           <section className="space-y-6">
             <div>
-              <SectionTitle>بيانات المشارك</SectionTitle>
-              <SectionLead>أدخل بياناتك الشخصية وبيانات التواصل بدقة.</SectionLead>
+              <SectionTitle>{t.s1.title}</SectionTitle>
+              <SectionLead>{t.s1.lead}</SectionLead>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2" data-field="applicant.fullName">
                 <label className={icLabelClass} htmlFor="fullName">
-                  الاسم الكامل *
+                  {t.s1.fullName}
                 </label>
                 <input
                   id="fullName"
@@ -436,7 +748,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
               <div data-field="applicant.birthDate">
                 <label className={icLabelClass} htmlFor="birthDate">
-                  تاريخ الميلاد *
+                  {t.s1.birthDate}
                 </label>
                 <input
                   id="birthDate"
@@ -450,16 +762,14 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                   {...icDatePickerGuardProps()}
                 />
                 <p id="hint-age" className={icHintClass}>
-                  {age != null
-                    ? `العمر يوم المؤتمر (${eventDate}): حوالي ${age} سنة`
-                    : `يُحسب العمر بالنسبة لتاريخ المؤتمر ${eventDate}`}
+                  {age != null ? t.s1.ageKnown(age, eventDate) : t.s1.ageHint(eventDate)}
                 </p>
                 <FieldError message={errors["applicant.birthDate"]} />
               </div>
 
               <div data-field="applicant.gender">
                 <label className={icLabelClass} htmlFor="gender">
-                  الجنس (اختياري)
+                  {t.s1.gender}
                 </label>
                 <select
                   id="gender"
@@ -470,9 +780,9 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                   }
                 >
                   <option value="">—</option>
-                  {(Object.keys(IC_GENDER_LABELS) as IcGender[]).map((g) => (
+                  {(Object.keys(ui.genderLabels) as IcGender[]).map((g) => (
                     <option key={g} value={g}>
-                      {IC_GENDER_LABELS[g]}
+                      {ui.genderLabels[g]}
                     </option>
                   ))}
                 </select>
@@ -480,7 +790,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
               <div data-field="applicant.governorate">
                 <label className={icLabelClass} htmlFor="governorate">
-                  المحافظة *
+                  {t.s1.governorate}
                 </label>
                 <select
                   id="governorate"
@@ -489,10 +799,10 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                   onChange={(e) => patchApplicant({ governorate: e.target.value })}
                   aria-invalid={!!errors["applicant.governorate"]}
                 >
-                  <option value="">اختر المحافظة</option>
+                  <option value="">{t.s1.governoratePlaceholder}</option>
                   {IC_IRAQI_GOVERNORATES.map((g) => (
                     <option key={g} value={g}>
-                      {g}
+                      {ui.governorateLabel(g)}
                     </option>
                   ))}
                 </select>
@@ -501,7 +811,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
               <div data-field="applicant.phone">
                 <label className={icLabelClass} htmlFor="phone">
-                  رقم الهاتف *
+                  {t.s1.phone}
                 </label>
                 <input
                   id="phone"
@@ -517,7 +827,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
               <div data-field="applicant.email">
                 <label className={icLabelClass} htmlFor="email">
-                  البريد الإلكتروني *
+                  {t.s1.email}
                 </label>
                 <input
                   id="email"
@@ -533,7 +843,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
               <div className="sm:col-span-2" data-field="applicant.applicantRole">
                 <label className={icLabelClass} htmlFor="applicantRole">
-                  الصفة *
+                  {t.s1.role}
                 </label>
                 <select
                   id="applicantRole"
@@ -545,10 +855,10 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                     })
                   }
                 >
-                  <option value="">اختر الصفة</option>
+                  <option value="">{t.s1.rolePlaceholder}</option>
                   {IC_APPLICANT_ROLES.map((r) => (
                     <option key={r} value={r}>
-                      {IC_ROLE_LABELS[r]}
+                      {ui.roleLabels[r]}
                     </option>
                   ))}
                 </select>
@@ -557,7 +867,8 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
               <div data-field="applicant.institutionName">
                 <label className={icLabelClass} htmlFor="institutionName">
-                  اسم المدرسة/الجامعة/المؤسسة{needsInst ? " *" : ""}
+                  {t.s1.institution}
+                  {needsInst ? " *" : ""}
                 </label>
                 <input
                   id="institutionName"
@@ -570,7 +881,8 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
               <div data-field="applicant.stageOrMajor">
                 <label className={icLabelClass} htmlFor="stageOrMajor">
-                  المرحلة / التخصص{needsInst ? " *" : ""}
+                  {t.s1.stageOrMajor}
+                  {needsInst ? " *" : ""}
                 </label>
                 <input
                   id="stageOrMajor"
@@ -587,13 +899,13 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
         {step === 2 && (
           <section className="space-y-6">
             <div>
-              <SectionTitle>بيانات المشروع</SectionTitle>
-              <SectionLead>صف مشروعك بوضوح ليتمكن المقيّمون من فهم فكرته وأثره.</SectionLead>
+              <SectionTitle>{t.s2.title}</SectionTitle>
+              <SectionLead>{t.s2.lead}</SectionLead>
             </div>
 
             <div data-field="project.projectTitle">
               <label className={icLabelClass} htmlFor="projectTitle">
-                اسم المشروع *
+                {t.s2.projectTitle}
               </label>
               <input
                 id="projectTitle"
@@ -606,14 +918,15 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                 value={form.project.projectTitle}
                 min={IC_FIELD_LIMITS.projectTitle.min}
                 max={IC_FIELD_LIMITS.projectTitle.max}
+                locale={locale}
               />
               <FieldError message={errors["project.projectTitle"]} />
             </div>
 
             <fieldset data-field="project.innovationField">
-              <legend className={icLabelClass}>مجال الابتكار *</legend>
+              <legend className={icLabelClass}>{t.s2.innovationField}</legend>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {IC_FIELD_OPTIONS.map((opt) => {
+                {ui.fieldOptions.map((opt) => {
                   const selected = form.project.innovationField === opt.value;
                   return (
                     <button
@@ -622,7 +935,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                       onClick={() =>
                         patchProject({ innovationField: opt.value as IcInnovationField })
                       }
-                      className={`rounded-2xl border p-4 text-right transition ${icFocus} ${
+                      className={`rounded-2xl border p-4 text-start transition ${icFocus} ${
                         selected
                           ? "border-[#31BD9C] bg-[#eef8f5] ring-2 ring-[#31BD9C]/35"
                           : "border-neutral-200 bg-[#F7FAF9] hover:border-[#31BD9C]/40"
@@ -645,12 +958,12 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
             {(
               [
-                ["projectSummary", "وصف مختصر *", IC_FIELD_LIMITS.projectSummary],
-                ["problem", "المشكلة التي يعالجها *", IC_FIELD_LIMITS.problem],
-                ["solution", "الحل المقترح *", IC_FIELD_LIMITS.solution],
-                ["novelty", "الجانب المبتكر / الجديد *", IC_FIELD_LIMITS.novelty],
-                ["beneficiaries", "الفئة المستفيدة *", IC_FIELD_LIMITS.beneficiaries],
-                ["expectedImpact", "الأثر المتوقع على المجتمع *", IC_FIELD_LIMITS.expectedImpact],
+                ["projectSummary", t.s2.projectSummary, IC_FIELD_LIMITS.projectSummary],
+                ["problem", t.s2.problem, IC_FIELD_LIMITS.problem],
+                ["solution", t.s2.solution, IC_FIELD_LIMITS.solution],
+                ["novelty", t.s2.novelty, IC_FIELD_LIMITS.novelty],
+                ["beneficiaries", t.s2.beneficiaries, IC_FIELD_LIMITS.beneficiaries],
+                ["expectedImpact", t.s2.expectedImpact, IC_FIELD_LIMITS.expectedImpact],
               ] as const
             ).map(([key, label, lim]) => (
               <div key={key} data-field={`project.${key}`}>
@@ -665,7 +978,12 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                   maxLength={lim.max}
                   onChange={(e) => patchProject({ [key]: e.target.value })}
                 />
-                <CharCounter value={form.project[key]} min={lim.min} max={lim.max} />
+                <CharCounter
+                  value={form.project[key]}
+                  min={lim.min}
+                  max={lim.max}
+                  locale={locale}
+                />
                 <FieldError message={errors[`project.${key}`]} />
               </div>
             ))}
@@ -675,17 +993,17 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
         {step === 3 && (
           <section className="space-y-8">
             <div>
-              <SectionTitle>الفريق ومرحلة المشروع</SectionTitle>
-              <SectionLead>حدد نوع المشاركة ومرحلة نضج مشروعك.</SectionLead>
+              <SectionTitle>{t.s3.title}</SectionTitle>
+              <SectionLead>{t.s3.lead}</SectionLead>
             </div>
 
             <fieldset data-field="participation.participationType">
-              <legend className={icLabelClass}>نوع المشاركة *</legend>
+              <legend className={icLabelClass}>{t.s3.participationType}</legend>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {(
                   [
-                    ["individual", "فردي", "تقديم المشروع باسمك كمشارك فردي."],
-                    ["team", "فريق", "أنت القائد مع حتى 3 أعضاء إضافيين."],
+                    ["individual", t.s3.individual, t.s3.individualDesc],
+                    ["team", t.s3.team, t.s3.teamDesc],
                   ] as const
                 ).map(([val, title, desc]) => {
                   const selected = form.participation.participationType === val;
@@ -702,7 +1020,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                           },
                         }))
                       }
-                      className={`rounded-2xl border p-5 text-right transition ${icFocus} ${
+                      className={`rounded-2xl border p-5 text-start transition ${icFocus} ${
                         selected
                           ? "border-[#31BD9C] bg-[#eef8f5] ring-2 ring-[#31BD9C]/35"
                           : "border-neutral-200 bg-white hover:border-[#31BD9C]/40"
@@ -720,9 +1038,9 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
             {form.participation.participationType === "team" && (
               <div data-field="participation.teamMembers" className="space-y-4">
                 <div className="rounded-2xl border border-[#163364]/10 bg-[#eef2f8] p-4">
-                  <p className="text-xs font-bold text-[#31BD9C]">قائد الفريق</p>
+                  <p className="text-xs font-bold text-[#31BD9C]">{t.s3.leader}</p>
                   <p className="mt-1 font-bold text-[#163364]">
-                    {form.applicant.fullName || "— أكمل بيانات الخطوة 1"}
+                    {form.applicant.fullName || t.s3.leaderEmpty}
                   </p>
                   <p className="mt-1 text-sm text-neutral-600">
                     {[form.applicant.email, form.applicant.phone].filter(Boolean).join(" · ")}
@@ -735,7 +1053,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                     className="space-y-4 rounded-2xl border border-neutral-200 bg-[#F7FAF9] p-4 sm:p-5"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="font-bold text-[#163364]">عضو إضافي {idx + 1}</p>
+                      <p className="font-bold text-[#163364]">{t.s3.member(idx + 1)}</p>
                       <button
                         type="button"
                         className={`text-sm font-semibold text-red-600 hover:underline ${icFocus}`}
@@ -749,12 +1067,12 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                           }))
                         }
                       >
-                        إزالة
+                        {t.s3.remove}
                       </button>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="sm:col-span-2" data-field={`participation.teamMembers.${idx}.fullName`}>
-                        <label className={icLabelClass}>الاسم الكامل *</label>
+                        <label className={icLabelClass}>{t.s3.memberFullName}</label>
                         <input
                           className={icInputClass}
                           value={m.fullName}
@@ -772,11 +1090,11 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                       </div>
                       {(
                         [
-                          ["roleInTeam", "الدور في الفريق"],
-                          ["phone", "الهاتف"],
-                          ["email", "البريد"],
-                          ["birthDate", "تاريخ الميلاد"],
-                          ["institutionName", "الجهة"],
+                          ["roleInTeam", t.s3.memberRoleInTeam],
+                          ["phone", t.s3.memberPhone],
+                          ["email", t.s3.memberEmail],
+                          ["birthDate", t.s3.memberBirthDate],
+                          ["institutionName", t.s3.memberInstitutionName],
                         ] as const
                       ).map(([key, label]) => (
                         <div key={key} data-field={`participation.teamMembers.${idx}.${key}`}>
@@ -821,7 +1139,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                     className={`inline-flex items-center gap-2 rounded-xl border border-dashed border-[#31BD9C]/50 bg-white px-4 py-3 text-sm font-bold text-[#163364] hover:bg-[#eef8f5] ${icFocus}`}
                   >
                     <IcIcon name="plus" className="h-4 w-4" />
-                    إضافة عضو
+                    {t.s3.addMember}
                   </button>
                 )}
                 <FieldError message={errors["participation.teamMembers"]} />
@@ -829,9 +1147,9 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
             )}
 
             <fieldset data-field="project.projectStage">
-              <legend className={icLabelClass}>مرحلة المشروع *</legend>
+              <legend className={icLabelClass}>{t.s3.projectStage}</legend>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {IC_STAGE_OPTIONS.map((opt) => {
+                {ui.stageOptions.map((opt) => {
                   const selected = form.project.projectStage === opt.value;
                   return (
                     <button
@@ -840,7 +1158,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                       onClick={() =>
                         patchProject({ projectStage: opt.value as IcProjectStage })
                       }
-                      className={`rounded-2xl border p-5 text-right transition ${icFocus} ${
+                      className={`rounded-2xl border p-5 text-start transition ${icFocus} ${
                         selected
                           ? "border-[#163364] bg-[#eef2f8] ring-2 ring-[#163364]/25"
                           : "border-neutral-200 bg-white hover:border-[#163364]/30"
@@ -861,19 +1179,17 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
         {step === 4 && (
           <section className="space-y-8">
             <div>
-              <SectionTitle>الملكية الفكرية والمشاركات السابقة</SectionTitle>
-              <SectionLead>
-                لا يشترط امتلاك براءة اختراع للمشاركة في المؤتمر.
-              </SectionLead>
+              <SectionTitle>{t.s4.title}</SectionTitle>
+              <SectionLead>{t.s4.lead}</SectionLead>
             </div>
 
             <fieldset data-field="intellectualProperty.shownBefore">
-              <legend className={icLabelClass}>هل سبق عرض المشروع؟ *</legend>
+              <legend className={icLabelClass}>{t.s4.shownBefore}</legend>
               <div className="mt-3 flex flex-wrap gap-3">
                 {(
                   [
-                    [true, "نعم"],
-                    [false, "لا"],
+                    [true, t.s4.yes],
+                    [false, t.s4.no],
                   ] as const
                 ).map(([val, label]) => (
                   <button
@@ -908,7 +1224,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
             {form.intellectualProperty.shownBefore === true && (
               <div data-field="intellectualProperty.shownBeforeDetails">
                 <label className={icLabelClass} htmlFor="shownBeforeDetails">
-                  أين ومتى تم عرض المشروع؟ *
+                  {t.s4.shownBeforeDetails}
                 </label>
                 <textarea
                   id="shownBeforeDetails"
@@ -930,15 +1246,16 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                   value={form.intellectualProperty.shownBeforeDetails}
                   min={IC_FIELD_LIMITS.shownBeforeDetails.min}
                   max={IC_FIELD_LIMITS.shownBeforeDetails.max}
+                  locale={locale}
                 />
                 <FieldError message={errors["intellectualProperty.shownBeforeDetails"]} />
               </div>
             )}
 
             <fieldset data-field="intellectualProperty.patentStatus">
-              <legend className={icLabelClass}>حالة البراءة *</legend>
+              <legend className={icLabelClass}>{t.s4.patentStatus}</legend>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                {(Object.keys(IC_PATENT_LABELS) as IcPatentStatus[]).map((status) => {
+                {(Object.keys(ui.patentLabels) as IcPatentStatus[]).map((status) => {
                   const selected = form.intellectualProperty.patentStatus === status;
                   return (
                     <button
@@ -966,7 +1283,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                       }`}
                       aria-pressed={selected}
                     >
-                      {IC_PATENT_LABELS[status]}
+                      {ui.patentLabels[status]}
                     </button>
                   );
                 })}
@@ -978,7 +1295,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
               form.intellectualProperty.patentStatus === "registered") && (
               <div data-field="intellectualProperty.patentNumber">
                 <label className={icLabelClass} htmlFor="patentNumber">
-                  رقم البراءة / الطلب *
+                  {t.s4.patentNumber}
                 </label>
                 <input
                   id="patentNumber"
@@ -999,7 +1316,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
             )}
 
             <p className="rounded-xl border border-[#31BD9C]/20 bg-[#eef8f5] px-4 py-3 text-sm text-[#163364]">
-              لا يشترط امتلاك براءة اختراع للمشاركة في المؤتمر.
+              {t.s4.patentNote}
             </p>
           </section>
         )}
@@ -1007,17 +1324,16 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
         {step === 5 && (
           <section className="space-y-8">
             <div>
-              <SectionTitle>المرفقات</SectionTitle>
-              <SectionLead>
-                ارفع صور المشروع وملف PDF التعريفي. يتم الرفع مباشرة ثم تُربط الملفات عند الإرسال.
-              </SectionLead>
+              <SectionTitle>{t.s5.title}</SectionTitle>
+              <SectionLead>{t.s5.lead}</SectionLead>
             </div>
 
             <IcFileUploadZone
               kind="image"
               fieldKey="attachments.project_image"
-              label="صور المشروع *"
-              hint="من 1 إلى 5 صور · JPG / PNG / WEBP · حتى 5MB لكل صورة"
+              label={t.s5.images}
+              hint={t.s5.imagesHint}
+              locale={locale}
               multiple
               maxFiles={5}
               value={form.attachments.images}
@@ -1030,8 +1346,9 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
             <IcFileUploadZone
               kind="pdf"
               fieldKey="attachments.project_pdf"
-              label="ملف PDF المشروع *"
-              hint="ملف واحد · حتى 10MB"
+              label={t.s5.projectPdf}
+              hint={t.s5.projectPdfHint}
+              locale={locale}
               maxFiles={1}
               value={form.attachments.projectPdf ? [form.attachments.projectPdf] : []}
               onChange={(files) =>
@@ -1048,8 +1365,9 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
               <IcFileUploadZone
                 kind="pdf"
                 fieldKey="attachments.patent_document"
-                label="مستند البراءة *"
-                hint="ملف PDF واحد · حتى 10MB"
+                label={t.s5.patentDocument}
+                hint={t.s5.patentDocumentHint}
+                locale={locale}
                 maxFiles={1}
                 value={
                   form.attachments.patentDocument ? [form.attachments.patentDocument] : []
@@ -1066,7 +1384,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 
             <div data-field="project.videoUrl">
               <label className={icLabelClass} htmlFor="videoUrl">
-                رابط فيديو تعريفي (اختياري)
+                {t.s5.videoUrl}
               </label>
               <input
                 id="videoUrl"
@@ -1078,7 +1396,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
                 maxLength={IC_FIELD_LIMITS.videoUrl.max}
                 onChange={(e) => patchProject({ videoUrl: e.target.value })}
               />
-              <p className={icHintClass}>يجب أن يكون الرابط بصيغة HTTPS.</p>
+              <p className={icHintClass}>{t.s5.videoUrlHint}</p>
               <FieldError message={errors["project.videoUrl"]} />
             </div>
           </section>
@@ -1087,113 +1405,127 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
         {step === 6 && (
           <section className="space-y-8">
             <div>
-              <SectionTitle>المراجعة والإقرار والإرسال</SectionTitle>
-              <SectionLead>راجع بياناتك ثم وافق على الإقرارات قبل الإرسال.</SectionLead>
+              <SectionTitle>{t.s6.title}</SectionTitle>
+              <SectionLead>{t.s6.lead}</SectionLead>
             </div>
 
-            <SummaryBlock title="بيانات المشارك" onEdit={() => goToStep(1)}>
-              <SummaryRow label="الاسم" value={form.applicant.fullName} />
-              <SummaryRow label="الميلاد" value={form.applicant.birthDate} />
-              <SummaryRow label="المحافظة" value={form.applicant.governorate} />
-              <SummaryRow label="الهاتف" value={form.applicant.phone} />
-              <SummaryRow label="البريد" value={form.applicant.email} />
+            <SummaryBlock title={t.s6.applicantBlock} editLabel={t.edit} onEdit={() => goToStep(1)}>
+              <SummaryRow label={t.s6.name} value={form.applicant.fullName} />
+              <SummaryRow label={t.s6.birthDate} value={form.applicant.birthDate} />
               <SummaryRow
-                label="الصفة"
+                label={t.s6.governorate}
+                value={
+                  form.applicant.governorate
+                    ? ui.governorateLabel(form.applicant.governorate)
+                    : ""
+                }
+              />
+              <SummaryRow label={t.s6.phone} value={form.applicant.phone} />
+              <SummaryRow label={t.s6.email} value={form.applicant.email} />
+              <SummaryRow
+                label={t.s6.role}
                 value={
                   form.applicant.applicantRole
-                    ? IC_ROLE_LABELS[form.applicant.applicantRole]
+                    ? ui.roleLabels[form.applicant.applicantRole]
                     : "—"
                 }
               />
             </SummaryBlock>
 
-            <SummaryBlock title="المشروع" onEdit={() => goToStep(2)}>
-              <SummaryRow label="الاسم" value={form.project.projectTitle} />
+            <SummaryBlock title={t.s6.projectBlock} editLabel={t.edit} onEdit={() => goToStep(2)}>
+              <SummaryRow label={t.s6.name} value={form.project.projectTitle} />
               <SummaryRow
-                label="المجال"
+                label={t.s6.field}
                 value={
-                  IC_FIELD_OPTIONS.find((f) => f.value === form.project.innovationField)?.title ||
+                  ui.fieldOptions.find((f) => f.value === form.project.innovationField)?.title ||
                   "—"
                 }
               />
-              <SummaryRow label="الملخص" value={form.project.projectSummary} />
+              <SummaryRow label={t.s6.summary} value={form.project.projectSummary} />
             </SummaryBlock>
 
-            <SummaryBlock title="الفريق" onEdit={() => goToStep(3)}>
+            <SummaryBlock title={t.s6.teamBlock} editLabel={t.edit} onEdit={() => goToStep(3)}>
               <SummaryRow
-                label="النوع"
-                value={form.participation.participationType === "team" ? "فريق" : "فردي"}
+                label={t.s6.type}
+                value={
+                  form.participation.participationType === "team" ? t.s3.team : t.s3.individual
+                }
               />
               <SummaryRow
-                label="المرحلة"
+                label={t.s6.stage}
                 value={
-                  IC_STAGE_OPTIONS.find((s) => s.value === form.project.projectStage)?.title || "—"
+                  ui.stageOptions.find((s) => s.value === form.project.projectStage)?.title || "—"
                 }
               />
               {form.participation.participationType === "team" && (
                 <SummaryRow
-                  label="الأعضاء"
+                  label={t.s6.members}
                   value={
-                    form.participation.teamMembers.map((m) => m.fullName).filter(Boolean).join("، ") ||
-                    "—"
+                    form.participation.teamMembers
+                      .map((m) => m.fullName)
+                      .filter(Boolean)
+                      .join(t.s6.membersSeparator) || "—"
                   }
                 />
               )}
             </SummaryBlock>
 
-            <SummaryBlock title="الملكية الفكرية" onEdit={() => goToStep(4)}>
+            <SummaryBlock title={t.s6.ipBlock} editLabel={t.edit} onEdit={() => goToStep(4)}>
               <SummaryRow
-                label="عُرض سابقاً"
+                label={t.s6.shownBefore}
                 value={
                   form.intellectualProperty.shownBefore === null
                     ? "—"
                     : form.intellectualProperty.shownBefore
-                      ? "نعم"
-                      : "لا"
+                      ? t.s6.yes
+                      : t.s6.no
                 }
               />
               <SummaryRow
-                label="البراءة"
+                label={t.s6.patent}
                 value={
                   form.intellectualProperty.patentStatus
-                    ? IC_PATENT_LABELS[form.intellectualProperty.patentStatus]
+                    ? ui.patentLabels[form.intellectualProperty.patentStatus]
                     : "—"
                 }
               />
             </SummaryBlock>
 
-            <SummaryBlock title="المرفقات" onEdit={() => goToStep(5)}>
+            <SummaryBlock
+              title={t.s6.attachmentsBlock}
+              editLabel={t.edit}
+              onEdit={() => goToStep(5)}
+            >
               <SummaryRow
-                label="الصور"
-                value={`${form.attachments.images.length} ملف(ات)`}
+                label={t.s6.images}
+                value={t.s6.filesCount(form.attachments.images.length)}
               />
               <SummaryRow
-                label="PDF"
+                label={t.s6.pdf}
                 value={form.attachments.projectPdf?.fileName || "—"}
               />
               {(form.intellectualProperty.patentStatus === "pending" ||
                 form.intellectualProperty.patentStatus === "registered") && (
                 <SummaryRow
-                  label="مستند البراءة"
+                  label={t.s6.patentDocument}
                   value={form.attachments.patentDocument?.fileName || "—"}
                 />
               )}
               {form.project.videoUrl && (
-                <SummaryRow label="فيديو" value={form.project.videoUrl} />
+                <SummaryRow label={t.s6.video} value={form.project.videoUrl} />
               )}
             </SummaryBlock>
 
             <fieldset data-field="consents" className="space-y-3 rounded-2xl border border-neutral-200 bg-[#F7FAF9] p-5">
-              <legend className="px-1 text-sm font-bold text-[#163364]">الإقرارات *</legend>
+              <legend className="px-1 text-sm font-bold text-[#163364]">
+                {t.s6.consentsLegend}
+              </legend>
               {(
                 [
-                  ["accuracy", "أقر بصحة المعلومات المدخلة."],
-                  ["ownership", "أقر بملكية المشروع أو حقي القانوني في تقديمه."],
-                  ["terms", "أوافق على شروط المشاركة في المؤتمر."],
-                  [
-                    "media",
-                    "أوافق على استخدام الصور والمعلومات العامة لأغراض المؤتمر والتغطية الإعلامية وفق سياسة الكلية.",
-                  ],
+                  ["accuracy", t.s6.consentAccuracy],
+                  ["ownership", t.s6.consentOwnership],
+                  ["terms", t.s6.consentTerms],
+                  ["media", t.s6.consentMedia],
                 ] as const
               ).map(([key, label]) => (
                 <label key={key} className="flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-neutral-700">
@@ -1217,7 +1549,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
             {submitError && (
               <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {submitError}
-                <p className="mt-1 text-xs text-red-600/80">بياناتك محفوظة محلياً ويمكنك إعادة المحاولة.</p>
+                <p className="mt-1 text-xs text-red-600/80">{t.s6.submitErrorNote}</p>
               </div>
             )}
           </section>
@@ -1230,7 +1562,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
             disabled={step === 1 || submitState === "loading"}
             className={`rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-[#163364] disabled:opacity-40 ${icFocus}`}
           >
-            السابق
+            {t.prev}
           </button>
 
           {step < 6 ? (
@@ -1239,7 +1571,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
               onClick={goNext}
               className={`rounded-xl bg-[#31BD9C] px-6 py-3 text-sm font-bold text-[#061528] hover:brightness-105 ${icFocus}`}
             >
-              التالي
+              {t.next}
             </button>
           ) : (
             <button
@@ -1247,7 +1579,7 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
               disabled={submitState === "loading"}
               className={`rounded-xl bg-[#31BD9C] px-6 py-3 text-sm font-bold text-[#061528] hover:brightness-105 disabled:opacity-70 ${icFocus}`}
             >
-              {submitState === "loading" ? "جاري إرسال طلبك..." : "إرسال طلب المشاركة"}
+              {submitState === "loading" ? t.submitting : t.submit}
             </button>
           )}
         </div>
@@ -1259,10 +1591,12 @@ export default function RegisterWizard({ registrationOpen, eventDate, titleAr }:
 function SummaryBlock({
   title,
   onEdit,
+  editLabel,
   children,
 }: {
   title: string;
   onEdit: () => void;
+  editLabel: string;
   children: ReactNode;
 }) {
   return (
@@ -1274,7 +1608,7 @@ function SummaryBlock({
           onClick={onEdit}
           className={`text-sm font-semibold text-[#187c67] hover:underline ${icFocus}`}
         >
-          تعديل
+          {editLabel}
         </button>
       </div>
       <div className="space-y-2 px-4 py-4 sm:px-5">{children}</div>
@@ -1294,11 +1628,16 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 function SuccessPanel({
   data,
   onDone,
+  locale = "ar",
 }: {
   data: IcSuccessPayload;
   onDone: () => void;
+  locale?: IcLocale;
 }) {
   const [copied, setCopied] = useState<string | null>(null);
+  const t = WIZARD_COPY[locale];
+  // صفحة متابعة الطلب متاحة بالعربية فقط حالياً.
+  const trackHref = "/ar/innovation-conference/track";
 
   const copy = async (label: string, text: string) => {
     try {
@@ -1311,26 +1650,24 @@ function SuccessPanel({
   };
 
   return (
-    <div dir="rtl" className="overflow-x-hidden bg-white print:bg-white">
+    <div dir={locale === "ar" ? "rtl" : "ltr"} className="overflow-x-hidden bg-white print:bg-white">
       <div className="bg-[#061528] px-4 py-12 text-white sm:px-6 print:bg-white print:text-black">
         <div className="mx-auto max-w-2xl text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#31BD9C] text-[#061528] print:border print:border-neutral-300">
             <IcIcon name="check" className="h-7 w-7" />
           </div>
-          <h1 className="text-3xl font-extrabold sm:text-4xl">تم استلام طلبك بنجاح</h1>
-          <p className="mt-3 text-sm text-white/70 print:text-neutral-600">
-            احتفظ بمعلومات المتابعة أدناه في مكان آمن.
-          </p>
+          <h1 className="text-3xl font-extrabold sm:text-4xl">{t.successHeading}</h1>
+          <p className="mt-3 text-sm text-white/70 print:text-neutral-600">{t.successLead}</p>
         </div>
       </div>
 
       <div className="mx-auto max-w-2xl space-y-5 px-4 py-8 sm:px-6" id="ic-success-print">
         <div className="space-y-3 rounded-2xl border border-neutral-100 bg-[#F7FAF9] p-5">
-          <SuccessRow label="رقم المشاركة" value={data.participationCode} />
-          <SuccessRow label="اسم المشروع" value={data.projectTitle} />
-          <SuccessRow label="الحالة" value="تم الاستلام" />
+          <SuccessRow label={t.successCode} value={data.participationCode} />
+          <SuccessRow label={t.successProject} value={data.projectTitle} />
+          <SuccessRow label={t.successStatus} value={t.successStatusValue} />
           <div>
-            <p className="text-xs font-semibold text-neutral-500">رمز المتابعة</p>
+            <p className="text-xs font-semibold text-neutral-500">{t.successToken}</p>
             <p
               className="mt-1 break-all font-mono text-2xl font-extrabold tracking-wider text-[#163364] sm:text-3xl"
               dir="ltr"
@@ -1344,7 +1681,7 @@ function SuccessPanel({
           role="alert"
           className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
         >
-          احفظ رمز المتابعة الآن، لأنه لن يُعرض لك مرة أخرى بهذه الصيغة.
+          {t.successWarning}
         </div>
 
         <div className="flex flex-wrap gap-2 print:hidden">
@@ -1353,37 +1690,37 @@ function SuccessPanel({
             className={`rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#163364] ${icFocus}`}
             onClick={() => void copy("code", data.participationCode)}
           >
-            {copied === "code" ? "تم النسخ" : "نسخ رقم المشاركة"}
+            {copied === "code" ? t.copied : t.copyCode}
           </button>
           <button
             type="button"
             className={`rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#163364] ${icFocus}`}
             onClick={() => void copy("token", data.trackingToken)}
           >
-            {copied === "token" ? "تم النسخ" : "نسخ رمز المتابعة"}
+            {copied === "token" ? t.copied : t.copyToken}
           </button>
           <button
             type="button"
             className={`rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#163364] ${icFocus}`}
             onClick={() => window.print()}
           >
-            طباعة
+            {t.print}
           </button>
         </div>
 
         <div className="flex flex-col gap-3 pt-2 print:hidden sm:flex-row">
           <Link
-            href="/ar/innovation-conference/track"
+            href={trackHref}
             className={`rounded-xl border border-neutral-200 bg-white px-5 py-3 text-center text-sm font-semibold text-[#163364] ${icFocus}`}
           >
-            متابعة الطلب
+            {t.track}
           </Link>
           <Link
-            href="/ar/innovation-conference"
+            href={`/${locale}/innovation-conference`}
             onClick={onDone}
             className={`rounded-xl bg-[#31BD9C] px-5 py-3 text-center text-sm font-bold text-[#061528] ${icFocus}`}
           >
-            العودة إلى صفحة المؤتمر
+            {t.backToConference}
           </Link>
         </div>
       </div>

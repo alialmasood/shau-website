@@ -131,6 +131,156 @@ export const IC_PATENT_LABELS: Record<IcPatentStatus, string> = {
   registered: "مسجلة",
 };
 
+/* ------------------------------------------------------------------ */
+/* النسخة الإنجليزية من تسميات الواجهة (القيم المرسلة للخادم لا تتغير) */
+/* ------------------------------------------------------------------ */
+
+export type IcUiLocale = "ar" | "en";
+
+export const IC_STEP_LABELS_EN = [
+  "Participant details",
+  "Project details",
+  "Team & stage",
+  "Intellectual property",
+  "Attachments",
+  "Review & submit",
+] as const;
+
+export const IC_ROLE_LABELS_EN: Record<IcApplicantRole, string> = {
+  school_student: "School student",
+  university_student: "University / college / institute student",
+  graduate: "Graduate",
+  researcher: "Researcher",
+  independent_innovator: "Independent innovator",
+  entrepreneur: "Entrepreneur",
+  other: "Other",
+};
+
+export const IC_GENDER_LABELS_EN: Record<IcGender, string> = {
+  male: "Male",
+  female: "Female",
+};
+
+const IC_FIELD_TEXT_EN: Record<IcInnovationField, { title: string; description: string }> = {
+  medical_health: {
+    title: "Medical & health innovation",
+    description:
+      "Solutions and technologies that advance healthcare, diagnostics and medical services.",
+  },
+  ai_digital: {
+    title: "Artificial intelligence & digital transformation",
+    description:
+      "Smart applications and systems that use technology and data to build more efficient solutions.",
+  },
+  engineering_robotics: {
+    title: "Engineering, robotics & automation",
+    description:
+      "Engineering and robotic innovations, control and automation systems that can scale and be applied.",
+  },
+  energy_oil_gas: {
+    title: "Energy, oil & gas",
+    description:
+      "Innovative solutions for energy, the oil industry, operational efficiency and sustainability.",
+  },
+  environment_sustainability: {
+    title: "Environment & sustainability",
+    description:
+      "Ideas that tackle environmental, water and waste challenges and build a more sustainable future.",
+  },
+  social_services: {
+    title: "Social & service innovations",
+    description:
+      "Innovative solutions that improve education, services and quality of life and address community challenges.",
+  },
+  entrepreneurship: {
+    title: "Innovation & entrepreneurship",
+    description:
+      "Innovative projects, products and services with the potential to grow into successful businesses.",
+  },
+  patents_inventions: {
+    title: "Inventions & patents",
+    description:
+      "Inventions, prototypes and projects with real technical value and development potential.",
+  },
+  open_innovation: {
+    title: "Open track for innovation & creativity",
+    description: "An open track for any idea that deserves to see the light.",
+  },
+};
+
+export const IC_FIELD_OPTIONS_EN = IC_FIELD_OPTIONS.map((opt) => ({
+  ...opt,
+  ...IC_FIELD_TEXT_EN[opt.value],
+}));
+
+const IC_STAGE_TEXT_EN: Record<IcProjectStage, { title: string; description: string }> = {
+  advanced_idea: {
+    title: "Advanced innovative idea",
+    description: "A clear, well-studied idea ready for development.",
+  },
+  prototype: {
+    title: "Prototype",
+    description: "A working prototype that demonstrates the idea in practice.",
+  },
+  applicable_solution: {
+    title: "Applicable product or solution",
+    description: "A solution that is ready or nearly ready for use.",
+  },
+  patent_related: {
+    title: "Registered or pending invention",
+    description: "An invention on an intellectual property protection track.",
+  },
+};
+
+export const IC_STAGE_OPTIONS_EN = IC_STAGE_OPTIONS.map((opt) => ({
+  ...opt,
+  ...IC_STAGE_TEXT_EN[opt.value],
+}));
+
+export const IC_PATENT_LABELS_EN: Record<IcPatentStatus, string> = {
+  none: "None",
+  pending: "Pending registration",
+  registered: "Registered",
+};
+
+/** عرض إنجليزي لأسماء المحافظات — القيمة المخزنة تبقى بالعربية. */
+export const IC_GOVERNORATE_LABELS_EN: Record<string, string> = {
+  بغداد: "Baghdad",
+  البصرة: "Basra",
+  نينوى: "Nineveh",
+  أربيل: "Erbil",
+  السليمانية: "Sulaymaniyah",
+  دهوك: "Duhok",
+  كركوك: "Kirkuk",
+  الأنبار: "Anbar",
+  ديالى: "Diyala",
+  "صلاح الدين": "Salah al-Din",
+  واسط: "Wasit",
+  بابل: "Babil",
+  كربلاء: "Karbala",
+  النجف: "Najaf",
+  الديوانية: "Al-Diwaniyah",
+  المثنى: "Al-Muthanna",
+  "ذي قار": "Dhi Qar",
+  ميسان: "Maysan",
+  حلبجة: "Halabja",
+};
+
+/** يجمع تسميات الواجهة بحسب اللغة المطلوبة. */
+export function icUi(locale: IcUiLocale) {
+  const en = locale === "en";
+  return {
+    stepLabels: (en ? IC_STEP_LABELS_EN : IC_STEP_LABELS) as readonly string[],
+    roleLabels: en ? IC_ROLE_LABELS_EN : IC_ROLE_LABELS,
+    genderLabels: en ? IC_GENDER_LABELS_EN : IC_GENDER_LABELS,
+    fieldOptions: en ? IC_FIELD_OPTIONS_EN : IC_FIELD_OPTIONS,
+    stageOptions: en ? IC_STAGE_OPTIONS_EN : IC_STAGE_OPTIONS,
+    patentLabels: en ? IC_PATENT_LABELS_EN : IC_PATENT_LABELS,
+    governorateLabel: (value: string) =>
+      en ? IC_GOVERNORATE_LABELS_EN[value] ?? value : value,
+  };
+}
+
 export const IC_FIELD_LIMITS = {
   projectTitle: { min: 5, max: 120 },
   projectSummary: { min: 50, max: 600 },

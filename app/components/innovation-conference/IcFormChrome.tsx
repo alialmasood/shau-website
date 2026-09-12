@@ -69,10 +69,21 @@ export function FieldError({ id, message }: { id?: string; message?: string }) {
   );
 }
 
-export function CharCounter({ value, min, max }: { value: string; min: number; max: number }) {
+export function CharCounter({
+  value,
+  min,
+  max,
+  locale = "ar",
+}: {
+  value: string;
+  min: number;
+  max: number;
+  locale?: "ar" | "en";
+}) {
   const n = value.length;
   const ok = n >= min && n <= max;
   const under = n > 0 && n < min;
+  const minLabel = locale === "en" ? `minimum ${min}` : `الحد الأدنى ${min}`;
   return (
     <p
       className={`mt-1.5 text-xs tabular-nums ${
@@ -80,7 +91,7 @@ export function CharCounter({ value, min, max }: { value: string; min: number; m
       }`}
     >
       {n} / {max}
-      {under ? ` · الحد الأدنى ${min}` : ""}
+      {under ? ` · ${minLabel}` : ""}
     </p>
   );
 }

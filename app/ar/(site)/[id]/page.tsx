@@ -20,7 +20,13 @@ export async function generateMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, url, type: "article", images: [{ url: imagePath, width: 1200, height: 630, alt: title }] },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "article",
+      images: [{ url: imagePath, width: 1200, height: 630, alt: title }],
+    },
     twitter: { card: "summary_large_image", title, description, images: [imagePath] },
     alternates: { canonical: url },
   };
