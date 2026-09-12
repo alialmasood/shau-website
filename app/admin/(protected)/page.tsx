@@ -57,6 +57,7 @@ export default async function AdminDashboardPage() {
         "employee-identity": "/admin/employee-identity",
         events: "/admin/events",
         "continuing-education": "/admin/continuing-education",
+        "innovation-conference": "/admin/innovation-conference",
       };
       const target = pageToPath[accessiblePages[0]] || "/admin";
       redirect(target);
@@ -79,6 +80,8 @@ export default async function AdminDashboardPage() {
   } catch {
     // إبقاء القيم الافتراضية
   }
+
+  const canInnovationConference = await canAdmin("innovation-conference", "access");
 
   const cards = [
     {
@@ -183,6 +186,45 @@ export default async function AdminDashboardPage() {
           })}
         </div>
       </div>
+
+      {canInnovationConference && (
+        <div className="space-y-3">
+          <h2 className="text-xl font-bold text-neutral-900">وصول سريع</h2>
+          <Link
+            href="/admin/innovation-conference"
+            prefetch={false}
+            className="group flex items-start gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-[#31BD9C]/40 hover:shadow-md"
+          >
+            <div className="rounded-xl bg-[#31BD9C]/10 p-3 text-[#31BD9C] transition-transform group-hover:scale-105">
+              <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-lg font-extrabold text-neutral-900">مؤتمر الابتكار</h3>
+                <svg
+                  className="h-4 w-4 shrink-0 text-neutral-400 transition-colors group-hover:text-[#31BD9C]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <p className="mt-1 text-sm leading-relaxed text-neutral-600">
+                إدارة طلبات المشاركة ومراجعة المشاريع ومتابعة الحالات.
+              </p>
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* القوائم السريعة */}
       <div className="space-y-4">

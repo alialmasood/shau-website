@@ -42,6 +42,7 @@ const PAGE_ORDER: Record<string, number> = {
   "tuition-pdf": 12,
   "events": 13,
   "continuing-education": 14,
+  "innovation-conference": 15,
 };
 
 // خريطة الصفحات الفرعية -> الصفحات الأساسية
@@ -79,6 +80,12 @@ const REQUIRED_PAGES: Array<{
     code: "continuing-education",
     nameAr: "التعليم المستمر",
     nameEn: "Continuing Education",
+    parentCode: null,
+  },
+  {
+    code: "innovation-conference",
+    nameAr: "طلبات مؤتمر الابتكار",
+    nameEn: "Innovation Conference Applications",
     parentCode: null,
   },
 ];
