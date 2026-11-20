@@ -44,6 +44,8 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
   const [stage, setStage] = useState("");
   const [studyType, setStudyType] = useState("");
   const [activityType, setActivityType] = useState("");
+  const [activityTitle, setActivityTitle] = useState("");
+  const [activityBrief, setActivityBrief] = useState("");
   const [organizers, setOrganizers] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -169,6 +171,8 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
       !stage ||
       !studyType ||
       !activityType ||
+      !activityTitle.trim() ||
+      !activityBrief.trim() ||
       !organizers.trim() ||
       !dateFrom ||
       !dateTo
@@ -196,6 +200,8 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
           stage,
           studyType,
           activityType,
+          activityTitle: activityTitle.trim(),
+          activityBrief: activityBrief.trim(),
           organizers: organizers.trim(),
           dateFrom,
           dateTo,
@@ -213,6 +219,8 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
       setStage("");
       setStudyType("");
       setActivityType("");
+      setActivityTitle("");
+      setActivityBrief("");
       setOrganizers("");
       setDateFrom("");
       setDateTo("");
@@ -335,6 +343,30 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-neutral-800 mb-1.5">{L("activityTitle")}</label>
+          <input
+            type="text"
+            value={activityTitle}
+            onChange={(e) => setActivityTitle(e.target.value)}
+            className={fieldClass}
+            placeholder={L("activityTitlePlaceholder")}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-neutral-800 mb-1.5">{L("activityBrief")}</label>
+          <textarea
+            value={activityBrief}
+            onChange={(e) => setActivityBrief(e.target.value)}
+            rows={4}
+            className={fieldClass}
+            placeholder={L("activityBriefPlaceholder")}
+            required
+          />
         </div>
 
         <div>

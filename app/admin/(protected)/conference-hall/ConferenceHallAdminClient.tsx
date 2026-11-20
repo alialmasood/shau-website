@@ -99,6 +99,8 @@ export default function ConferenceHallAdminClient({ initialRows }: Props) {
       const hay = [
         r.departmentNameAr,
         r.departmentNameEn,
+        r.activityTitle,
+        r.activityBrief,
         r.organizers,
         labelActivityType(r.activityType, "ar"),
         labelStage(r.stage, "ar"),
@@ -275,6 +277,8 @@ export default function ConferenceHallAdminClient({ initialRows }: Props) {
                   <th className="text-start py-3 px-3 font-bold">المرحلة</th>
                   <th className="text-start py-3 px-3 font-bold">الدراسة</th>
                   <th className="text-start py-3 px-3 font-bold">نوع النشاط</th>
+                  <th className="text-start py-3 px-3 font-bold">عنوان النشاط</th>
+                  <th className="text-start py-3 px-3 font-bold">نبذة</th>
                   <th className="text-start py-3 px-3 font-bold">القائمون</th>
                   <th className="text-start py-3 px-3 font-bold">من</th>
                   <th className="text-start py-3 px-3 font-bold">إلى</th>
@@ -296,7 +300,13 @@ export default function ConferenceHallAdminClient({ initialRows }: Props) {
                     <td className="py-3 px-3 text-neutral-700">{labelStage(r.stage, "ar")}</td>
                     <td className="py-3 px-3 text-neutral-700">{labelStudyType(r.studyType, "ar")}</td>
                     <td className="py-3 px-3 text-neutral-700">{labelActivityType(r.activityType, "ar")}</td>
-                    <td className="py-3 px-3 text-neutral-700 max-w-[200px]">
+                    <td className="py-3 px-3 font-semibold text-neutral-900 max-w-[180px]">
+                      <span className="line-clamp-2">{r.activityTitle || "—"}</span>
+                    </td>
+                    <td className="py-3 px-3 text-neutral-700 max-w-[220px]">
+                      <span className="line-clamp-2">{r.activityBrief || "—"}</span>
+                    </td>
+                    <td className="py-3 px-3 text-neutral-700 max-w-[180px]">
                       <span className="line-clamp-2">{r.organizers}</span>
                     </td>
                     <td className="py-3 px-3 text-neutral-700 whitespace-nowrap">{r.dateFrom}</td>

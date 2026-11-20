@@ -24,6 +24,8 @@ export type ConferenceHallRequestRow = {
   stage: string;
   studyType: string;
   activityType: string;
+  activityTitle: string;
+  activityBrief: string;
   organizers: string;
   dateFrom: string;
   dateTo: string;
@@ -77,6 +79,8 @@ function mapRow(r: Record<string, unknown>): ConferenceHallRequestRow {
     stage: String(r.stage),
     studyType: String(r.study_type),
     activityType: String(r.activity_type),
+    activityTitle: String(r.activity_title ?? ""),
+    activityBrief: String(r.activity_brief ?? ""),
     organizers: String(r.organizers),
     dateFrom: toDateOnly(r.date_from),
     dateTo: toDateOnly(r.date_to),
@@ -129,6 +133,8 @@ export type CreateConferenceHallInput = {
   stage: ConferenceHallStage;
   studyType: ConferenceHallStudyType;
   activityType: ConferenceHallActivityType;
+  activityTitle: string;
+  activityBrief: string;
   organizers: string;
   dateFrom: string;
   dateTo: string;
@@ -146,8 +152,8 @@ export async function createConferenceHallRequest(
   const res = await query(
     `INSERT INTO conference_hall_requests
       (department_key, department_keys, department_name_ar, department_name_en, stage, study_type, activity_type,
-       organizers, date_from, date_to, status, locale, created_at, updated_at)
-     VALUES ($1,$2::text[],$3,$4,$5,$6,$7,$8,$9::date,$10::date,'pending',$11,NOW(),NOW())
+       activity_title, activity_brief, organizers, date_from, date_to, status, locale, created_at, updated_at)
+     VALUES ($1,$2::text[],$3,$4,$5,$6,$7,$8,$9,$10,$11::date,$12::date,'pending',$13,NOW(),NOW())
      RETURNING *`,
     [
       primaryKey,
@@ -157,6 +163,8 @@ export async function createConferenceHallRequest(
       input.stage,
       input.studyType,
       input.activityType,
+      input.activityTitle,
+      input.activityBrief,
       input.organizers,
       input.dateFrom,
       input.dateTo,

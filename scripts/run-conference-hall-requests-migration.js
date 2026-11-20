@@ -29,6 +29,7 @@ async function runMigration() {
     "../prisma/migrations/20260321000001_add_conference_hall_requests/migration.sql",
     "../prisma/migrations/20260321000002_conference_hall_multi_departments/migration.sql",
     "../prisma/migrations/20260321000003_conference_hall_status_completed/migration.sql",
+    "../prisma/migrations/20260321000004_conference_hall_activity_title_brief/migration.sql",
   ].map((p) => path.join(__dirname, p));
 
   for (const migrationPath of migrationPaths) {

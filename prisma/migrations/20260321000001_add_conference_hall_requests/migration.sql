@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS conference_hall_requests (
   stage TEXT NOT NULL,
   study_type TEXT NOT NULL,
   activity_type TEXT NOT NULL,
+  activity_title TEXT NOT NULL DEFAULT '',
+  activity_brief TEXT NOT NULL DEFAULT '',
   organizers TEXT NOT NULL,
   date_from DATE NOT NULL,
   date_to DATE NOT NULL,

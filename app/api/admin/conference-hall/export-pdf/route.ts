@@ -6,6 +6,7 @@ import {
   buildConferenceHallPdfHtml,
   toConferenceHallExportRows,
 } from "@/lib/conferenceHallExport";
+import { launchChromiumForPdf } from "@/lib/launchChromium";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +31,16 @@ export async function GET(request: NextRequest) {
   if (studyType) rows = rows.filter((r) => r.studyType === studyType);
   if (q) {
     rows = rows.filter((r) =>
-      [r.departmentNameAr, r.departmentNameEn, r.organizers, r.status, r.dateFrom, r.dateTo]
+      [
+        r.departmentNameAr,
+        r.departmentNameEn,
+        r.activityTitle,
+        r.activityBrief,
+        r.organizers,
+        r.status,
+        r.dateFrom,
+        r.dateTo,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(q)
@@ -43,16 +53,11 @@ export async function GET(request: NextRequest) {
     rows: exportRows,
   });
 
-  let browser: Awaited<ReturnType<(typeof import("playwright"))["chromium"]["launch"]>> | null =
-    null;
+  let browser: Awaited<ReturnType<typeof launchChromiumForPdf>> | null = null;
   try {
-    const { chromium } = await import("playwright");
-    browser = await chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    });
+    browser = await launchChromiumForPdf();
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "load" });
+    await page.setContent(html, { waitUntil: "load", timeout: 60000 });
     const pdfBuffer = await page.pdf({
       format: "A4",
       landscape: true,
@@ -80,6 +85,14 @@ export async function GET(request: NextRequest) {
       }
     }
     console.error("[admin conference-hall export pdf]", e);
-    return NextResponse.json({ error: "فشل إنشاء ملف PDF" }, { status: 500 });
+    const details = e instanceof Error ? e.message : String(e);
+    return NextResponse.json(
+      {
+        error: "فشل إنشاء ملف PDF",
+        details,
+        installCommand: "npx playwright install --with-deps chromium",
+      },
+      { status: 500 }
+    );
   }
 }

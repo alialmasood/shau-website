@@ -31,6 +31,8 @@ export async function POST(request: Request) {
     const stage = String((body as { stage?: unknown }).stage ?? "").trim();
     const studyType = String((body as { studyType?: unknown }).studyType ?? "").trim();
     const activityType = String((body as { activityType?: unknown }).activityType ?? "").trim();
+    const activityTitle = String((body as { activityTitle?: unknown }).activityTitle ?? "").trim();
+    const activityBrief = String((body as { activityBrief?: unknown }).activityBrief ?? "").trim();
     const organizers = String((body as { organizers?: unknown }).organizers ?? "").trim();
     const dateFrom = String((body as { dateFrom?: unknown }).dateFrom ?? "").trim();
     const dateTo = String((body as { dateTo?: unknown }).dateTo ?? "").trim();
@@ -55,6 +57,18 @@ export async function POST(request: Request) {
     }
     if (!CONFERENCE_HALL_ACTIVITY_TYPES.some((x) => x.value === activityType)) {
       return NextResponse.json({ error: locale === "en" ? "Invalid activity type" : "نوع النشاط غير صالح" }, { status: 400 });
+    }
+    if (activityTitle.length < 3) {
+      return NextResponse.json(
+        { error: locale === "en" ? "Enter the activity title" : "أدخل عنوان النشاط" },
+        { status: 400 }
+      );
+    }
+    if (activityBrief.length < 10) {
+      return NextResponse.json(
+        { error: locale === "en" ? "Enter a brief about the activity" : "أدخل نبذة عن النشاط" },
+        { status: 400 }
+      );
     }
     if (organizers.length < 3) {
       return NextResponse.json(
@@ -135,6 +149,8 @@ export async function POST(request: Request) {
       stage: stage as ConferenceHallStage,
       studyType: studyType as ConferenceHallStudyType,
       activityType: activityType as ConferenceHallActivityType,
+      activityTitle,
+      activityBrief,
       organizers,
       dateFrom,
       dateTo,

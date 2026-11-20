@@ -30,7 +30,16 @@ export async function GET(request: NextRequest) {
   if (studyType) rows = rows.filter((r) => r.studyType === studyType);
   if (q) {
     rows = rows.filter((r) =>
-      [r.departmentNameAr, r.departmentNameEn, r.organizers, r.status, r.dateFrom, r.dateTo]
+      [
+        r.departmentNameAr,
+        r.departmentNameEn,
+        r.activityTitle,
+        r.activityBrief,
+        r.organizers,
+        r.status,
+        r.dateFrom,
+        r.dateTo,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(q)
