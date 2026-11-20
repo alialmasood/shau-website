@@ -1,0 +1,10 @@
+/* TEAM */
+Author / Designer / Developer: Ali Hussein Mezher Almasood
+Author (Arabic): علي حسين مزهر المسعود
+Role: Designed and developed the official website and all related systems
+
+/* SITE */
+College: Alsharq College for Specialized Technical Sciences
+College (Arabic): كلية الشرق للعلوم التقنية التخصصية
+URL: https://shau.edu.iq
+Standards: HTML5, CSS3, Next.js, Schema.org
