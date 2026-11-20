@@ -238,7 +238,7 @@ export async function getStudentIdCardsForExport({
     `SELECT serial, name_ar, name_en, dob, address, address_en, blood_type, department, department_en, stage, stage_en, expiry_date, photo_media_id, created_at, updated_at
      FROM student_id_cards
      ${where}
-     ORDER BY created_at DESC
+     ORDER BY name_ar ASC, created_at DESC
      LIMIT $${params.length}`,
     params
   );

@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const list = await getStudentIdCardsList({ search: q, limit: 10, offset: 0 });
+  const list = await getStudentIdCardsList({ search: q, limit: 15, offset: 0 });
   return NextResponse.json({
     matches: list.map((c) => ({
       serial: c.serial,

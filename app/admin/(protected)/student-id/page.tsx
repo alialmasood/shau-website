@@ -105,14 +105,19 @@ export default async function AdminStudentIdPage({
             <h2 className="text-lg font-bold text-neutral-900 mb-4">إحصائيات الأقسام</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {departmentsStats.map((dept) => (
-                <div
+                <Link
                   key={dept.department}
-                  className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3"
+                  href={`/admin/student-id/department?department=${encodeURIComponent(dept.department)}`}
+                  prefetch={false}
+                  className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 hover:border-[#31BD9C] hover:bg-[#31BD9C]/5 transition-colors group"
                 >
-                  <p className="text-sm font-semibold text-neutral-900">{dept.department}</p>
+                  <p className="text-sm font-semibold text-neutral-900 group-hover:text-[#04025E]">
+                    {dept.department}
+                  </p>
                   <p className="text-xs text-neutral-500 mt-1">عدد الطلبة</p>
                   <p className="text-lg font-bold text-neutral-900">{dept.total}</p>
-                </div>
+                  <p className="text-[11px] text-[#31BD9C] mt-2 font-semibold">عرض الكشف ←</p>
+                </Link>
               ))}
             </div>
           </div>
