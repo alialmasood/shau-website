@@ -43,6 +43,7 @@ const PAGE_ORDER: Record<string, number> = {
   "events": 13,
   "continuing-education": 14,
   "innovation-conference": 15,
+  "conference-hall": 16,
 };
 
 // خريطة الصفحات الفرعية -> الصفحات الأساسية
@@ -86,6 +87,12 @@ const REQUIRED_PAGES: Array<{
     code: "innovation-conference",
     nameAr: "طلبات مؤتمر الابتكار",
     nameEn: "Innovation Conference Applications",
+    parentCode: null,
+  },
+  {
+    code: "conference-hall",
+    nameAr: "قاعة المؤتمرات",
+    nameEn: "Conference Hall",
     parentCode: null,
   },
 ];

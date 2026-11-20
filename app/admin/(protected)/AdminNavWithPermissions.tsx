@@ -103,6 +103,7 @@ export default function AdminNavWithPermissions({ accessiblePages, navItems }: A
       "student-id",
       "staff-identity",
       "employee-identity",
+      "conference-hall",
     ].includes(item.pageCode)
   );
   const managementMain = managementItems.filter((item) => item.pageCode !== "employee-identity");

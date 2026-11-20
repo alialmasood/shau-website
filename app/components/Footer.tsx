@@ -99,6 +99,10 @@ export default function Footer({ socialButtons }: FooterProps) {
         { label: "التقويم الجامعي", href: "/services/calendar" },
         { label: "إستمارة الخطة الدراسية", href: "/services/study-plan" },
         { label: "طلب هوية", href: "/ar/services/identity-request" },
+        {
+          label: "اقامة نشاط",
+          href: locale === "en" ? "/en/conference-hall" : "/ar/conference-hall",
+        },
         { label: "الوظائف", href: "/services/jobs" },
       ],
     },
