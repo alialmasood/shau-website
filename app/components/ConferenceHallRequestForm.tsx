@@ -438,12 +438,12 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
               </button>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-neutral-500 mb-1">
+            <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold text-neutral-500 mb-1.5">
               {weekdayLabels.map((w) => (
                 <div key={w}>{w}</div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1.5">
               {Array.from({ length: firstWeekday }).map((_, i) => (
                 <div key={`e-${i}`} />
               ))}
@@ -452,25 +452,39 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
                 const day = ymd(viewYear, viewMonth, dayNum);
                 const busy = busyMap.get(day);
                 const isPast = day < minDate;
+                const isToday = day === minDate;
                 const isBooked = Boolean(busy?.kinds.includes("booking"));
                 const hasEvent = Boolean(busy?.kinds.includes("event"));
                 const selected = day === dateFrom || day === dateTo;
                 const inRange =
                   dateFrom && dateTo && day >= dateFrom && day <= dateTo && dateFrom !== dateTo;
                 let cls =
-                  "aspect-square rounded-lg text-sm font-semibold transition-colors border border-transparent";
-                if (isPast || isBooked) {
-                  cls += " bg-red-100 text-red-700 cursor-not-allowed opacity-80";
+                  "aspect-square rounded-xl text-sm font-semibold transition-colors border";
+                // Past days: muted gray (distinct from booked)
+                if (isPast) {
+                  cls += " bg-neutral-100 text-neutral-400 border-neutral-200/80 cursor-not-allowed line-through decoration-neutral-300";
+                } else if (isBooked) {
+                  // Booked: unique violet — clearly different from past gray
+                  cls +=
+                    " bg-violet-600 text-white border-violet-700 shadow-sm shadow-violet-200 cursor-not-allowed ring-1 ring-violet-300/80";
                 } else if (selected) {
-                  cls += " bg-[#31BD9C] text-white";
+                  cls += " bg-[#31BD9C] text-white border-[#2aa88a] shadow-sm";
                 } else if (inRange) {
-                  cls += " bg-[#31BD9C]/20 text-neutral-900";
+                  cls += " bg-[#31BD9C]/20 text-neutral-900 border-[#31BD9C]/30";
                 } else if (hasEvent) {
-                  cls += " bg-amber-100 text-amber-900 hover:bg-amber-200 border-amber-200";
+                  cls += " bg-amber-100 text-amber-950 hover:bg-amber-200 border-amber-300";
+                } else if (isToday) {
+                  cls +=
+                    " bg-white text-neutral-900 border-[#31BD9C] ring-1 ring-[#31BD9C]/35 hover:bg-[#31BD9C]/10";
                 } else {
-                  cls += " bg-white hover:bg-[#31BD9C]/10 text-neutral-800 border-neutral-100";
+                  cls += " bg-white hover:bg-[#31BD9C]/10 text-neutral-800 border-neutral-200";
                 }
-                const title = busy?.labels?.join(" · ") || undefined;
+                const titleParts = [
+                  ...(busy?.labels ?? []),
+                  isPast ? L("legendPast") : null,
+                  isBooked ? L("legendBooked") : null,
+                ].filter(Boolean);
+                const title = titleParts.length ? titleParts.join(" · ") : undefined;
                 return (
                   <button
                     key={day}
@@ -479,6 +493,7 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
                     disabled={isPast || isBooked}
                     onClick={() => selectDay(day)}
                     className={cls}
+                    aria-label={title ? `${dayNum} — ${title}` : String(dayNum)}
                   >
                     {dayNum}
                   </button>
@@ -486,14 +501,20 @@ export default function ConferenceHallRequestForm({ locale, labels, departments 
               })}
             </div>
             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-neutral-600">
-              <span className="inline-flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-red-100 border border-red-200" /> {L("legendBooked")}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded-md bg-neutral-100 border border-neutral-300" />{" "}
+                {L("legendPast")}
               </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-amber-100 border border-amber-200" /> {L("legendEvent")}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded-md bg-violet-600 border border-violet-700" />{" "}
+                {L("legendBooked")}
               </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-[#31BD9C]" /> {L("legendSelected")}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded-md bg-amber-100 border border-amber-300" />{" "}
+                {L("legendEvent")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded-md bg-[#31BD9C]" /> {L("legendSelected")}
               </span>
             </div>
             <button
